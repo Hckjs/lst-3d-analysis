@@ -1,0 +1,17 @@
+{
+  "DL3Cuts": {
+    "max_gh_cut": 1.0,
+    "min_gh_cut": 0.4,
+    "gh_efficiency": 0.6
+  },
+  "IRFFITSWriter": {
+    "energy_dependent_theta": true,
+    "energy_dependent_gh": true,
+    "point_like": false,
+    "overwrite": true
+  },
+  "DataReductionFITSWriter": {
+    "source_ra": "187.70593076 deg",
+    "source_dec": "12.39112329 deg"
+  }
+}

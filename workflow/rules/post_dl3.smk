@@ -1,6 +1,7 @@
 ruleorder: plot_flux_points > plot_dl4
 ruleorder: plot_theta > plot_dl4
 
+# TODO: Create background files and use them in gammapy to create datasets
 
 # Plots using dl3 files
 rule observation_plots:
