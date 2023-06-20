@@ -11,3 +11,6 @@ dependencies:
   - iminuit
   - tqdm
   - rich
+  - pip
+  - pip:
+    - git+https://github.com/cta-observatory/pybkgmodel.git@61925ca50d6ca53be2df86ee57e3335331475551
