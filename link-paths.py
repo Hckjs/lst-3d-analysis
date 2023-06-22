@@ -10,40 +10,6 @@ from astropy.table import Table
 from astropy.time import Time
 from tqdm import tqdm
 
-parser = ArgumentParser()
-parser.add_argument("--runs", required=True)
-parser.add_argument("--prod", required=True)
-parser.add_argument("--dec", required=True)
-parser.add_argument("--runsummary", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-args = parser.parse_args()
-
-with open(args.runs, "r") as f:
-    runs = json.load(f)
-n_runs = len(set(chain(*runs.values())))
-
-build_dir = Path(args.output_path).parent
-outdir_dl1 = build_dir / "dl1/"
-filename_dl1 = "dl1_LST-1.Run{run_id}.h5"
-template_target_dl1 = (
-    (Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1)
-    .resolve()
-    .as_posix()
-)
-template_linkname_dl1 = (outdir_dl1 / filename_dl1).resolve().as_posix()
-
-outdir_dl2 = build_dir / "dl2/test/"
-filename_dl2 = "dl2_LST-1.Run{run_id}.h5"
-template_target_dl2 = "/fefs/aswg/data/mc/DL2/AllSky/{prod}/TestingDataset/{dec}/{node}/dl2_{prod}_{node}_merged.h5"  # noqa
-template_linkname_dl2 = (outdir_dl2 / filename_dl2).resolve().as_posix()
-
-filename_irf = "irf_Run{run_id}.fits.gz"
-template_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa
-
-outdir_model = build_dir / "models/model_Run{run_id}/"
-template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/"
-template_linkname_model = outdir_model.resolve().as_posix()
-
 
 def sin_delta(altaz: AltAz):
     """Delta is the angle between pointing and magnetic field."""
@@ -166,8 +132,6 @@ def main() -> None:
                 ),
             )
 
-            target_model = Path(template_target_model.format(prod=prod, dec=dec))
-            linkname_model = Path(template_linkname_model.format(run_id=run_id))
 
             target_dl2 = Path(template_target_dl2.format(prod=prod, dec=dec, node=node))
             linkname_dl2 = Path(template_linkname_dl2.format(run_id=run_id))
@@ -177,15 +141,18 @@ def main() -> None:
                 linkname_dl1.unlink()
             linkname_dl1.symlink_to(target_dl1)
 
-            linkname_dl2.parent.mkdir(exist_ok=True, parents=True)
-            if linkname_dl2.exists() and linkname_dl2.is_symlink():
-                linkname_dl2.unlink()
-            linkname_dl2.symlink_to(target_dl2)
+            # Need to merge/split diffuse data myself and train a model!
+            #linkname_dl2.parent.mkdir(exist_ok=True, parents=True)
+            #if linkname_dl2.exists() and linkname_dl2.is_symlink():
+            #    linkname_dl2.unlink()
+            #linkname_dl2.symlink_to(target_dl2)
 
-            linkname_model.parent.mkdir(exist_ok=True, parents=True)
-            if linkname_model.exists() and linkname_model.is_symlink():
-                linkname_model.unlink()
-            linkname_model.symlink_to(target_model)
+    target_model = Path(template_target_model.format(prod=prod, dec=dec))
+    linkname_model = Path(template_linkname_model)
+    linkname_model.parent.mkdir(exist_ok=True, parents=True)
+    if linkname_model.exists() and linkname_model.is_symlink():
+        linkname_model.unlink()
+    linkname_model.symlink_to(target_model)
 
             progress.update()
 
@@ -193,4 +160,40 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("--runs", required=True)
+    parser.add_argument("--prod", required=True)
+    parser.add_argument("--dec", required=True)
+    parser.add_argument("--runsummary", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    args = parser.parse_args()
+
+    with open(args.runs, "r") as f:
+        runs = json.load(f)
+    n_runs = len(set(chain(*runs.values())))
+
+    build_dir = Path(args.output_path).parent
+    outdir_dl1 = build_dir / "dl1/"
+    filename_dl1 = "dl1_LST-1.Run{run_id}.h5"
+    template_target_dl1 = (
+        (Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1)
+        .resolve()
+        .as_posix()
+    )
+    template_linkname_dl1 = (outdir_dl1 / filename_dl1).resolve().as_posix()
+
+    outdir_dl2 = build_dir / "dl2/test/"
+    filename_dl2 = "dl2_LST-1.Run{run_id}.h5"
+    template_target_dl2 = "/fefs/aswg/data/mc/DL2/AllSky/{prod}/TestingDataset/{dec}/{node}/dl2_{prod}_{node}_merged.h5"  # noqa
+    template_linkname_dl2 = (outdir_dl2 / filename_dl2).resolve().as_posix()
+
+    filename_irf = "irf_Run{run_id}.fits.gz"
+    template_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa
+
+    # Just link to get the proper configs for training
+    outdir_model = build_dir / "models/mcpipe/"
+    template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/"
+    template_linkname_model = outdir_model.resolve().as_posix()
+
+
     main()

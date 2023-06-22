@@ -1,3 +1,88 @@
+# This needs to have the node dirs linked first!
+# put the diffuse in the definiton of particle, so gamma and gamma-diffuse are two things
+# We dont really need to split protons, hmm...
+# Maybe just link the final proton file?
+rule merge_runs_per_node
+    output:
+        train=build_dir / "merged/{particle}/{node}_train.h5"
+        test=build_dir / "merged/{particle}/{node}_test.h5"
+    input:
+        directory=build_dir / "mc_nodes/{node}/{particle}"
+    params:
+        train_size=0.5,
+    conda:
+        lstchain_env
+    shell:
+        """
+	a better merge script.python \
+	--input-dir {input.directory} \
+	--train-size {params.train_size} \
+	--output-train {output.train} \
+	--output-test {output.test} 
+	"""
+
+
+rule merge_train_of_all_nodes
+    output:
+        build_dir / "dl1/train/{particle}_train.h5"
+    input:
+        build_dir / "dl1/mc_nodes
+    conda:
+        lstchain_env
+    params:
+        pattern="_train.h5"
+    shell:
+        """
+	lstchain_merge_hdf5_files
+	--input-dir {input.directory} \
+	--pattern {params.pattern} \
+	--output-file {output}
+	"""
+
+
+rule train_models:
+    output:
+        build_dir/"models/reg_energy.sav",
+        build_dir/"models/cls_gh.sav",
+        build_dir/"models/reg_disp_norm.sav",
+        build_dir/"models/cls_disp_sign.sav",
+    input:
+        gamma=build_dir / "dl1/train/gamma_diffuse_train.h5",
+        proton=build_dir / "dl1/train/proton_diffuse_merged.h5",
+        config=build_dir / "models/mcpipe/lstchain_config.json",
+    params:
+        outdir=build_dir / "models"
+    conda:
+        lstchain_env
+    shell:
+        """
+	lstchain_mc_trainpipe \
+	--fg {input.gamma} \
+	--fp {input.proton} \
+	--config {input.config} \
+	--output-dir {params.outdir}
+	"""
+
+
+# Copy stuff from the link script to link here again
+# Maybe do it for each run. Takes slightly longer, but is nicer?
+# Could also create the mapping once and then take it here. Then it should be in a checkpoint maybe?
+# all_irf_pointgs = ...
+# def get_pointing_from_file()
+# det get_closest()... return the path to the _test.h5 file in the node dir thats selected as closest
+# run: takes python code
+rule link_test_nodes:
+    input:
+        the run at dl1 or 2
+    output:
+        gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
+    run:
+        closest = get_closest()
+	link using pathlib so that the link is in dl1/test/dl1_LST-1.Run{run_id}.h5
+        
+
+
+# Adapt this to match for the diff gamma test set! needs a wildcard for the dir probably
 rule dl2:
     resources:
         mem_mb=80000,
