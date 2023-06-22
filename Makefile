@@ -13,6 +13,7 @@ $(BUILD_DIR)/all-linked.txt: FORCE
 	snakemake $@ $(CFG) \
 		--use-conda \
 		--cores=1 \
+		--latency-wait=10 \
 		--snakefile workflow/link_runs.smk
 
 $(BUILD_DIR)/%: FORCE
