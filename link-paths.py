@@ -133,28 +133,27 @@ def main() -> None:
             )
 
 
-            target_dl2 = Path(template_target_dl2.format(prod=prod, dec=dec, node=node))
-            linkname_dl2 = Path(template_linkname_dl2.format(run_id=run_id))
-
             linkname_dl1.parent.mkdir(exist_ok=True, parents=True)
             if linkname_dl1.exists() and linkname_dl1.is_symlink():
                 linkname_dl1.unlink()
             linkname_dl1.symlink_to(target_dl1)
 
             # Need to merge/split diffuse data myself and train a model!
-            #linkname_dl2.parent.mkdir(exist_ok=True, parents=True)
-            #if linkname_dl2.exists() and linkname_dl2.is_symlink():
-            #    linkname_dl2.unlink()
-            #linkname_dl2.symlink_to(target_dl2)
-
-    target_model = Path(template_target_model.format(prod=prod, dec=dec))
-    linkname_model = Path(template_linkname_model)
-    linkname_model.parent.mkdir(exist_ok=True, parents=True)
-    if linkname_model.exists() and linkname_model.is_symlink():
-        linkname_model.unlink()
-    linkname_model.symlink_to(target_model)
-
             progress.update()
+
+    target_nodes = Path(template_target_nodes.format(prod=prod, dec=dec, node=node))
+    linkname_nodes.parent.mkdir(exist_ok=True, parents=True)
+    if linkname_nodes.exists() and linkname_nodes.is_symlink():
+        linkname_nodes.unlink()
+    linkname_nodes.symlink_to(target_nodes)
+
+    #target_model = Path(template_target_model.format(prod=prod, dec=dec))
+    #linkname_model = Path(template_linkname_model)
+    #linkname_model.parent.mkdir(exist_ok=True, parents=True)
+    #if linkname_model.exists() and linkname_model.is_symlink():
+    #    linkname_model.unlink()
+    #linkname_model.symlink_to(target_model)
+
 
     Path(args.output_path).touch()
 
@@ -182,12 +181,14 @@ if __name__ == "__main__":
     )
     template_linkname_dl1 = (outdir_dl1 / filename_dl1).resolve().as_posix()
 
-    outdir_dl2 = build_dir / "dl2/test/"
-    filename_dl2 = "dl2_LST-1.Run{run_id}.h5"
-    template_target_dl2 = "/fefs/aswg/data/mc/DL2/AllSky/{prod}/TestingDataset/{dec}/{node}/dl2_{prod}_{node}_merged.h5"  # noqa
-    template_linkname_dl2 = (outdir_dl2 / filename_dl2).resolve().as_posix()
+    # This is what changes compared to 1D
+    # We link unmerged dl1 nodes here!
+    outdir_nodes = build_dir / "mc_nodes/"
+    #filename_dl2 = "dl2_LST-1.Run{run_id}.h5"
+    template_target_nodes = "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}"  # noqa
+    linkname_nodes = (outdir_nodes).resolve()
 
-    filename_irf = "irf_Run{run_id}.fits.gz"
+    #filename_irf = "irf_Run{run_id}.fits.gz"
     template_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa
 
     # Just link to get the proper configs for training

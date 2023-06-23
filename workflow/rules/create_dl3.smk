@@ -2,35 +2,37 @@
 # put the diffuse in the definiton of particle, so gamma and gamma-diffuse are two things
 # We dont really need to split protons, hmm...
 # Maybe just link the final proton file?
-rule merge_runs_per_node
+rule merge_gamma_mc_per_node:
     output:
-        train=build_dir / "merged/{particle}/{node}_train.h5"
-        test=build_dir / "merged/{particle}/{node}_test.h5"
-    input:
-        directory=build_dir / "mc_nodes/{node}/{particle}"
+        train=build_dir / "merged/GammaDiffuse/{node}_train.dl1.h5",
+        test=build_dir / "merged/GammaDiffuse/{node}_test.dl1.h5"
     params:
         train_size=0.5,
+        directory=build_dir / "mc_nodes/{node}/GammaDiffuse"
     conda:
         lstchain_env
     shell:
         """
-	a better merge script.python \
-	--input-dir {input.directory} \
+        python scripts/merge_mc_nodes.py \
+	--input-dir {params.directory} \
 	--train-size {params.train_size} \
 	--output-train {output.train} \
 	--output-test {output.test} 
 	"""
 
+from pathlib import Path
+all_nodes = [ x.name for x in (build_dir / "mc_nodes/GammaDiffuse").glob("*") if x.is_dir()]
+print(all_nodes)
 
-rule merge_train_of_all_nodes
+rule merge_train_of_all_nodes:
     output:
-        build_dir / "dl1/train/{particle}_train.h5"
+        build_dir / "dl1/train/{particle}_train.dl1.h5"
     input:
-        build_dir / "dl1/mc_nodes
+        expand(build_dir / "merged/{{particle}}/{node}_train.dl1.h5", node=all_nodes)
     conda:
         lstchain_env
     params:
-        pattern="_train.h5"
+        pattern="_train.dl1.h5"
     shell:
         """
 	lstchain_merge_hdf5_files
@@ -71,14 +73,14 @@ rule train_models:
 # def get_pointing_from_file()
 # det get_closest()... return the path to the _test.h5 file in the node dir thats selected as closest
 # run: takes python code
-rule link_test_nodes:
-    input:
-        the run at dl1 or 2
-    output:
-        gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
-    run:
-        closest = get_closest()
-	link using pathlib so that the link is in dl1/test/dl1_LST-1.Run{run_id}.h5
+#rule link_test_nodes:
+#    input:
+#"        the run at dl1 or 2"
+#    output:
+#        gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
+#    run:
+#        closest = get_closest()
+#	"link using pathlib so that the link is in dl1/test/dl1_LST-1.Run{run_id}.h5"
         
 
 
