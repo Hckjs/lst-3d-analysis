@@ -147,13 +147,19 @@ def main() -> None:
         linkname_nodes.unlink()
     linkname_nodes.symlink_to(target_nodes)
 
-    #target_model = Path(template_target_model.format(prod=prod, dec=dec))
-    #linkname_model = Path(template_linkname_model)
-    #linkname_model.parent.mkdir(exist_ok=True, parents=True)
-    #if linkname_model.exists() and linkname_model.is_symlink():
-    #    linkname_model.unlink()
-    #linkname_model.symlink_to(target_model)
+    target_protons_dl1 = Path(template_target_protons_dl1.format(prod=prod, dec=dec))
+    linkname_protons_dl1.parent.mkdir(exist_ok=True, parents=True)
+    if linkname_protons_dl1.exists() and linkname_protons_dl1.is_symlink():
+        linkname_protons_dl1.unlink()
+    linkname_protons_dl1.symlink_to(target_protons_dl1)
 
+    # to get the config
+    target_model = Path(template_target_model.format(prod=prod, dec=dec))
+    linkname_model = Path(template_linkname_model)
+    linkname_model.parent.mkdir(exist_ok=True, parents=True)
+    if linkname_model.exists() and linkname_model.is_symlink():
+        linkname_model.unlink()
+    linkname_model.symlink_to(target_model)
 
     Path(args.output_path).touch()
 
@@ -183,18 +189,20 @@ if __name__ == "__main__":
 
     # This is what changes compared to 1D
     # We link unmerged dl1 nodes here!
-    outdir_nodes = build_dir / "mc_nodes/"
+    outdir_nodes = build_dir / "mc_nodes"
     #filename_dl2 = "dl2_LST-1.Run{run_id}.h5"
     template_target_nodes = "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}"  # noqa
-    linkname_nodes = (outdir_nodes).resolve()
+    linkname_nodes = outdir_nodes
 
     #filename_irf = "irf_Run{run_id}.fits.gz"
     template_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa
+
+    template_target_protons_dl1 = "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}/Protons/dl1_{prod}_{dec}_Protons_merged.h5"
+    linkname_protons_dl1 = outdir_dl1 / "train/proton_diffuse_merged.dl1.h5"
 
     # Just link to get the proper configs for training
     outdir_model = build_dir / "models/mcpipe/"
     template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/"
     template_linkname_model = outdir_model.resolve().as_posix()
-
 
     main()

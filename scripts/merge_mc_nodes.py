@@ -50,6 +50,9 @@ def main():
     args = parser.parse_args()
     train_size = args.train_size
     file_list = glob(os.path.join(args.input_dir, args.pattern))
+    print("Dir:", args.input_dir)
+    print("pattern:", args.pattern)
+    print("files:", file_list)
     if not args.output_test:
         print("Not creating a test file since none is given")
         train_files = file_list
@@ -67,16 +70,12 @@ def main():
         train_files,
         args.output_train,
         nodes_keys=keys,
-        progress_bar=True,
-        run_checks=True,
     )
     if test_files:
         auto_merge_h5files(
             test_files,
             args.output_test,
             nodes_keys=keys,
-            progress_bar=True,
-            run_checks=True,
         )
 
 

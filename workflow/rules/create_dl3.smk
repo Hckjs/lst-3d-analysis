@@ -1,14 +1,16 @@
-# This needs to have the node dirs linked first!
-# put the diffuse in the definiton of particle, so gamma and gamma-diffuse are two things
-# We dont really need to split protons, hmm...
-# Maybe just link the final proton file?
+rule link_proton_train_file:
+    output:
+        build_dir / "dl1/train/proton_diffuse_merged.dl1.h5"
+    input:
+        
+
 rule merge_gamma_mc_per_node:
     output:
         train=build_dir / "merged/GammaDiffuse/{node}_train.dl1.h5",
-        test=build_dir / "merged/GammaDiffuse/{node}_test.dl1.h5"
+        test=build_dir / "merged/GammaDiffuse/{node}_test.dl1.h5",
     params:
         train_size=0.5,
-        directory=build_dir / "mc_nodes/{node}/GammaDiffuse"
+        directory=lambda node: build_dir / f"mc_nodes/GammaDiffuse/{node}"
     conda:
         lstchain_env
     shell:
@@ -20,27 +22,27 @@ rule merge_gamma_mc_per_node:
 	--output-test {output.test} 
 	"""
 
+# TODO This should be a function getting the wildcard particle, but right now its only one particle, so its fine
 from pathlib import Path
-all_nodes = [ x.name for x in (build_dir / "mc_nodes/GammaDiffuse").glob("*") if x.is_dir()]
-print(all_nodes)
+all_gamma_nodes = [ x.name for x in (build_dir / "mc_nodes/GammaDiffuse").glob("*") if x.is_dir()]
 
-rule merge_train_of_all_nodes:
+rule merge_train_or_test_of_all_nodes:
     output:
-        build_dir / "dl1/train/{particle}_train.dl1.h5"
+        build_dir / "dl1/{train_or_test}/{particle}_train.dl1.h5"
     input:
-        expand(build_dir / "merged/{{particle}}/{node}_train.dl1.h5", node=all_nodes)
+        files=expand(build_dir / "merged/{{particle}}/{node}_{{train_or_test}}.dl1.h5", node=all_gamma_nodes),
+    params:
+        directory=lambda wildcards: build_dir / f"merged/{wildcards.particle}",
+        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5"
     conda:
         lstchain_env
-    params:
-        pattern="_train.dl1.h5"
     shell:
         """
-	lstchain_merge_hdf5_files
-	--input-dir {input.directory} \
-	--pattern {params.pattern} \
+	lstchain_merge_hdf5_files \
+	--input-dir {params.directory} \
+        --pattern {params.pattern} \
 	--output-file {output}
 	"""
-
 
 rule train_models:
     output:
@@ -49,9 +51,13 @@ rule train_models:
         build_dir/"models/reg_disp_norm.sav",
         build_dir/"models/cls_disp_sign.sav",
     input:
-        gamma=build_dir / "dl1/train/gamma_diffuse_train.h5",
-        proton=build_dir / "dl1/train/proton_diffuse_merged.h5",
+        gamma=build_dir / "dl1/train/GammaDiffuse_train.dl1.h5",
+        proton=build_dir / "dl1/train/proton_diffuse_merged.dl1.h5",
         config=build_dir / "models/mcpipe/lstchain_config.json",
+    resources:
+        mem_mb=64000,
+        time=120,
+        cpus=8
     params:
         outdir=build_dir / "models"
     conda:
@@ -76,6 +82,7 @@ rule train_models:
 #rule link_test_nodes:
 #    input:
 #"        the run at dl1 or 2"
+#        build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
 #    output:
 #        gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
 #    run:
@@ -87,12 +94,14 @@ rule train_models:
 # Adapt this to match for the diff gamma test set! needs a wildcard for the dir probably
 rule dl2:
     resources:
-        mem_mb=80000,
+        mem_mb=32000,
+        cpus=4,
     output:
         build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
     input:
         data=build_dir / "dl1/dl1_LST-1.Run{run_id}.h5",
-        config=build_dir / "models/model_Run{run_id}/lstchain_config.json",
+        config=build_dir / "models/mcpipe/lstchain_config.json",
+        models=build_dir / "models"
     conda:
         lstchain_env
     log:
@@ -101,8 +110,8 @@ rule dl2:
         """
         lstchain_dl1_to_dl2  \
             --input-file {input.data}  \
-            --output-dir $(dirname $(realpath {output}))  \
-            --path-models $(dirname {input.config})  \
+            --output-dir $(dirname {output}) \
+            --path-models {input.models}  \
             --config {input.config}  \
         """
 

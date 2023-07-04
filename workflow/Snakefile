@@ -25,10 +25,12 @@ irf_plots = [
     for irf in ("aeff", "edisp", "gh_cut", "radmax_cut")
     for run_id in RUN_IDS
 ]
+print(irf_plots)
 
 analyses = [
     x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
 ]
+
 
 dl3_plots = [
     build_dir / f"plots/{plot}/{run_id}.pdf"
@@ -61,9 +63,7 @@ dl4_plots = [
 
 rule all:
     input:
-        dl3_plots
+        irf_plots,
 
-
-	#,
+        #dl3_plots
         #dl4_plots,
-        #irf_plots,
