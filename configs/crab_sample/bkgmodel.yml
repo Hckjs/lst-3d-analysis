@@ -1,0 +1,40 @@
+data:
+    mask: 'build/crab_sample/dl3/dl3*.fits.gz'
+    cuts: 'none'
+
+# TODO Where to specify that you want the other side?
+mode: 'stacked_wobble'
+    #mode: 'runwise_exclusion'
+
+output:
+    directory: 'build/crab_sample/background'
+    prefix: ''
+    overwrite: True
+
+run_matching:
+    time_delta: '0.2 hour'
+    pointing_delta: '2 deg'
+
+# TODO probably way finer
+binning:
+    mode: 'rectangular'
+    extension:
+    x:
+        min: '-5 deg'
+        max: '5 deg'
+        nbins: 100
+    y:
+        min: '-5 deg'
+        max: '5 deg'
+        nbins: 100
+    energy:
+        min: '10 GeV'
+        max: '10 TeV'
+        nbins: 15
+
+exclusion_regions:
+#    type: list
+#    - {type: 'circle', x: 83.633080, y: 22.014500, rad: 0.2, unit: 'deg', frame: 'icrs'}
+    - 'icrs; circle(83.6287, 22.0147, 0.3d)'
+
+# run_matching: {val: 1, unit: 'arcmin'}

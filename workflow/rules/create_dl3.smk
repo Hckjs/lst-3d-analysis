@@ -1,9 +1,3 @@
-rule link_proton_train_file:
-    output:
-        build_dir / "dl1/train/proton_diffuse_merged.dl1.h5"
-    input:
-        
-
 rule merge_gamma_mc_per_node:
     output:
         train=build_dir / "merged/GammaDiffuse/{node}_train.dl1.h5",
@@ -33,15 +27,16 @@ rule merge_train_or_test_of_all_nodes:
         files=expand(build_dir / "merged/{{particle}}/{node}_{{train_or_test}}.dl1.h5", node=all_gamma_nodes),
     params:
         directory=lambda wildcards: build_dir / f"merged/{wildcards.particle}",
-        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5"
+        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
+	out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
     conda:
         lstchain_env
     shell:
         """
-	lstchain_merge_hdf5_files \
+        python scripts/merge_mc_nodes.py \
 	--input-dir {params.directory} \
         --pattern {params.pattern} \
-	--output-file {output}
+	--{params.out_type} {output}
 	"""
 
 rule train_models:
@@ -56,8 +51,9 @@ rule train_models:
         config=build_dir / "models/mcpipe/lstchain_config.json",
     resources:
         mem_mb=64000,
-        time=120,
-        cpus=8
+        cpus=8,
+	partition="long",
+	time=1200,
     params:
         outdir=build_dir / "models"
     conda:
@@ -71,48 +67,62 @@ rule train_models:
 	--output-dir {params.outdir}
 	"""
 
-
-# Copy stuff from the link script to link here again
-# Maybe do it for each run. Takes slightly longer, but is nicer?
-# Could also create the mapping once and then take it here. Then it should be in a checkpoint maybe?
-# all_irf_pointgs = ...
-# def get_pointing_from_file()
-# det get_closest()... return the path to the _test.h5 file in the node dir thats selected as closest
-# run: takes python code
-#rule link_test_nodes:
-#    input:
-#"        the run at dl1 or 2"
-#        build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
-#    output:
-#        gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
-#    run:
-#        closest = get_closest()
-#	"link using pathlib so that the link is in dl1/test/dl1_LST-1.Run{run_id}.h5"
+# Cant do this in link script because the merge into train and test did not happen yet at that stage
+rule link_test_nodes:
+    input:
+        runs=expand(
+            build_dir / "dl1/dl1_LST-1.Run{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+        dir = build_dir / "dl1",
+        test_files=expand(build_dir / "merged/GammaDiffuse/{node}_test.dl1.h5", node=all_gamma_nodes),
+    output:
+        runs=expand(
+            build_dir / "dl1/test/dl1_LST-1.Run{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+    params:
+        test_dir = build_dir / "dl1/test",
+        mc_nodes_dir = build_dir / "merged/GammaDiffuse",
+    conda:
+        lstchain_env
+    shell:
+        """
+	python link-dl1.py \
+	--dl1-dir {input.dir} \
+	--test-link-dir {params.test_dir} \
+	--mc-nodes-dir {params.mc_nodes_dir}
+	"""
         
 
 
 # Adapt this to match for the diff gamma test set! needs a wildcard for the dir probably
 rule dl2:
     resources:
-        mem_mb=32000,
-        cpus=4,
+        mem_mb=64000,
+        cpus=4
     output:
-        build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
+        build_dir / "dl2/{potentially_test}dl2_LST-1.Run{run_id}.h5",
     input:
-        data=build_dir / "dl1/dl1_LST-1.Run{run_id}.h5",
+        data=build_dir / "dl1/{potentially_test}dl1_LST-1.Run{run_id}.h5",
         config=build_dir / "models/mcpipe/lstchain_config.json",
-        models=build_dir / "models"
+        e_model=build_dir/"models/reg_energy.sav",
+        gh_model=build_dir/"models/cls_gh.sav",
+        disp_model=build_dir/"models/reg_disp_norm.sav",
+        sign_model=build_dir/"models/cls_disp_sign.sav",
+        model_dir=build_dir / "models"
     conda:
         lstchain_env
-    log:
-        build_dir / "logs/dl2/{run_id}.log",
+    # allow wildcard to be empty
+    wildcard_constraints:
+        potentially_test = ".*"
     shell:
         """
         lstchain_dl1_to_dl2  \
             --input-file {input.data}  \
             --output-dir $(dirname {output}) \
-            --path-models {input.models}  \
-            --config {input.config}  \
+            --path-models {input.model_dir}  \
+            --config {input.config} 
         """
 
 
@@ -121,7 +131,7 @@ rule irf:
         mem_mb=8000,
         time=10,
     output:
-        build_dir / "irf/calculated/irf_Run{run_id}.fits.gz",
+        build_dir / "irf/irf_Run{run_id}.fits.gz",
     input:
         gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
         config=irf_config_path,
@@ -140,7 +150,7 @@ rule plot_irf:
     output:
         build_dir / "plots/irf/{irf}_Run{run_id}.pdf",
     input:
-        data=build_dir / "irf/calculated/irf_Run{run_id}.fits.gz",
+        data=build_dir / "irf/irf_Run{run_id}.fits.gz",
         script="scripts/plot_irf_{irf}.py",
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
     resources:
@@ -152,12 +162,46 @@ rule plot_irf:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
+# Using my fork here currently
+# One stacked map for now. Maybe per run later?
+# Need to check again how this is done in pybkgmodel
+rule calc_background:
+    conda:
+        background_env
+    output:
+        build_dir / "background/stacked_bkg_map.fits"
+    input:
+        runs=expand(
+            build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
+            run_id=RUN_IDS,
+        ),
+        config=bkg_config_path,
+    shell:
+        """
+	bkgmodel --config {input.config}
+        """
+
+# Use lstchain env here to ensure we can load it
+# run id is stacked only right now, but this way it can be expanded
+rule plot_background:
+    output:
+        build_dir / "plots/background/{run_id}.pdf",
+    conda:
+        lstchain_env
+    input:
+        data=build_dir / "background/{run_id}_bkg_map.fits",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+	script="scripts/plot_bkg.py"
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
 rule dl3:
     output:
         build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
     input:
         data=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
-        irf=build_dir / "irf/calculated/irf_Run{run_id}.fits.gz",
+        irf=build_dir / "irf/irf_Run{run_id}.fits.gz",
         config=irf_config_path,
     resources:
         mem_mb=12000,
@@ -188,6 +232,10 @@ rule dl3_hdu_index:
             build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
             run_id=RUN_IDS,
         ),
+	bkg_file=build_dir / "background/stacked_bkg_map.fits"
+    params:
+        bkg_dir = build_dir / "background",
+        bkg_script = "scripts/link_bkg.py",
     resources:
         time=15,
     shell:
@@ -196,7 +244,12 @@ rule dl3_hdu_index:
             --input-dl3-dir {build_dir}/dl3  \
             --output-index-path {build_dir}/dl3  \
             --file-pattern 'dl3_*.fits.gz'  \
-            --overwrite \
+            --overwrite 
+
+	python {params.bkg_script} \
+	--hdu-index-path {output} \
+	--bkg-dir {params.bkg_dir} \
+	--bkg-file {input.bkg_file}
         """
 
 
@@ -210,7 +263,7 @@ rule cuts_dl2_dl3:
         build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
     input:
         dl2=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
-        irf=build_dir / "irf/calculated/irf_Run{run_id}.fits.gz",
+        irf=build_dir / "irf/irf_Run{run_id}.fits.gz",
         config=irf_config_path,
         script="scripts/calc_counts_after_cuts.py",
     shell:
@@ -303,3 +356,4 @@ rule stack_skymaps_dl3:
         script="scripts/stack_skymap.py",
     shell:
         "python {input.script} -i {input.data} -o {output}"
+

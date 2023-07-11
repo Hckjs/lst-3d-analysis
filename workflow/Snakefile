@@ -12,7 +12,8 @@ RUN_IDS = sorted(set(chain(*runs.values())))
 
 
 ruleorder: plot_bayesian_blocks_lightcurve > plot_dl4
-
+ruleorder: plot_irf > plot_dl4
+ruleorder: plot_background > plot_dl4
 
 include: "rules/run_selection.smk"
 include: "rules/create_dl3.smk"
@@ -20,18 +21,20 @@ include: "rules/post_dl3.smk"
 include: "rules/bayesian_blocks.smk"
 
 
+# no radmax for full enclosure
 irf_plots = [
     build_dir / f"plots/irf/{irf}_Run{run_id}.pdf"
-    for irf in ("aeff", "edisp", "gh_cut", "radmax_cut")
+    for irf in ("aeff", "edisp", "gh_cut")
     for run_id in RUN_IDS
 ]
-print(irf_plots)
 
 analyses = [
     x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
 ]
 
 
+# Normal skymap still broken after trigger type selection...
+# TODO: Test on some new runs
 dl3_plots = [
     build_dir / f"plots/{plot}/{run_id}.pdf"
     for run_id in RUN_IDS + ["stacked"]
@@ -40,12 +43,11 @@ dl3_plots = [
 
 background_plots = [
     build_dir / f"plots/{plot}/{run_id}.pdf"
-    for run_id in RUN_IDS + ["stacked"]
+    for run_id in ["stacked"] # no runids right now
     for plot in ["background", "skymap_subtracted"]
 ]
 
 # observation plots are arguably dl3
-# 
 dl4_plots = [
     build_dir / f"plots/{analysis}/{plot}.pdf"
     for analysis in analyses
@@ -64,6 +66,6 @@ dl4_plots = [
 rule all:
     input:
         irf_plots,
-
-        #dl3_plots
-        #dl4_plots,
+        dl3_plots,
+#	background_plots
+	#dl4_plots
