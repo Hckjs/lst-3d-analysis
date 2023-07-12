@@ -5,7 +5,7 @@
     "gh_efficiency": 0.8
   },
   "IRFFITSWriter": {
-    "energy_dependent_theta": true,
+    "energy_dependent_theta": false,
     "energy_dependent_gh": true,
     "point_like": false,
     "overwrite": true
