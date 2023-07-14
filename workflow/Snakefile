@@ -14,6 +14,8 @@ RUN_IDS = sorted(set(chain(*runs.values())))
 ruleorder: plot_bayesian_blocks_lightcurve > plot_dl4
 ruleorder: plot_irf > plot_dl4
 ruleorder: plot_background > plot_dl4
+ruleorder: plot_significance_map > plot_dl4
+#ruleorder: dataset_3d > dataset
 
 include: "rules/run_selection.smk"
 include: "rules/create_dl3.smk"
@@ -44,7 +46,7 @@ dl3_plots = [
 background_plots = [
     build_dir / f"plots/{plot}/{run_id}.pdf"
     for run_id in ["stacked"] # no runids right now
-    for plot in ["background", "skymap_subtracted"]
+    for plot in ["background"] #, "skymap_subtracted"
 ]
 
 # observation plots are arguably dl3
@@ -52,20 +54,27 @@ dl4_plots = [
     build_dir / f"plots/{analysis}/{plot}.pdf"
     for analysis in analyses
     for plot in [
-        "sensitivity",
-        "light_curve",
-        "flux_points",
+        #"sensitivity",
+        #"light_curve",
+        #"flux_points",
         "observation_plots",
-        "bayesian_blocks",
-        "bayesian_blocks_comparison",
-        "dl4_diagnostics",
+	"dataset_peek",
+	"significance_map",
+        #"bayesian_blocks",
+        #"bayesian_blocks_comparison",
+        #"dl4_diagnostics",
     ]
 ]
 
+# einmal peek oder so überall
+# könnte man auch für die obs machen
+# eine excess map wäre auf jeden fall nice da, kann aber auch in dl3_plots ggf?
+# wobei ich lieber das mit dem background fit/scale hätte, der auch im fit genommen wird.
+dl4_per_dataset_plots = []
 
 rule all:
     input:
         dl3_plots,
         #irf_plots,
-#	background_plots
-	#dl4_plots
+	background_plots,
+	dl4_plots

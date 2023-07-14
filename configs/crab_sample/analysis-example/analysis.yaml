@@ -3,7 +3,7 @@ general:
     level: info
 
 observations:
-  datastore: build/lst-analysis-config/dl3
+  datastore: build/crab_sample/dl3
   obs_time:
     start: null
     stop: null
@@ -12,8 +12,8 @@ observations:
     - edisp
 
 datasets:
-  type: 1d
-  stack: true
+  type: 3d
+  stack: false
   geom:
     wcs:
       skydir: { frame: icrs, lon: 83.633 deg, lat: 22.014 deg }
@@ -31,10 +31,14 @@ datasets:
         max: 10 TeV
         nbins: 20
   background:
-    method: "reflected"
-    parameters: { min_distance_input: 10 deg }
+    method: "fov_background"
+    exclusion: "build/crab_sample/analysis-example/exclusion.fits.gz"
+    parameters: {"method": "scale"}
+  safe_mask:
+    methods: ["aeff-max"]
+    parameters: {aeff_percent: 30}
   on_region:
-    { frame: icrs, lon: 83.633 deg, lat: 22.014 deg, radius: 0.2 deg }
+    { frame: icrs, lon: 83.633 deg, lat: 22.014 deg, radius: 0.3 deg }
   containment_correction: false
 
 fit:

@@ -18,6 +18,7 @@ rule merge_gamma_mc_per_node:
 
 # TODO This should be a function getting the wildcard particle, but right now its only one particle, so its fine
 from pathlib import Path
+import os
 all_gamma_nodes = [ x.name for x in (build_dir / "mc_nodes/GammaDiffuse").glob("*") if x.is_dir()]
 
 rule merge_train_or_test_of_all_nodes:
@@ -232,10 +233,11 @@ rule dl3_hdu_index:
             build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
             run_id=RUN_IDS,
         ),
-	bkg_file=build_dir / "background/stacked_bkg_map.fits"
+	bkg = build_dir / "background/stacked_bkg_map.fits"
     params:
-        bkg_dir = build_dir / "background",
         bkg_script = "scripts/link_bkg.py",
+	bkg_dir= lambda w, input: os.path.relpath(Path(input.bkg).parent, Path(input.runs[0]).parent),
+	bkg_file= lambda w, input: Path(input.bkg).name
     resources:
         time=15,
     shell:
@@ -249,7 +251,7 @@ rule dl3_hdu_index:
 	python {params.bkg_script} \
 	--hdu-index-path {output} \
 	--bkg-dir {params.bkg_dir} \
-	--bkg-file {input.bkg_file}
+	--bkg-file {params.bkg_file}
         """
 
 
