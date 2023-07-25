@@ -32,6 +32,7 @@ def main(config, dataset_path, output):
         },
     )
     table.meta["CUMUL"] = True
+    print(table)
     hdulist.append(fits.table_to_hdu(table))
 
     # vs run id and vs zenith
@@ -43,14 +44,14 @@ def main(config, dataset_path, output):
         sqrt_ts = []
         for obs, ds in zip(analysis.observations, datasets):
             obs_ids.append(obs.obs_id)
-            zenith.append(obs.pointing_zen.to_value(u.deg))
+            #zenith.append(obs.get_pointing_altaz(obs.tmid).zen.to_value(u.deg))
             excess.append(ds.info_dict()["excess"])
             sqrt_ts.append(ds.info_dict()["sqrt_ts"])
         table = Table(
             {
                 "excess": np.array(excess),
                 "sqrt_ts": np.array(sqrt_ts),
-                "zenith": np.array(zenith),
+             #   "zenith": np.array(zenith),
                 "obs_id": np.array(obs_ids),
             },
         )
