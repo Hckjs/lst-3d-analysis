@@ -191,7 +191,7 @@ rule plot_significance_map:
     conda:
         gammapy_env
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} --lima-map-input {input.lima_map} --exclusion_map-input {input.exclusion_mask} -o {output}"
+        "MATPLOTLIBRC={input.rc} python {input.script} --lima-maps-input {input.lima_map} --exclusion-map-input {input.exclusion_mask} -o {output}"
 
 
 

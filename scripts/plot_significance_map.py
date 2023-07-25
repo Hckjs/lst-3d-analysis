@@ -4,6 +4,7 @@ from gammapy.maps import WcsNDMap
 from matplotlib import pyplot as plt
 from scipy.stats import norm
 import matplotlib
+from gammapy.estimators import FluxMaps
 
 if matplotlib.get_backend() == "pgf":
     from matplotlib.backends.backend_pgf import PdfPages
@@ -19,7 +20,7 @@ args = parser.parse_args()
 
 def main(lima_maps_input, exclusion_map_input, output):
     figures = []
-    lima_maps = WcsNDMap.read(lima_maps_input)
+    lima_maps = FluxMaps.read(lima_maps_input)
     exclusion_mask = WcsNDMap.read(exclusion_map_input)
 
     significance_map = lima_maps["sqrt_ts"]
@@ -62,7 +63,7 @@ def main(lima_maps_input, exclusion_map_input, output):
     mu, std = norm.fit(significance_off)
     x = np.linspace(-8, 8, 50)
     p = norm.pdf(x, mu, std)
-    ax.plot(x, p, lw=2, color="black")
+    ax.plot(x, p, lw=2, color="black", label=f"mu={mu:.2f}\nstd={std:.2f}")
     ax.legend()
     ax.set_xlabel("Significance")
     ax.set_yscale("log")

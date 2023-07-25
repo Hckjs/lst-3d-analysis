@@ -23,13 +23,13 @@ datasets:
     selection: { offset_max: 2.5 deg }
     axes:
       energy:
-        min: 20 GeV
-        max: 10 TeV
-        nbins: 40
+        min: 500 GeV
+        max: 50 TeV
+        nbins: 10
       energy_true:
-        min: 20 GeV
-        max: 10 TeV
-        nbins: 20
+        min: 500 GeV
+        max: 50 TeV
+        nbins: 5
   background:
     method: "fov_background"
     exclusion: "build/crab_sample/analysis-example/exclusion.fits.gz"

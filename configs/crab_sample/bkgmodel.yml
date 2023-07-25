@@ -3,7 +3,7 @@ data:
     cuts: 'none'
 
 # TODO Where to specify that you want the other side?
-mode: 'stacked_wobble'
+mode: 'runwise_exclusion'
     #mode: 'runwise_exclusion'
 
 output:
@@ -12,29 +12,30 @@ output:
     overwrite: True
 
 run_matching:
-    time_delta: '0.2 hour'
-    pointing_delta: '2 deg'
+    time_delta: '1 day' # some large number for testing
+    pointing_delta: '1 deg' # needs to be large enough to match the other pointing (in icrs!)
 
 # TODO probably way finer
+# TODO Align with other irfs
 binning:
     mode: 'rectangular'
     extension:
     x:
-        min: '-5 deg'
-        max: '5 deg'
-        nbins: 100
+        min: '-1.5 deg'
+        max: '1.5 deg'
+        nbins: 50
     y:
-        min: '-5 deg'
-        max: '5 deg'
-        nbins: 100
+        min: '-1.5 deg'
+        max: '1.5 deg'
+        nbins: 50
     energy:
-        min: '10 GeV'
-        max: '10 TeV'
-        nbins: 15
+        min: '500 GeV'
+        max: '50 TeV'
+        nbins: 10
 
 exclusion_regions:
 #    type: list
 #    - {type: 'circle', x: 83.633080, y: 22.014500, rad: 0.2, unit: 'deg', frame: 'icrs'}
-    - 'icrs; circle(83.6287, 22.0147, 0.3d)'
+    - 'icrs; circle(83.633, 22.014, 0.3d)'
 
 # run_matching: {val: 1, unit: 'arcmin'}

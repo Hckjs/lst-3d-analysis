@@ -23,6 +23,15 @@ def peek(data):
     return fig
 
 
+def counts(data):
+    fig, ax = plt.subplots()
+    data.background.get_spectrum().plot(label="bkg", ax=ax)
+    data.counts.get_spectrum().plot(label="counts", ax=ax)
+    ax.legend()
+    ax.set_title(data.name)
+    return fig
+
+
 def main(config, dataset_path, output):
     config = AnalysisConfig.read(config)
 
@@ -36,7 +45,13 @@ def main(config, dataset_path, output):
     figures = []
     for d in analysis.datasets:
         figures.append(peek(d))
+        figures.append(counts(d))
 
+    # TODO Mark this as stacked, the name cant be set unfortunately...
+    if len(analysis.datasets) > 1:
+        stacked = analysis.datasets.stack_reduce()
+        figures.append(peek(stacked))
+        figures.append(counts(stacked))
     
     with PdfPages(output) as pdf:
         for fig in figures:

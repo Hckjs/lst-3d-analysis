@@ -45,7 +45,8 @@ dl3_plots = [
 
 background_plots = [
     build_dir / f"plots/{plot}/{run_id}.pdf"
-    for run_id in ["stacked"] # no runids right now
+    #for run_id in ["stacked"] # no runids right now
+    for run_id in RUN_IDS
     for plot in ["background"] #, "skymap_subtracted"
 ]
 
@@ -72,9 +73,17 @@ dl4_plots = [
 # wobei ich lieber das mit dem background fit/scale hätte, der auch im fit genommen wird.
 dl4_per_dataset_plots = []
 
+
+selection_plots = [
+        build_dir / "moon-illumination.pdf",
+        build_dir / "cosmics.pdf",
+        build_dir / "cosmics-above.pdf"]
+
+
 rule all:
     input:
+        selection_plots,
         dl3_plots,
-        #irf_plots,
 	background_plots,
+        irf_plots,
 	dl4_plots

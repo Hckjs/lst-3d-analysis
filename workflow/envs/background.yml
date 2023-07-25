@@ -5,4 +5,4 @@ dependencies:
   - python=3.8
   - pip
   - pip:
-    - git+https://github.com/LukasNickel/pybkgmodel.git@40a3560546132b892d4dc7ca83e7f9a1f93c198a
+    - git+https://github.com/LukasNickel/pybkgmodel.git@ad73f13c06e7c9f174c792358f427bded3386aab

@@ -24,7 +24,7 @@ def main(config, dataset_path, output):
     estimator = ExcessMapEstimator(0.02 * u.deg, selection_optional=[])
     lima_maps = estimator.run(datasets.stack_reduce())
 
-    lima_maps.write(output)
+    lima_maps.write(output, overwrite=True)
 
 
 if __name__ == "__main__":

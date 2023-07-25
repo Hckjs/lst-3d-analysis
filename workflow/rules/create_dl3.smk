@@ -156,7 +156,7 @@ rule plot_irf:
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
     resources:
         mem_mb=1000,
-        time=5,  # minutes
+        time=20,  # minutes
     conda:
         gammapy_env
     shell:
@@ -164,13 +164,19 @@ rule plot_irf:
 
 
 # Using my fork here currently
-# One stacked map for now. Maybe per run later?
-# Need to check again how this is done in pybkgmodel
+# no clear way to swap between runwise and stacked in my workflow :/
+# maybe define a function, that returns the corresponding bkg name to a run based on
+# a variable. I would need to parse that from the bkgmodel config and
+# also get it into the link bkg script ...
 rule calc_background:
     conda:
         background_env
     output:
-        build_dir / "background/stacked_bkg_map.fits"
+        #build_dir / "background/stacked_bkg_map.fits"
+        expand(
+            build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits", # dont ask... result of my hacks, should be solved later upstream
+            run_id=RUN_IDS,
+        ),
     input:
         runs=expand(
             build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
@@ -190,7 +196,8 @@ rule plot_background:
     conda:
         lstchain_env
     input:
-        data=build_dir / "background/{run_id}_bkg_map.fits",
+        #data=build_dir / "background/{run_id}_bkg_map.fits", # stacked
+        data=build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits", #runwise
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
 	script="scripts/plot_bkg.py"
     shell:
@@ -233,11 +240,15 @@ rule dl3_hdu_index:
             build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
             run_id=RUN_IDS,
         ),
-	bkg = build_dir / "background/stacked_bkg_map.fits"
+        bkg=expand(
+            build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits", # dont ask... result of my hacks, should be solved later upstream
+            run_id=RUN_IDS,
+        ),
+	#bkg = build_dir / "background/stacked_bkg_map.fits"
     params:
         bkg_script = "scripts/link_bkg.py",
-	bkg_dir= lambda w, input: os.path.relpath(Path(input.bkg).parent, Path(input.runs[0]).parent),
-	bkg_file= lambda w, input: Path(input.bkg).name
+	bkg_dir= lambda w, input: os.path.relpath(Path(input.bkg[0]).parent, Path(input.runs[0]).parent),
+	bkg_files= lambda w, input: [Path(x).name for x in input.bkg]
     resources:
         time=15,
     shell:
@@ -251,7 +262,7 @@ rule dl3_hdu_index:
 	python {params.bkg_script} \
 	--hdu-index-path {output} \
 	--bkg-dir {params.bkg_dir} \
-	--bkg-file {params.bkg_file}
+	--bkg-file {params.bkg_files} 
         """
 
 
