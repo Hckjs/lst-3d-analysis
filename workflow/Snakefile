@@ -59,7 +59,7 @@ dl4_plots = [
 	"dataset_peek",
 	"significance_map",
         "dl4_diagnostics",
-        #"flux_points",
+        "flux_points",
         #"light_curve",
     ]
 ]
@@ -72,9 +72,9 @@ dl4_per_dataset_plots = []
 
 
 selection_plots = [
-        build_dir / "moon-illumination.pdf",
-        build_dir / "cosmics.pdf",
-        build_dir / "cosmics-above.pdf"]
+        build_dir / "plots/moon-illumination.pdf",
+        build_dir / "plots/cosmics.pdf",
+        build_dir / "plots/cosmics-above.pdf"]
 
 
 rule all:

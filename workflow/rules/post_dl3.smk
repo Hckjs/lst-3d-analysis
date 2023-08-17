@@ -90,36 +90,13 @@ rule dataset_3d:
     input:
         data=build_dir / "dl3/hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
-        script="scripts/write_datasets_hli.py",
-        # This could be parsed from the config in principle!
-        # right now this needs to match in the config
-        # but i would also make sure the rule is adaptable then
-        exclusion_mask=build_dir / "{analysis}/exclusion.fits.gz"
+        script="scripts/write_datasets_manual.py",
     output:
         build_dir / "dl4/{analysis}/datasets.fits.gz",
     conda:
         gammapy_env
     shell:
         "python {input.script} -c {input.config} -o {output}"
-
-
-#rule dataset:
-#    input:
-#        data=build_dir / "dl3/hdu-index.fits.gz",
-#        config=config_dir / "{analysis}/analysis.yaml",
-#        script="scripts/write_datasets.py",
-#    params:
-#        n_off=config_agn["n_off_regions"],
-#    output:
-#        build_dir / "dl4/{analysis}/datasets.fits.gz",
-#    resources:
-#        cpus=16,
-#        mem_mb=32000,
-#        time=30,  # minutes
-#    conda:
-#        gammapy_env
-#    shell:
-#        "python {input.script} -j{resources.cpus} -c {input.config} -o {output} --n-off-regions={params.n_off}"
 
 
 rule calc_sensitivity:
@@ -192,7 +169,6 @@ rule plot_significance_map:
         gammapy_env
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} --lima-maps-input {input.lima_map} --exclusion-map-input {input.exclusion_mask} -o {output}"
-
 
 
 

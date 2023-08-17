@@ -1,6 +1,24 @@
 components:
   - name: Crab
     type: SkyModel
+    spatial:
+      type: GaussianSpatialModel
+      frame: icrs
+      parameters:
+        - name: lon_0
+          value: 86.633
+          unit: deg
+        - name: lat_0
+          value: 22.014
+          unit: deg
+        - name: sigma
+          value: 0.01
+          unit: deg
+        - name: e
+          value: 0.0
+        - name: phi
+          value: 0.0
+          unit: deg
     spectral:
       type: LogParabolaSpectralModel
       parameters:

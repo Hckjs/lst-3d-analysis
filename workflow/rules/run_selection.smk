@@ -37,7 +37,7 @@ rule plot_data_selection:
         config=build_dir / "dl1-selection-cuts-config.json",
         script="scripts/plot-{name}.py",
     output:
-        build_dir / "{name}.pdf",
+        build_dir / "plots/{name}.pdf",
     conda:
         data_selection_env
     shell:

@@ -32,8 +32,9 @@ datasets:
         nbins: 5
   background:
     method: "fov_background"
-    exclusion: "build/crab_sample/analysis-example/exclusion.fits.gz"
-    parameters: {"method": "scale"}
+      #    exclusion: "build/crab_sample/analysis-example/exclusion.fits.gz"
+      #    I set that elsewhere
+    parameters: {"method": "fit"}
   safe_mask:
     methods: ["aeff-max"]
     parameters: {aeff_percent: 30}
@@ -45,9 +46,9 @@ fit:
   fit_range: { min: 20 GeV, max: 10 TeV }
 
 flux_points:
-  energy: { min: 20 GeV, max: 10 TeV, nbins: 20 }
+  energy: { min: 1000 GeV, max: 10 TeV, nbins: 20 }
   source: Crab
 
 light_curve:
-  energy_edges: { min: 100 GeV, max: 10 TeV, nbins: 1 }
+  energy_edges: { min: 1000 GeV, max: 10 TeV, nbins: 1 }
   source: Crab
