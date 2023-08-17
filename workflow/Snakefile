@@ -4,83 +4,94 @@ from itertools import chain
 
 include: "definitions.smk"
 
-
-with open(build_dir / "runs.json", "r") as f:
-    runs = json.load(f)
-
-RUN_IDS = sorted(set(chain(*runs.values())))
-
-
-ruleorder: plot_bayesian_blocks_lightcurve > plot_dl4
-ruleorder: plot_irf > plot_dl4
-ruleorder: plot_background > plot_dl4
-ruleorder: plot_significance_map > plot_dl4
-#ruleorder: dataset_3d > dataset
-
+# Run Selection
 include: "rules/run_selection.smk"
-include: "rules/create_dl3.smk"
-include: "rules/post_dl3.smk"
-include: "rules/bayesian_blocks.smk"
-
-
-# no radmax for full enclosure
-irf_plots = [
-    build_dir / f"plots/irf/{irf}_Run{run_id}.pdf"
-    for irf in ("aeff", "edisp", "gh_cut")
-    for run_id in RUN_IDS
-]
-
-analyses = [
-    x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
-]
-
-
-# Normal skymap still broken after trigger type selection...
-# TODO: Test on some new runs
-dl3_plots = [
-    build_dir / f"plots/{plot}/{run_id}.pdf"
-    for run_id in RUN_IDS + ["stacked"]
-    for plot in ["skymap", "skymap_dl3"]
-]
-
-background_plots = [
-    build_dir / f"plots/{plot}/{run_id}.pdf"
-    #for run_id in ["stacked"] # no runids right now
-    for run_id in RUN_IDS
-    for plot in ["background"] #, "skymap_subtracted"
-]
-
-# observation plots are arguably dl3
-dl4_plots = [
-    build_dir / f"plots/{analysis}/{plot}.pdf"
-    for analysis in analyses
-    for plot in [
-        "observation_plots",
-	"dataset_peek",
-	"significance_map",
-        "dl4_diagnostics",
-        "flux_points",
-        #"light_curve",
+run_selection_plots = [
+        build_dir / "plots/run_selection/moon-illumination.pdf",
+        build_dir / "plots/run_selection/cosmics.pdf",
+        build_dir / "plots/run_selection/cosmics-above.pdf"
     ]
-]
 
-# einmal peek oder so überall
-# könnte man auch für die obs machen
-# eine excess map wäre auf jeden fall nice da, kann aber auch in dl3_plots ggf?
-# wobei ich lieber das mit dem background fit/scale hätte, der auch im fit genommen wird.
-dl4_per_dataset_plots = []
-
-
-selection_plots = [
-        build_dir / "plots/moon-illumination.pdf",
-        build_dir / "plots/cosmics.pdf",
-        build_dir / "plots/cosmics-above.pdf"]
+# Link runs
+include: "rules/link_runs.smk"
+def run_ids(wildcards):
+    with open(checkpoints.run_ids.get(**wildcards).output, "r") as f:
+        runs = json.load(f)
+    return sorted(set(chain(*runs.values())))
 
 
+
+# include: "rules/create_dl3.smk"
+# include: "rules/post_dl3.smk"
+# include: "rules/bayesian_blocks.smk"
+#
+#
+# no radmax for full enclosure
+# irf_plots = [
+#     build_dir / f"plots/irf/{irf}_Run{run_id}.pdf"
+#     for irf in ("aeff", "edisp", "gh_cut")
+#     for run_id in RUN_IDS
+# ]
+#
+# analyses = [
+#     x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
+# ]
+#
+#
+# # Normal skymap still broken after trigger type selection...
+# # TODO: Test on some new runs
+# dl3_plots = [
+#     build_dir / f"plots/{plot}/{run_id}.pdf"
+#     for run_id in RUN_IDS + ["stacked"]
+#     for plot in ["skymap", "skymap_dl3"]
+# ]
+#
+# background_plots = [
+#     build_dir / f"plots/{plot}/{run_id}.pdf"
+#     #for run_id in ["stacked"] # no runids right now
+#     for run_id in RUN_IDS
+#     for plot in ["background"] #, "skymap_subtracted"
+# ]
+#
+# # observation plots are arguably dl3
+# dl4_plots = [
+#     build_dir / f"plots/{analysis}/{plot}.pdf"
+#     for analysis in analyses
+#     for plot in [
+#         "observation_plots",
+# 	"dataset_peek",
+# 	"significance_map",
+#         "dl4_diagnostics",
+#         "flux_points",
+#         #"light_curve",
+#     ]
+# ]
+#
+# # einmal peek oder so überall
+# # könnte man auch für die obs machen
+# # eine excess map wäre auf jeden fall nice da, kann aber auch in dl3_plots ggf?
+# # wobei ich lieber das mit dem background fit/scale hätte, der auch im fit genommen wird.
+# dl4_per_dataset_plots = []
+#
+#
+#
+#
 rule all:
     input:
-        selection_plots,
-        dl3_plots,
-	background_plots,
-        irf_plots,
-	dl4_plots
+        get_selection_targets,
+#        dl3_plots,
+#	background_plots,
+#        irf_plots,
+#	dl4_plots
+
+
+
+
+#ruleorder: plot_bayesian_blocks_lightcurve > plot_dl4
+#ruleorder: plot_irf > plot_dl4
+#ruleorder: plot_background > plot_dl4
+#ruleorder: plot_significance_map > plot_dl4
+#ruleorder: dataset_3d > dataset
+
+
+
