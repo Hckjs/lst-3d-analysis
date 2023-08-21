@@ -4,10 +4,10 @@ from pathlib import Path
 
 # "Main" paths. Everuthing else is relative to these
 scripts_dir = Path("scripts")
-config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
-main_config_path = config_dir / "lst_agn.json".resolve()
-build = Path("build") / config_dir.name
 env_dir = Path("workflow/envs")
+config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
+main_config_path = (config_dir / "lst_agn.json").resolve()
+build = Path("build") / config_dir.name
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 
 with open(main_config_path, "r") as f:
