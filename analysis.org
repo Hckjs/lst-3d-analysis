@@ -10,11 +10,11 @@
 # Definitions only, no actual target
 include: "definitions.smk"
 include: "rules/dl1.smk"
-#include: "rules/mc.smk"
-#include: "rules/dl2.smk"
-#include: "rules/dl3.smk"
-#include: "rules/dl4.smk"
-#include: "rules/dl5.smk"
+# include: "rules/mc.smk"
+# include: "rules/dl2.smk"
+# include: "rules/dl3.smk"
+# include: "rules/dl4.smk"
+# include: "rules/dl5.smk"
 
 rule all:
     input:
@@ -158,7 +158,7 @@ env = ENVS["data_selection"]
 config = CONFIGS["data_selection"]
 scripts = Path(SCRIPTS["data_selection"])
 out = Path(OUTDIRS["data_selection"])
-plots = Path(PLOTSDIRS["data_selection"])
+plots = out / plots
 
 
 rule link_runs_stage:

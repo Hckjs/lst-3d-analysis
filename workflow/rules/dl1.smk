@@ -2,7 +2,7 @@ env = ENVS["data_selection"]
 config = CONFIGS["data_selection"]
 scripts = Path(SCRIPTS["data_selection"])
 out = Path(OUTDIRS["data_selection"])
-plots = Path(PLOTSDIRS["data_selection"])
+plots = out / plots
 
 
 rule link_runs_stage:
