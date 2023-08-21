@@ -63,7 +63,7 @@ import os
 from pathlib import Path
 
 # Unfortunately I need these as parameters for the rules, so I define them here
-main_config_path = (config_dir / "lst_agn.json").resolve()
+main_config_path = (Path(config.get("config_dir")) / "lst_agn.json").resolve()
 with open(main_config_path, "r") as f:
     config_agn = json.load(f)
 PRODUCTION = config_agn["production"]
