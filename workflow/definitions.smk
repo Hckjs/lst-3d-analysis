@@ -42,7 +42,7 @@ env_dir = Path("workflow/envs")
 ENVS = {
     "lstchain": config_agn.get("lstchain_enviroment", "lstchain-v0.9.13"),
     "gammapy": (env_dir / "agn_analysis.yml").resolve(),
-    "run_selection": (env_dir / "run_selection.yml").resolve(),
+    "data_selection": (env_dir / "run_selection.yml").resolve(),
     "background": (env_dir / "background.yml").resolve(),
     "dark_matter": (env_dir / "dark_matter.yml").resolve(),
 }
