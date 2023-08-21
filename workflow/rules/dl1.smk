@@ -22,7 +22,8 @@ rule runlist:
     output:
         out / "runlist.html",
     shell:
-        """
+        f"""
+        mkdir -p {{out}}
         echo 'Provide the file {output}. The command is:'
         echo 'curl --user <username>:<password> https://lst1.iac.es/datacheck/lstosa/LST_source_catalog.html -o {{out}}/runlist.html'
         """
