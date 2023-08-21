@@ -49,18 +49,23 @@ import json
 import os
 from pathlib import Path
 
-# Unfortunately I need these as parameters for the rules, so I define them here
-main_config_path = (Path(config.get("config_dir")) / "lst_agn.json").resolve()
+# "Main" paths. Everuthing else is relative to these
+scripts_dir = Path("scripts")
+config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
+main_config_path = config_dir / "lst_agn.json".resolve()
+build = Path("build") / config_dir.name
+env_dir = Path("workflow/envs")
+MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
+
 with open(main_config_path, "r") as f:
     config_agn = json.load(f)
 PRODUCTION = config_agn["production"]
 DECLINATION = config_agn["declination"]
+
 # Set all configs
 # .resolve(), because I am paranoid. Thats a TODO kinda
 # It seems to be, that snakemake changes the current working directory and then local paths fail
 # Per Analysis configs are not in here. They have fixed names in the analysis-* dirs
-config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
-MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 CONFIGS = {
     "agn": (config_dir / "lst_agn.json").resolve(),
     "data_selection": (config_dir / "run_selection.json").resolve(),
@@ -68,7 +73,6 @@ CONFIGS = {
     "bkg_model": (config_dir / "bkgmodel.yml").resolve(),
 }
 
-build = Path("build") / config_dir.name
 OUTDIRS = {
     "data_selection": (build / "data_selection").resolve(),
     "mc_nodes": (
@@ -85,7 +89,6 @@ OUTDIRS = {
 }
 
 # Set all enviroments
-env_dir = Path("workflow/envs")
 ENVS = {
     "lstchain": config_agn.get("lstchain_enviroment", "lstchain-v0.9.13"),
     "gammapy": (env_dir / "agn_analysis.yml").resolve(),
@@ -94,9 +97,8 @@ ENVS = {
     "dark_matter": (env_dir / "dark_matter.yml").resolve(),
 }
 
-scripts_dir = Path("scripts")
 SCRIPTS = {
-    "data_selection": (build / "data_selection").resolve(),
+    "data_selection": (scripts_dir / "data_selection").resolve(),
     "mc": (scripts_dir / "mc").resolve(),
     "dl1": (scripts_dir / "dl1").resolve(),
     "dl2": (scripts_dir / "dl2").resolve(),
