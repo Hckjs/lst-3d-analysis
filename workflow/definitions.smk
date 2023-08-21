@@ -32,6 +32,7 @@ OUTDIRS = {
     "dl1": (build / "dl1").resolve(),
     "dl2": (build / "dl2").resolve(),
     "dl3": (build / "dl3").resolve(),
+    "irfs": (build / "irfs").resolve(),
     "dl4": (build / "dl4").resolve(),
     "dl5": (build / "dl5").resolve(),
 }
@@ -39,6 +40,7 @@ PLOTDIRS = {
     "link_runs": (build / "run_selection/plots").resolve(),
     "run_selection": (build / "run_selection/plots").resolve(),
     "mc": (build / "mc/plots").resolve(),
+    "irfs": (build / "irfs/plots").resolve(),
 }
 
 # Set all enviroments
@@ -47,7 +49,7 @@ ENVS = {
     "lstchain": config_agn.get("lstchain_enviroment", "lstchain-v0.9.13"),
     "gammapy": (env_dir / "agn_analysis.yml").resolve(),
     "run_selection": (env_dir / "run_selection.yml").resolve(),
-    "background_creation": (env_dir / "background.yml").resolve(),
+    "background": (env_dir / "background.yml").resolve(),
     "dark_matter": (env_dir / "dark_matter.yml").resolve(),
 }
 
@@ -80,3 +82,7 @@ models_to_train = [
     Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
     Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
 ]
+
+# TODO: cuts are not really IRFs, should separate that.
+# Add radmax here if 1D
+irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
