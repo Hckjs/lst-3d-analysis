@@ -38,8 +38,8 @@ rule select_datasets:
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        out=out / "runlist.log",
+        err=out / "runlist.err",
     shell:
         "python {input.script} {input.data} {output} -c {input.config}"
 
@@ -53,8 +53,8 @@ rule merge_datachecks:
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        out=out / "merge_datacheck.log",
+        err=out / "merge_datacheck.err",
     shell:
         "python {input.script} {input.data} {output.output}"
 
@@ -72,8 +72,8 @@ rule data_check:
     conda:
         env
     log:
-        out=out / "datackeck.log",
-        err=out / "datackeck.err",
+        out=out / "datacheck.log",
+        err=out / "datacheck.err",
     shell:
         "\
         python \
@@ -97,8 +97,8 @@ rule run_ids:
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        out=out / "check_runlist.log",
+        err=out / "check_runlist.err",
     shell:
         "python {input.script} {input.data} {output} -c {input.config}"
 
@@ -116,8 +116,8 @@ checkpoint link_paths:
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        out=out / "link_paths.log",
+        err=out / "link_paths.err",
     shell:
         "python {input.script} \
         --runs {input.runs} \
@@ -151,8 +151,8 @@ rule gather_run_pointings:
     conda:
         env
     log:
-        out=lambda wildcards, output: Path(output).with_suffix(".log"),
-        err=lambda wildcards, output: Path(output).with_suffix(".err"),
+        out=out / "run_pointings.log",
+        err=out / "run_pointings.err",
     shell:
         "python {input.script} \
         --runs {input.runs} \
@@ -170,7 +170,7 @@ rule plot_data_selection:
     conda:
         env
     log:
-        out=lambda wildcards, output: Path(output).with_suffix(".log"),
-        err=lambda wildcards, output: Path(output).with_suffix(".err"),
+        out=out / "{name}.log",
+        err=out / "{name}.err",
     shell:
         "python {input.script} {input.data} -c {input.config} -o {output}"
