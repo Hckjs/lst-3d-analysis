@@ -9,19 +9,9 @@
 #+begin_src snakemake
 # Definitions only, no actual target
 include: "definitions.smk"
-# Thats kind of all dl1
-# thats kind of link runs and run selection...
-# Link runs
-include: "rules/link_runs.smk"
-# Run Selection
-include: "rules/run_selection.smk"
-# Get MC, get models
-# As there are no test datasets for diffuse gammas, I need to merge the nodes
-# myself, train new models on the train split and calc IRFs on the test split(s)
+include: "rules/dl1.smk"
 include: "rules/mc.smk"
-# dl2
 include: "rules/dl2.smk"
-# including background
 include: "rules/dl3.smk"
 include: "rules/dl4.smk"
 include: "rules/dl5.smk"
