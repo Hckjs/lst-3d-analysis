@@ -6,16 +6,6 @@ CONFIG_DIR?=configs/crab_sample
 BUILD_DIR=build/$(notdir $(CONFIG_DIR))
 CFG=--config config_dir="$(CONFIG_DIR)"
 
-all: $(BUILD_DIR)/all-linked.txt
-	snakemake $(PROFILE) $(CFG)
-
-$(BUILD_DIR)/all-linked.txt: FORCE
-	snakemake $@ $(CFG) \
-		--use-conda \
-		--cores=1 \
-		--latency-wait=10 \
-		--snakefile workflow/link_runs.smk
-
 $(BUILD_DIR)/%: FORCE
 	snakemake $(PROFILE) $@ $(CFG)
 
