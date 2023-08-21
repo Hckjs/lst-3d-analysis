@@ -2,36 +2,39 @@ import json
 from itertools import chain
 
 
+# Definitions only, no actual target
 include: "definitions.smk"
-
-# Run Selection
-include: "rules/run_selection.smk"
-run_selection_plots = [
-        build_dir / "plots/run_selection/moon-illumination.pdf",
-        build_dir / "plots/run_selection/cosmics.pdf",
-        build_dir / "plots/run_selection/cosmics-above.pdf"
-    ]
-
 # Link runs
 include: "rules/link_runs.smk"
-def run_ids(wildcards):
-    with open(checkpoints.run_ids.get(**wildcards).output, "r") as f:
-        runs = json.load(f)
-    return sorted(set(chain(*runs.values())))
+# Run Selection
+include: "rules/run_selection.smk"
+# Get MC, get models
+# As there are no test datasets for diffuse gammas, I need to merge the nodes
+# myself, train new models on the train split and calc IRFs on the test split(s)
+include: "rules/mc.smk"
 
 
+# dl1
+# thats kind of link runs and run selection...
 
-# include: "rules/create_dl3.smk"
-# include: "rules/post_dl3.smk"
-# include: "rules/bayesian_blocks.smk"
-#
-#
+
+# dl2
+include: "rules/dl2.smk"
+include: "rules/irf.smk"
+
+
 # no radmax for full enclosure
 # irf_plots = [
 #     build_dir / f"plots/irf/{irf}_Run{run_id}.pdf"
 #     for irf in ("aeff", "edisp", "gh_cut")
 #     for run_id in RUN_IDS
 # ]
+
+
+# include: "rules/create_dl3.smk"
+# include: "rules/post_dl3.smk"
+
+
 #
 # analyses = [
 #     x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
@@ -79,19 +82,14 @@ def run_ids(wildcards):
 rule all:
     input:
         get_selection_targets,
+
+
 #        dl3_plots,
-#	background_plots,
+# 	background_plots,
 #        irf_plots,
-#	dl4_plots
-
-
-
-
-#ruleorder: plot_bayesian_blocks_lightcurve > plot_dl4
-#ruleorder: plot_irf > plot_dl4
-#ruleorder: plot_background > plot_dl4
-#ruleorder: plot_significance_map > plot_dl4
-#ruleorder: dataset_3d > dataset
-
-
-
+# 	dl4_plots
+# ruleorder: plot_bayesian_blocks_lightcurve > plot_dl4
+# ruleorder: plot_irf > plot_dl4
+# ruleorder: plot_background > plot_dl4
+# ruleorder: plot_significance_map > plot_dl4
+# ruleorder: dataset_3d > dataset

@@ -1,180 +1,16 @@
-rule merge_gamma_mc_per_node:
-    output:
-        train=build_dir / "merged/GammaDiffuse/{node}_train.dl1.h5",
-        test=build_dir / "merged/GammaDiffuse/{node}_test.dl1.h5",
-    params:
-        train_size=0.5,
-        directory=lambda node: build_dir / f"mc_nodes/GammaDiffuse/{node}"
-    conda:
-        lstchain_env
-    shell:
-        """
-        python scripts/merge_mc_nodes.py \
-	--input-dir {params.directory} \
-	--train-size {params.train_size} \
-	--output-train {output.train} \
-	--output-test {output.test} 
-	"""
-
-# TODO This should be a function getting the wildcard particle, but right now its only one particle, so its fine
-from pathlib import Path
-import os
-all_gamma_nodes = [ x.name for x in (build_dir / "mc_nodes/GammaDiffuse").glob("*") if x.is_dir()]
-
-rule merge_train_or_test_of_all_nodes:
-    output:
-        build_dir / "dl1/{train_or_test}/{particle}_train.dl1.h5"
-    input:
-        files=expand(build_dir / "merged/{{particle}}/{node}_{{train_or_test}}.dl1.h5", node=all_gamma_nodes),
-    params:
-        directory=lambda wildcards: build_dir / f"merged/{wildcards.particle}",
-        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
-	out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
-    conda:
-        lstchain_env
-    shell:
-        """
-        python scripts/merge_mc_nodes.py \
-	--input-dir {params.directory} \
-        --pattern {params.pattern} \
-	--{params.out_type} {output}
-	"""
-
-rule train_models:
-    output:
-        build_dir/"models/reg_energy.sav",
-        build_dir/"models/cls_gh.sav",
-        build_dir/"models/reg_disp_norm.sav",
-        build_dir/"models/cls_disp_sign.sav",
-    input:
-        gamma=build_dir / "dl1/train/GammaDiffuse_train.dl1.h5",
-        proton=build_dir / "dl1/train/proton_diffuse_merged.dl1.h5",
-        config=build_dir / "models/mcpipe/lstchain_config.json",
-    resources:
-        mem_mb=64000,
-        cpus=8,
-	partition="long",
-	time=1200,
-    params:
-        outdir=build_dir / "models"
-    conda:
-        lstchain_env
-    shell:
-        """
-	lstchain_mc_trainpipe \
-	--fg {input.gamma} \
-	--fp {input.proton} \
-	--config {input.config} \
-	--output-dir {params.outdir}
-	"""
-
-# Cant do this in link script because the merge into train and test did not happen yet at that stage
-rule link_test_nodes:
-    input:
-        runs=expand(
-            build_dir / "dl1/dl1_LST-1.Run{run_id}.h5",
-            run_id=RUN_IDS,
-        ),
-        dir = build_dir / "dl1",
-        test_files=expand(build_dir / "merged/GammaDiffuse/{node}_test.dl1.h5", node=all_gamma_nodes),
-    output:
-        runs=expand(
-            build_dir / "dl1/test/dl1_LST-1.Run{run_id}.h5",
-            run_id=RUN_IDS,
-        ),
-    params:
-        test_dir = build_dir / "dl1/test",
-        mc_nodes_dir = build_dir / "merged/GammaDiffuse",
-    conda:
-        lstchain_env
-    shell:
-        """
-	python link-dl1.py \
-	--dl1-dir {input.dir} \
-	--test-link-dir {params.test_dir} \
-	--mc-nodes-dir {params.mc_nodes_dir}
-	"""
-        
-
-
-# Adapt this to match for the diff gamma test set! needs a wildcard for the dir probably
-rule dl2:
-    resources:
-        mem_mb=64000,
-        cpus=4
-    output:
-        build_dir / "dl2/{potentially_test}dl2_LST-1.Run{run_id}.h5",
-    input:
-        data=build_dir / "dl1/{potentially_test}dl1_LST-1.Run{run_id}.h5",
-        config=build_dir / "models/mcpipe/lstchain_config.json",
-        e_model=build_dir/"models/reg_energy.sav",
-        gh_model=build_dir/"models/cls_gh.sav",
-        disp_model=build_dir/"models/reg_disp_norm.sav",
-        sign_model=build_dir/"models/cls_disp_sign.sav",
-        model_dir=build_dir / "models"
-    conda:
-        lstchain_env
-    # allow wildcard to be empty
-    wildcard_constraints:
-        potentially_test = ".*"
-    shell:
-        """
-        lstchain_dl1_to_dl2  \
-            --input-file {input.data}  \
-            --output-dir $(dirname {output}) \
-            --path-models {input.model_dir}  \
-            --config {input.config} 
-        """
-
-
-rule irf:
-    resources:
-        mem_mb=8000,
-        time=10,
-    output:
-        build_dir / "irf/irf_Run{run_id}.fits.gz",
-    input:
-        gammas=build_dir / "dl2/test/dl2_LST-1.Run{run_id}.h5",
-        config=irf_config_path,
-    conda:
-        lstchain_env
-    shell:
-        """
-        lstchain_create_irf_files \
-            -o {output} \
-            -g {input.gammas} \
-            --config {input.config} \
-        """
-
-
-rule plot_irf:
-    output:
-        build_dir / "plots/irf/{irf}_Run{run_id}.pdf",
-    input:
-        data=build_dir / "irf/irf_Run{run_id}.fits.gz",
-        script="scripts/plot_irf_{irf}.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
-    resources:
-        mem_mb=1000,
-        time=20,  # minutes
-    conda:
-        gammapy_env
-    shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-
 # Using my fork here currently
 # no clear way to swap between runwise and stacked in my workflow :/
 # maybe define a function, that returns the corresponding bkg name to a run based on
 # a variable. I would need to parse that from the bkgmodel config and
 # also get it into the link bkg script ...
+# build_dir / "background/stacked_bkg_map.fits"
+# dont ask... result of my hacks, should be solved later upstream
 rule calc_background:
     conda:
         background_env
     output:
-        #build_dir / "background/stacked_bkg_map.fits"
         expand(
-            build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits", # dont ask... result of my hacks, should be solved later upstream
+            build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits",
             run_id=RUN_IDS,
         ),
     input:
@@ -185,21 +21,22 @@ rule calc_background:
         config=bkg_config_path,
     shell:
         """
-	bkgmodel --config {input.config}
+    bkgmodel --config {input.config}
         """
+
 
 # Use lstchain env here to ensure we can load it
 # run id is stacked only right now, but this way it can be expanded
+# data=build_dir / "background/{run_id}_bkg_map.fits", # stacked
 rule plot_background:
     output:
         build_dir / "plots/background/{run_id}.pdf",
     conda:
         lstchain_env
     input:
-        #data=build_dir / "background/{run_id}_bkg_map.fits", # stacked
-        data=build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits", #runwise
+        data=build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits",  #runwise
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
-	script="scripts/plot_bkg.py"
+        script="scripts/plot_bkg.py",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
@@ -230,6 +67,8 @@ rule dl3:
         """
 
 
+# bkg = build_dir / "background/stacked_bkg_map.fits"
+# dont ask... result of my hacks, should be solved later upstream
 rule dl3_hdu_index:
     conda:
         lstchain_env
@@ -241,14 +80,15 @@ rule dl3_hdu_index:
             run_id=RUN_IDS,
         ),
         bkg=expand(
-            build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits", # dont ask... result of my hacks, should be solved later upstream
+            build_dir / "background/dl3_LST-1.Run{run_id}.fits.fits",
             run_id=RUN_IDS,
         ),
-	#bkg = build_dir / "background/stacked_bkg_map.fits"
     params:
-        bkg_script = "scripts/link_bkg.py",
-	bkg_dir= lambda w, input: os.path.relpath(Path(input.bkg[0]).parent, Path(input.runs[0]).parent),
-	bkg_files= lambda w, input: [Path(x).name for x in input.bkg]
+        bkg_script="scripts/link_bkg.py",
+        bkg_dir=lambda w, input: os.path.relpath(
+            Path(input.bkg[0]).parent, Path(input.runs[0]).parent
+        ),
+        bkg_files=lambda w, input: [Path(x).name for x in input.bkg],
     resources:
         time=15,
     shell:
@@ -259,10 +99,10 @@ rule dl3_hdu_index:
             --file-pattern 'dl3_*.fits.gz'  \
             --overwrite 
 
-	python {params.bkg_script} \
-	--hdu-index-path {output} \
-	--bkg-dir {params.bkg_dir} \
-	--bkg-file {params.bkg_files} 
+    python {params.bkg_script} \
+    --hdu-index-path {output} \
+    --bkg-dir {params.bkg_dir} \
+    --bkg-file {params.bkg_files} 
         """
 
 
@@ -369,4 +209,3 @@ rule stack_skymaps_dl3:
         script="scripts/stack_skymap.py",
     shell:
         "python {input.script} -i {input.data} -o {output}"
-

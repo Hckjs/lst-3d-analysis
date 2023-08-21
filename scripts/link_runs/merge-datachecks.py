@@ -7,25 +7,27 @@ import pandas as pd
 from astropy import units as u
 from astropy.table import vstack
 from ctapipe.io import read_table
-from log import setup_logging
 from rich.progress import track
 
-parser = ArgumentParser()
-parser.add_argument("input_path")
-parser.add_argument("output_path")
-parser.add_argument("--log-file")
-parser.add_argument("-v", "--verbose", action="store_true")
-args = parser.parse_args()
+from ..log import setup_logging
 
-template = (
-    "/fefs/aswg/data/real/OSA/DL1DataCheck_LongTerm/"
-    "v0.9/{night}/DL1_datacheck_{night}.h5"
-)
+log = logging.getLogger(__name__)
 
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument("input_path")
+    parser.add_argument("output_path")
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
+    template = (
+        "/fefs/aswg/data/real/OSA/DL1DataCheck_LongTerm/"
+        "v0.9/{night}/DL1_datacheck_{night}.h5"
+    )
+
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-    log = logging.getLogger("merge-datachecks")
 
     runs = pd.read_csv(args.input_path)
 
@@ -33,10 +35,12 @@ def main():
         template.format(night=night)
         for night in sorted(np.unique(runs["Date directory"]))
     ]
+    log.info(f"All files: {filenames}")
 
     datachecks = []
     for f in filenames:
         if Path(f).exists():
+            log.debug(f"Adding {f}")
             datachecks.append(f)
         else:
             log.warning("%s not found.", f)

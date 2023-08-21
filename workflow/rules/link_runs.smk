@@ -1,3 +1,20 @@
+# "Preselect" runs and link (no data quality checks)
+# Choose runs observing the source and find the observations of these runs
+# TODO: Merge with run_selection?
+
+env = ENVS["link_runs"]
+config = CONFIGS["run_selection"]
+# Having these as paths makes them easier to use
+scripts = Path(SCRIPTS["link_runs"])
+out = Path(OUTDIRS["link_runs"])
+plots = Path(PLOTSDIRS["link_runs"])
+
+
+rule link_runs_stage:
+    input:
+        OUTDIRS["link_runs"] / "all-linked.txt",
+
+
 localrules:
     runlist,
     select_datasets,
@@ -6,91 +23,108 @@ localrules:
     data_check,
 
 
+# Can not automatize this easily as it requires a password
+# Could read that from somewhere, but I think this is fine for now
 rule runlist:
     output:
-        "runlist.html",
+        out / "runlist.html",
     shell:
-        "echo 'Provide the file {output} as explained in README.md'"
+        """
+        echo 'Provide the file {output}. The command is:'
+        echo 'curl --user <username>:<password> https://lst1.iac.es/datacheck/lstosa/LST_source_catalog.html -o runlist.html'
+        """
 
 
 rule select_datasets:
-    input:
-        data="runlist.html",
-        config=data_selection_config_path,
-        script="scripts/select-data.py",
     output:
-        build_dir / "runlist.csv",
+        out / "runlist.csv",
+    input:
+        data=out / "runlist.html",
+        config=config,
+        script=scripts / "select-data.py",
     conda:
-        data_selection_env
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
     shell:
         "python {input.script} {input.data} {output} -c {input.config}"
 
 
 rule merge_datachecks:
-    input:
-        data=build_dir / "runlist.csv",
-        script="scripts/merge-datachecks.py",
     output:
-        output=build_dir / "dl1-datachecks-merged.h5",
-        log=build_dir / "merge-datachecks.log",
+        output=out / "dl1-datachecks-merged.h5",
+    input:
+        data=out / "runlist.csv",
+        script=scripts / "merge-datachecks.py",
     conda:
-        data_selection_env
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
     shell:
-        "python {input.script} {input.data} {output.output} --log-file={output.log}"
+        "python {input.script} {input.data} {output.output}"
 
 
 rule data_check:
-    input:
-        runlist=build_dir / "runlist.csv",
-        datachecks=build_dir / "dl1-datachecks-merged.h5",
-        config=data_selection_config_path,
-        script="scripts/data-check.py",
     output:
-        runlist=build_dir / "runlist-checked.csv",
-        datachecks=build_dir / "dl1-datachecks-masked.h5",
-        log=build_dir / "datacheck.log",
-        config=build_dir / "dl1-selection-cuts-config.json",
+        runlist=out / "runlist-checked.csv",
+        datachecks=out / "dl1-datachecks-masked.h5",
+        config=out / "dl1-selection-cuts-config.json",
+    input:
+        runlist=out / "runlist.csv",
+        datachecks=out / "dl1-datachecks-merged.h5",
+        config=config,
+        script=scripts / "data-check.py",
     conda:
-        data_selection_env
+        env
+    log:  # there is not really one good name here based on output
+        out=out / "datackeck.log",
+        err=out / "datackeck.err",
     shell:
         "\
         python \
             {input.script} \
             {input.runlist} \
             {input.datachecks} \
+            --config {input.config} \
             --output-runlist {output.runlist} \
             --output-datachecks {output.datachecks} \
             --output-config {output.config} \
-            --config {input.config} \
-            --log-file {output.log} \
         "
 
 
 rule run_ids:
     output:
-        build_dir / "runs.json",
+        out / "runs.json",
     input:
-        data=build_dir / "runlist-checked.csv",
-        config=data_selection_config_path,
-        script="scripts/create-night-run-list.py",
+        data=out / "runlist-checked.csv",
+        config=config,
+        script=scripts / "create-night-run-list.py",
     conda:
-        data_selection_env
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
     shell:
         "python {input.script} {input.data} {output} -c {input.config}"
 
 
 checkpoint link_paths:
     output:
-        build_dir / "all-linked.txt",
-    conda:
-        data_selection_env
+        out / "all-linked.txt",
     input:
-        runs=build_dir / "runs.json",
-        datacheck=build_dir / "dl1-datachecks-masked.h5",
-        script="link-paths.py",
+        runs=out / "runs.json",
+        datacheck=out / "dl1-datachecks-masked.h5",
+        script=scripts / "link-paths.py",
     params:
         production=PRODUCTION,
         declination=DECLINATION,
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
     shell:
         "python {input.script} \
         --runs {input.runs} \

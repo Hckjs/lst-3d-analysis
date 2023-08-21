@@ -13,15 +13,22 @@ This project tries to handle all the steps needed for a typical AGN-analysis (or
 What it does NOT handle:
 
 - Low-level calibrations. We start at DL1
-- Non standard MC. We use the standard all-sky
-- Perform a 3D analysis
-- Perform any "non-standard" high-level analysis (pulsars etc)
 
 Conceptually there are three main steps (You could define more, but these are still somewhat split in the workflow):
 
 - Select runs via the datacheck files
 - Link runs and mc to the `build` directory. This makes rules easier to reason about. These are only links, not copies (!) and show up as such using `ls -l`.
 - Run the analysis using `lstchain` and `gammapy`
+
+The different workflow stages are separated into different files where I saw a clear
+distinction. This is to keep each file relatively small and reduce the number of variables one
+has to reason about at once. The different stages are not directly usable on their own
+as they assume a certain directory structure and file naming conventions, but it should be
+straightforward to adapt this to ones liking if one would want to build their own analysis.
+I try to keep all variables in `workflow/definitions.smk`, which should cover most, but
+not necessarily all. Also the scripts should all be usable on their own with the small caveat,
+that sometimes things get imported from the top level `scripts` directory, so
+you will need to make sure these things are present as well or copy them there.
 
 # Usage
 

@@ -1,7 +1,9 @@
 ruleorder: plot_flux_points > plot_dl4
 ruleorder: plot_theta > plot_dl4
 
+
 # TODO: Create background files and use them in gammapy to create datasets
+
 
 # Plots using dl3 files
 rule observation_plots:
@@ -78,7 +80,7 @@ rule bkg_exclusion:
         config=config_dir / "{analysis}/analysis.yaml",
         script="scripts/make_exclusion_region.py",
     output:
-        build_dir / "{analysis}/exclusion.fits.gz"
+        build_dir / "{analysis}/exclusion.fits.gz",
     conda:
         gammapy_env
     shell:
@@ -169,7 +171,6 @@ rule plot_significance_map:
         gammapy_env
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} --lima-maps-input {input.lima_map} --exclusion-map-input {input.exclusion_mask} -o {output}"
-
 
 
 rule plot_dl4:

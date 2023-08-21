@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -7,13 +8,12 @@ from astropy.coordinates import AltAz, EarthLocation
 from astropy.table import Table
 from astropy.time import Time
 
-parser = ArgumentParser()
-parser.add_argument("--prod", required=True)
-parser.add_argument("--dec", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-args = parser.parse_args()
+from ..log import setup_logging
 
 template_target_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa
+
+
+log = logging.getLogger(__name__)
 
 
 @u.quantity_input
@@ -67,12 +67,21 @@ def get_pointings_of_irfs(filelist) -> AltAz:
 
 
 def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("--prod", required=True)
+    parser.add_argument("--dec", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
     prod = args.prod
     dec = args.dec
 
     path = Path(template_target_irf.format(prod=prod, dec=dec, node=""))
     filelist = [p.name for p in path.parent.iterdir()]
     irf_pointings: AltAz = get_pointings_of_irfs(filelist)
+    log.info("")
 
     wrap_angles = u.Quantity([0, 90, 180, 270, 360], u.deg, dtype="int")
     table = Table(

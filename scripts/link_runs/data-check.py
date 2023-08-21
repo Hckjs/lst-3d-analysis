@@ -7,23 +7,12 @@ from astropy import units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_moon
 from astropy.table import Table
 from astropy.time import Time
-from config import Config
-from log import setup_logging
-from stats import bounds_std as bounds
 
-parser = ArgumentParser()
-parser.add_argument("input_path")
-parser.add_argument("datacheck_path")
-parser.add_argument("--output-runlist", required=True)
-parser.add_argument("--output-datachecks", required=True)
-parser.add_argument("--output-config", required=True)
-parser.add_argument("-c", "--config", required=True)
-parser.add_argument("--log-file")
-parser.add_argument("-v", "--verbose", action="store_true")
-args = parser.parse_args()
+from ..config import Config
+from ..log import setup_logging
+from ..stats import bounds_std as bounds
 
-config = Config.parse_file(args.config)
-output_config = config.copy()
+log = logging.getLogger(__name__)
 
 
 def get_mask(x, le=np.inf, ge=-np.inf):
@@ -34,13 +23,27 @@ def get_mask(x, le=np.inf, ge=-np.inf):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("input_path")
+    parser.add_argument("datacheck_path")
+    parser.add_argument("--output-runlist", required=True)
+    parser.add_argument("--output-datachecks", required=True)
+    parser.add_argument("--output-config", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
+    config = Config.parse_file(args.config)
+    output_config = config.copy()
+
     runs = pd.read_csv(args.input_path, dtype={"Run ID": str})
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-    log = logging.getLogger("data-check")
 
     run_ids = np.array(runs["Run ID"], dtype=int)
 
     runsummary = Table.read(args.datacheck_path)
+    log.info(f"Checking a total of {len(runsummary)} runs")
 
     time = Time(runsummary["time"], format="unix", scale="utc")
 
@@ -91,14 +94,13 @@ if __name__ == "__main__":
 
     after_pedestals_run_id_time_separation = np.count_nonzero(mask)
     s = (
-        "After selecting the time of the dataset used in AGN Zoo Paper, "
+        "After selecting the time of the dataset, "
         "after removing runs with problems in pedestals and after removing "
         f"mispointed runs, {after_pedestals_run_id_time_separation} runs are kept."
     )
     log.info(s)
 
     # Exclude runs with high zenith (?)
-    #
     # Better later.
 
     location = EarthLocation.from_geodetic(
