@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 
-import astropy.units as u
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -40,18 +39,17 @@ def main(config, dataset_path, output):
     if len(analysis.observations) == len(datasets):
         obs_ids = []
         excess = []
-        zenith = []
         sqrt_ts = []
         for obs, ds in zip(analysis.observations, datasets):
             obs_ids.append(obs.obs_id)
-            #zenith.append(obs.get_pointing_altaz(obs.tmid).zen.to_value(u.deg))
+            # zenith.append(obs.get_pointing_altaz(obs.tmid).zen.to_value(u.deg))
             excess.append(ds.info_dict()["excess"])
             sqrt_ts.append(ds.info_dict()["sqrt_ts"])
         table = Table(
             {
                 "excess": np.array(excess),
                 "sqrt_ts": np.array(sqrt_ts),
-             #   "zenith": np.array(zenith),
+                #   "zenith": np.array(zenith),
                 "obs_id": np.array(obs_ids),
             },
         )

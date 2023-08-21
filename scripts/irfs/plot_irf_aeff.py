@@ -17,7 +17,7 @@ def main(input_path, output):
 
     offsets = aeff.axes["offset"]
     unit = offsets.unit
-    
+
     off_centers = np.atleast_1d(offsets.center)
     off_widths = np.atleast_1d(offsets.bin_width)
 
@@ -37,7 +37,7 @@ def main(input_path, output):
             ls="",
             label=f"Offset: {label}",
             color="black",
-            alpha=alpha
+            alpha=alpha,
         )
     ax.set_xlabel(rf"$E_{{\mathrm{{true}}}}$ / {e_true.center.unit}")
     ax.set_ylabel(f"Effective Area / {aeff.unit}")

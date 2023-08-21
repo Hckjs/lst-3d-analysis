@@ -1,7 +1,6 @@
-
 from argparse import ArgumentParser
-from gammapy.analysis import Analysis, AnalysisConfig
 
+from gammapy.analysis import Analysis, AnalysisConfig
 
 parser = ArgumentParser()
 parser.add_argument("-c", "--config", required=True)
@@ -10,7 +9,6 @@ args = parser.parse_args()
 
 
 def main(config, output):
-
     # Standard high-level interface stuff
     config = AnalysisConfig.read(config)
     analysis = Analysis(config)

@@ -1,9 +1,9 @@
 from argparse import ArgumentParser
 
-from gammapy.analysis import Analysis, AnalysisConfig
-from gammapy.datasets import Datasets
 import matplotlib
 import matplotlib.pyplot as plt
+from gammapy.analysis import Analysis, AnalysisConfig
+from gammapy.datasets import Datasets
 
 if matplotlib.get_backend() == "pgf":
     from matplotlib.backends.backend_pgf import PdfPages
@@ -52,7 +52,7 @@ def main(config, dataset_path, output):
         stacked = analysis.datasets.stack_reduce()
         figures.append(peek(stacked))
         figures.append(counts(stacked))
-    
+
     with PdfPages(output) as pdf:
         for fig in figures:
             pdf.savefig(fig)

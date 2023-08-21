@@ -1,21 +1,22 @@
 from argparse import ArgumentParser
 from os import cpu_count
+
 import numpy as np
 import yaml
 from astropy.coordinates import SkyCoord
 from gammapy.analysis import Analysis, AnalysisConfig
-from gammapy.datasets import SpectrumDataset
+from gammapy.datasets import MapDataset
 from gammapy.makers import (
     DatasetsMaker,
     FoVBackgroundMaker,
     MapDatasetMaker,
 )
 from gammapy.maps import MapAxis, RegionGeom
-from regions import PointSkyRegion, Regions
 from gammapy.modeling.models import PiecewiseNormSpectralModel
+from regions import PointSkyRegion, Regions
 
 
-def main(config, bkg_config, output, n_off_regions, n_jobs):
+def main(config, bkg_config, output, n_jobs):
     """
     Create dl4 datasets from a dl3 datastore for a pointlike analysis
     This can currently (Gammapy 0.20.1) not be done with the high-level interface
@@ -36,7 +37,9 @@ def main(config, bkg_config, output, n_off_regions, n_jobs):
 
     with open(bkg_config) as f:
         b = yaml.safe_load(f)["exclusion_regions"]
-        exclusion_regions = [Regions.parse(reg,format='ds9') for reg in b["exclusion_regions"]]
+        exclusion_regions = [
+            Regions.parse(reg, format="ds9") for reg in b["exclusion_regions"]
+        ]
 
     energy_axis_config = config.datasets.geom.axes.energy
     energy_axis = MapAxis.from_bounds(
@@ -60,17 +63,22 @@ def main(config, bkg_config, output, n_off_regions, n_jobs):
     )
     geom = RegionGeom.create(region=on_region, axes=[energy_axis])
     empty = MapDataset.create(
-        geom=geom, energy_axis_true=energy_axis_true, name="empty"
+        geom=geom,
+        energy_axis_true=energy_axis_true,
+        name="empty",
     )
 
     dataset_maker = MapDatasetMaker()
     safe_mask_maker = analysis._create_safe_mask_maker()
-    bkg_spektral = PiecewiseNormSpectralModel(energy_axis.center, norms=np.ones(len(energy_axis.center)))
+    bkg_spektral = PiecewiseNormSpectralModel(
+        energy_axis.center,
+        norms=np.ones(len(energy_axis.center)),
+    )
     bkg_maker = FoVBackgroundMaker(
-            method=config.background.parameters["method"],# Needs to be set
-            exclusion_mask=~geom.region_mask(regions=[exclusion_regions]),
-            spectral_model=bkg_spektral,
-            )
+        method=config.background.parameters["method"],  # Needs to be set
+        exclusion_mask=~geom.region_mask(regions=[exclusion_regions]),
+        spectral_model=bkg_spektral,
+    )
 
     makers = [
         dataset_maker,
@@ -92,7 +100,6 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", required=True)
     parser.add_argument("-b", "--bkg-config", required=True)
     parser.add_argument("-o", "--output", required=True)
-    parser.add_argument("--n-off-regions", default=1, type=int)
     parser.add_argument("-j", "--n-jobs", default=1, type=int)
     args = parser.parse_args()
     main(**vars(args))

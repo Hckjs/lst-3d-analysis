@@ -5,9 +5,9 @@ import json
 from argparse import ArgumentParser
 
 import numpy as np
+import pandas as pd
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-import pandas as pd
 from gammapy.maps import MapAxis, WcsGeom, WcsNDMap
 from lstchain.high_level.hdu_table import add_icrs_position_params
 from lstchain.io import read_data_dl2_to_QTable
@@ -36,10 +36,9 @@ def main(input_path, output_path, config, width, n_bins):
     trigger_type = events["trigger_type"]
     print(pd.Series(trigger_type).value_counts())
     # which type? 1 -> Data, 32 -> Pedestal
-    data = (trigger_type == 1)
     print("Keeping all data")
-    #print("Keeping ", np.count_nonzero(data), "/", len(events))
-    #events = events[data]
+    # print("Keeping ", np.count_nonzero(data), "/", len(events))
+    # events = events[data]
 
     t_eff, t_ela = get_effective_time(events)
     events.meta["t_effective"] = t_eff
