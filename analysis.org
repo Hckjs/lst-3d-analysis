@@ -183,6 +183,9 @@ It is just a simple `curl` command, so not a big deal.
 *Note:* The analysis will not know of new runs until you redownload the runlist.
 That should not matter most of the times, but keep it in mind!
 
+*NOTE:* It seems that snakemake sometimes deletes the output dir althoug the runlist is downloaded.
+I don't understand whats happening there.
+
 #+begin_src snakemake
 
 rule runlist:
@@ -192,8 +195,8 @@ rule runlist:
         """
         echo 'Provide the file {output}. The command is:'
         echo 'curl --user <username>:<password> https://lst1.iac.es/datacheck/lstosa/LST_source_catalog.html -o {output}'
+        echo 'You might need to create the output directory first.'
         """
-
 #+end_src
 
 ** Select relevant runs
