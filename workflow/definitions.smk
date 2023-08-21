@@ -16,7 +16,7 @@ config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 CONFIGS = {
     "agn": (config_dir / "lst_agn.json").resolve(),
-    "data_selection": (config_dir / "data-selection.json").resolve(),
+    "data_selection": (config_dir / "run_selection.json").resolve(),
     "irf_tool": (config_dir / "irf_tool_config.json").resolve(),
     "bkg_model": (config_dir / "bkgmodel.yml").resolve(),
 }

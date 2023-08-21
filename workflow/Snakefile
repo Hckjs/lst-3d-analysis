@@ -8,8 +8,3 @@ include: "rules/dl1.smk"
 # include: "rules/dl3.smk"
 # include: "rules/dl4.smk"
 # include: "rules/dl5.smk"
-
-
-rule all:
-    input:
-        get_selection_targets,
