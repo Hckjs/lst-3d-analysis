@@ -1,0 +1,1216 @@
+#+title: Analysis
+
+#+begin_src snakemake :tangle ./workflow-new/rules/dl1.smk :mkdirp yes
+#+end_src
+
+* Main Snakefile
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/Snakefile :mkdirp yes
+:END:
+
+#+begin_src snakemake
+# Definitions only, no actual target
+include: "definitions.smk"
+# Thats kind of all dl1
+# thats kind of link runs and run selection...
+# Link runs
+include: "rules/link_runs.smk"
+# Run Selection
+include: "rules/run_selection.smk"
+# Get MC, get models
+# As there are no test datasets for diffuse gammas, I need to merge the nodes
+# myself, train new models on the train split and calc IRFs on the test split(s)
+include: "rules/mc.smk"
+# dl2
+include: "rules/dl2.smk"
+# including background
+include: "rules/dl3.smk"
+include: "rules/dl4.smk"
+include: "rules/dl5.smk"
+
+
+rule all:
+    input:
+        get_selection_targets,
+#+end_src
+
+* Defining Paths etc
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/definitions.smk :mkdirp yes
+:END:
+
+From the config files in [[./configs]], the relevant
+variables are constructed and defined in [[./workflow/definitions.smk]].
+This includes:
+- Conda enviroments
+- Paths to configs
+- Output directories
+
+I kind of duplicate a lot of effort by collecting them here in
+some dictionaries and the index into them in the subtasks instead of
+just defining all variables directly, but in my mind this setup makes it easier
+to reuse the individual stages and reduces mental overhead because the variables
+are actually in the same file. Preference I guess.
+
+It is also not really "nice" to have these things defined as `Path`-Objects,
+resolve them and then construct `Path`-Objects again, but I had some issues
+with how `Snakemake` defines its `cwd` and this fixed it.
+Not claiming its the best way to do it, but it should be fine honestly.
+That little overhead is really not holding us back here.
+
+#+name: variables
+#+begin_src snakemake
+import json
+import os
+from pathlib import Path
+
+# Unfortunately I need these as parameters for the rules, so I define them here
+with open(main_config_path, "r") as f:
+    config_agn = json.load(f)
+PRODUCTION = config_agn["production"]
+DECLINATION = config_agn["declination"]
+# Set all configs
+# .resolve(), because I am paranoid. Thats a TODO kinda
+# It seems to be, that snakemake changes the current working directory and then local paths fail
+# Per Analysis configs are not in here. They have fixed names in the analysis-* dirs
+config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
+MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
+CONFIGS = {
+    "agn": (config_dir / "lst_agn.json").resolve(),
+    "data_selection": (config_dir / "data-selection.json").resolve(),
+    "irf_tool": (config_dir / "irf_tool_config.json").resolve(),
+    "bkg_model": (config_dir / "bkgmodel.yml").resolve(),
+}
+
+build = Path("build") / config_dir.name
+OUTDIRS = {
+    "data_selection": (build / "data_selection").resolve(),
+    "mc_nodes": (
+        build / "mc_nodes"
+    ).resolve(),  # This is not really configurable, its hard coded in the link script
+    "mc": (build / "mc").resolve(),
+    "models": (build / "models").resolve(),
+    "dl1": (build / "dl1").resolve(),
+    "dl2": (build / "dl2").resolve(),
+    "dl3": (build / "dl3").resolve(),
+    "irfs": (build / "irfs").resolve(),
+    "dl4": (build / "dl4").resolve(),
+    "dl5": (build / "dl5").resolve(),
+}
+
+# Set all enviroments
+env_dir = Path("workflow/envs")
+ENVS = {
+    "lstchain": config_agn.get("lstchain_enviroment", "lstchain-v0.9.13"),
+    "gammapy": (env_dir / "agn_analysis.yml").resolve(),
+    "run_selection": (env_dir / "run_selection.yml").resolve(),
+    "background": (env_dir / "background.yml").resolve(),
+    "dark_matter": (env_dir / "dark_matter.yml").resolve(),
+}
+
+scripts_dir = Path("scripts")
+SCRIPTS = {
+    "data_selection": (build / "data_selection").resolve(),
+    "mc": (scripts_dir / "mc").resolve(),
+    "dl1": (scripts_dir / "dl1").resolve(),
+    "dl2": (scripts_dir / "dl2").resolve(),
+    "irfs": (scripts_dir / "irfs").resolve(),
+    "dl3": (scripts_dir / "dl3").resolve(),
+    "dl4": (scripts_dir / "dl4").resolve(),
+    "fit": (scripts_dir / "fit").resolve(),
+    "dm": (scripts_dir / "dm").resolve(),
+}
+
+
+# TODO This is the most critical part as the further evaluation depends on this checkpoint
+# Have to make sure this works as expected
+def RUN_IDS(wildcards):
+    with open(checkpoints.run_ids.get(**wildcards).output, "r") as f:
+        runs = json.load(f)
+    return sorted(set(chain(*runs.values())))
+
+
+models_to_train = [
+    Path(OUTDIRS["models"]) / "reg_energy.sav",
+    Path(OUTDIRS["models"]) / "cls_gh.sav",
+    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
+    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
+]
+
+# TODO: cuts are not really IRFs, should separate that.
+# Add radmax here if 1D
+irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
+
+#+end_src
+
+* DL1
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl1.smk :mkdirp yes
+:END:
+
+This stage is arguably the most comlicated one.
+On the one hand, I do not even produce the dl1 files, instead using the LSTOSA files,
+but on the other hand this is where the magic happens as we go from "files somewhere on the cluster"
+to "nicely organized in the build directory".
+At a previous point in time, this was referred to as linking and selecting rather than dl1,
+but I wanted to have a structure where every stage was one datalevel, because I disliked the
+"preselection, selection, selecting mcs" naming, that followed from the previous structure.
+
+** Define stuff
+Important here (besides having the paths defined):
+There are some rules, that are really not computationally heavy.
+It would be a shame to have the slurm overhead for every step here, so
+they are defined as `localrules`.
+
+
+
+#+begin_src snakemake
+
+env = ENVS["data_selection"]
+config = CONFIGS["data_selection"]
+scripts = Path(SCRIPTS["data_selection"])
+out = Path(OUTDIRS["data_selection"])
+plots = Path(PLOTSDIRS["data_selection"])
+
+
+rule link_runs_stage:
+    input:
+        out / "all-linked.txt",
+
+
+localrules:
+    runlist,
+    select_datasets,
+    merge_datachecks,
+    run_ids,
+    data_check,
+
+#+end_src
+
+There is one manual step required at this point:
+The runlist has to be downloaded from the lst1 website, which is password-protected.
+As I want to have this public, I cannot put the credentials here.
+It is just a simple `curl` command, so not a big deal.
+
+*Note:* The analysis will not know of new runs until you redownload the runlist.
+That should not matter most of the times, but keep it in mind!
+
+#+begin_src snakemake
+
+rule runlist:
+    output:
+        out / "runlist.html",
+    shell:
+        """
+        echo 'Provide the file {output}. The command is:'
+        echo 'curl --user <username>:<password> https://lst1.iac.es/datacheck/lstosa/LST_source_catalog.html -o runlist.html'
+        """
+
+#+end_src
+
+** Select relevant runs
+
+First of all, we need to select runs observing our source(s) of interest.
+This is done purely based on the `runlist.html` without any notion of data quality.
+
+#+begin_src snakemake
+
+rule select_datasets:
+    output:
+        out / "runlist.csv",
+    input:
+        data=out / "runlist.html",
+        config=config,
+        script=scripts / "select-data.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        "python {input.script} {input.data} {output} -c {input.config}"
+
+
+#+end_src
+
+#+begin_src snakemake
+
+rule merge_datachecks:
+    output:
+        output=out / "dl1-datachecks-merged.h5",
+    input:
+        data=out / "runlist.csv",
+        script=scripts / "merge-datachecks.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        "python {input.script} {input.data} {output.output}"
+
+#+end_src
+
+#+begin_src snakemake
+
+rule data_check:
+    output:
+        runlist=out / "runlist-checked.csv",
+        datachecks=out / "dl1-datachecks-masked.h5",
+        config=out / "dl1-selection-cuts-config.json",
+    input:
+        runlist=out / "runlist.csv",
+        datachecks=out / "dl1-datachecks-merged.h5",
+        config=config,
+        script=scripts / "data-check.py",
+    conda:
+        env
+    log:
+        out=out / "datackeck.log",
+        err=out / "datackeck.err",
+    shell:
+        "\
+        python \
+            {input.script} \
+            {input.runlist} \
+            {input.datachecks} \
+            --config {input.config} \
+            --output-runlist {output.runlist} \
+            --output-datachecks {output.datachecks} \
+            --output-config {output.config} \
+        "
+
+#+end_src
+
+#+begin_src snakemake
+
+rule run_ids:
+    output:
+        out / "runs.json",
+    input:
+        data=out / "runlist-checked.csv",
+        config=config,
+        script=scripts / "create-night-run-list.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        "python {input.script} {input.data} {output} -c {input.config}"
+
+
+#+end_src
+
+#+begin_src snakemake
+
+checkpoint link_paths:
+    output:
+        out / "all-linked.txt",
+    input:
+        runs=out / "runs.json",
+        datacheck=out / "dl1-datachecks-masked.h5",
+        script=scripts / "link-paths.py",
+    params:
+        production=PRODUCTION,
+        declination=DECLINATION,
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        "python {input.script} \
+        --runs {input.runs} \
+        --prod {params.production} \
+        --dec {params.declination} \
+        --runsummary {input.datacheck} \
+        -o {output}"
+#+end_src
+
+** Link
+
+#+begin_src snakemake
+
+# Select runs based on datacheck values
+
+run_selection_plots = [
+    out / "plots/run_selection/moon-illumination.pdf",
+    out / "plots/run_selection/cosmics.pdf",
+    out / "plots/run_selection/cosmics-above.pdf",
+]
+
+
+rule run_selection_stage:
+    input:
+        run_selection_plots,
+
+#+end_src
+
+#+begin_src snakemake
+
+rule gather_run_pointings:
+    output:
+        out / "run-pointings.csv",
+    input:
+        runs=out / "runs.json",
+        datacheck=out / "dl1-datachecks-masked.h5",
+        script=scripts / "gather-run-pointings.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: Path(output).with_suffix(".log"),
+        err=lambda wildcards, output: Path(output).with_suffix(".err"),
+    shell:
+        "python {input.script} \
+        --runs {input.runs} \
+        --runsummary {input.datacheck} \
+        -o {output}"
+
+
+#+end_src
+
+#+begin_src snakemake
+
+rule plot_data_selection:
+    output:
+        out / "plots/{name}.pdf",
+    input:
+        data=out / "dl1-datachecks-masked.h5",
+        config=config / "dl1-selection-cuts-config.json",
+        script=scripts / "plot-{name}.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: Path(output).with_suffix(".log"),
+        err=lambda wildcards, output: Path(output).with_suffix(".err"),
+    shell:
+        "python {input.script} {input.data} -c {input.config} -o {output}"
+
+
+#+end_src
+
+
+* MC
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/mc.smk :mkdirp yes
+:END:
+
+#+begin_src snakemake
+env = ENVS["lstchain"]
+# Having these as paths makes them easier to use
+scripts = Path(SCRIPTS["mc"])
+# Only the intermediate files end up in out, models are extra and final MCs are in dl1
+mc_nodes = Path(OUTDIRS["mc_nodes"])
+merged = Path(OUTDIRS["mc_merged"])
+dl1 = Path(OUTDIRS["dl1"])
+models = Path(OUTDIRS["models"])
+plots = Path(PLOTSDIRS["link_runs"])
+
+
+rule mc_stage_target:
+    input:
+        m=models_to_train,
+
+
+def all_gamma_nodes(wildcards):
+    "Is this considered a hack? I dont use the output of the checkpoint directly, but its needed"
+    linked = checkpoints.run_ids.get(**wildcards).output
+    all_gamma_nodes = [
+        x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()
+    ]
+    return all_gamma_nodes
+
+
+rule merge_gamma_mc_per_node:
+    output:
+        train=merged / "GammaDiffuse/{node}_train.dl1.h5",
+        test=merged / "GammaDiffuse/{node}_test.dl1.h5",
+    input:
+        all_gamma_nodes,
+    params:
+        train_size=0.4,
+        directory=lambda node: mc_nodes / f"GammaDiffuse/{node}",
+    conda:
+        env
+    log:
+        out=merged / "merge_gamma_mc.log",
+        err=merged / "merge_gamma_mc.err",
+    shell:
+        """
+        python scripts/merge_mc_nodes.py \
+        --input-dir {params.directory} \
+        --train-size {params.train_size} \
+         --output-train {output.train} \
+        --output-test {output.test}
+        """
+
+
+rule merge_train_or_test_of_all_nodes:
+    output:
+        dl1 / "{train_or_test}/{particle}_train.dl1.h5",
+    input:
+        files=expand(
+            merged / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
+            node=all_gamma_nodes,
+        ),
+    params:
+        directory=lambda wildcards: merged / f"{wildcards.particle}",
+        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
+        out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        """
+        python scripts/merge_mc_nodes.py \
+        --input-dir {params.directory} \
+        --pattern {params.pattern} \
+        --{params.out_type} {output}
+        """
+
+
+rule train_models:
+    output:
+        models_to_train,
+    input:
+        gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
+        proton=dl1 / "train/proton_diffuse_merged.dl1.h5",
+        config=models / "mcpipe/lstchain_config.json",
+    resources:
+        mem_mb=64000,
+        cpus=8,
+        partition="long",
+        time=1200,
+    conda:
+        env
+    log:
+        out=models / "train_models.log",
+        err=models / "train_models.err",
+    shell:
+        """
+        lstchain_mc_trainpipe \
+        --fg {input.gamma} \
+        --fp {input.proton} \
+        --config {input.config} \
+        --output-dir {models}
+        """
+
+
+# Cant do this in link script because the merge into train and test did not happen yet at that stage
+rule link_test_nodes_to_dl1_runs:
+    input:
+        runs=expand(
+            dl1 / "dl1_LST-1.Run{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+        test_files=expand(
+            merged / "GammaDiffuse/{node}_test.dl1.h5", node=all_gamma_nodes
+        ),
+    output:
+        runs=expand(
+            dl1 / "test/dl1_LST-1.Run{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+    # Just to avoid complex things in the command below
+    params:
+        dl1_test_dir=dl1 / "test",
+        mc_nodes_dir=merged / "GammaDiffuse",  # these are the merged train/test ones
+    conda:
+        env
+    log:
+        out=models / "link_test_nodes_to_dl1_runs.log",
+        err=models / "link_test_nodes_to_dl1_runs.err",
+    shell:
+        """
+        python link-dl1.py \
+        --dl1-dir {dl1} \
+        --test-link-dir {params.dl1_test_dir} \
+        --mc-nodes-dir {params.mc_nodes_dir}
+        """
+
+#+end_src
+
+* DL2
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl2.smk :mkdirp yes
+:END:
+#+begin_src snakemake
+
+env = ENVS["lstchain"]
+# Having these as paths makes them easier to use
+scripts = Path(SCRIPTS["dl2"])
+dl2 = Path(OUTDIRS["dl2"])
+models = Path(OUTDIRS["models"])
+plots = Path(PLOTSDIRS["dl2"])
+# TODO i dont like this path too much, but for now keep it
+# At least its clear where the config comes from
+config = models / "mcpipe/lstchain_config.json"
+
+
+rule dl2_stage:
+    input:
+        runs=expand(
+            dl2 / "dl2_LST-1.Run{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+
+
+rule dl2:
+    resources:
+        mem_mb=64000,
+        cpus=4,
+    output:
+        dl2 / "{potentially_test}dl2_LST-1.Run{run_id}.h5",
+    input:
+        data=dl1 / "{potentially_test}dl1_LST-1.Run{run_id}.h5",
+        config=config,
+        models=models_to_train,
+    conda:
+        env
+    # allow wildcard to be empty to also match observed runs
+    wildcard_constraints:
+        potentially_test=".*",
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        """
+        lstchain_dl1_to_dl2  \
+            --input-file {input.data}  \
+            --output-dir $(dirname {output}) \
+            --path-models {input.model_dir}  \
+            --config {input.config}
+        """
+
+
+rule cuts_dl2_dl3:
+    resources:
+        mem_mb="64G",
+        time=10,
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
+    input:
+        dl2=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
+        irf=build_dir / "irf/irf_Run{run_id}.fits.gz",
+        config=irf_config_path,
+        script="scripts/calc_counts_after_cuts.py",
+    shell:
+        "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output}"
+
+
+rule stack_cuts_dl2_dl3:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/counts/after_gh_theta_cut_{norm}_stacked.h5",
+    input:
+        data=expand(
+            build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+        script="scripts/stack_counts_after_cuts.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --norm {wildcards.norm}"
+
+
+rule plot_cuts_dl2_dl3:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "plots/counts_after_gh_theta_cut_{norm}.pdf",
+    input:
+        data=build_dir / "dl3/counts/after_gh_theta_cut_{norm}.h5",
+        script="scripts/plot_counts_after_cuts.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
+# Really using the lstchain env should be fine, but I want to not
+# use the lstchain env for plots at all. TODO: One Plot env?
+irf_env = ENVS["lstchain"]
+plot_env = ENVS["gammapy"]
+# Having these as paths makes them easier to use
+scripts = Path(SCRIPTS["irfs"])
+out = Path(OUTDIRS["irfs"])
+dl2_test_files = Path(OUTDIRS["dl2"]) / "test"
+plots = Path(PLOTSDIRS["dl2"])
+config = CONFIGS["irf_tool"]
+
+
+rule irf_stage:
+    input:
+        expand(
+            plots / "{irf}/{irf}_Run{run_id}.pdf", run_id=RUN_IDS, irf=irfs_to_produce
+        ),
+
+
+rule irf:
+    output:
+        out / "irfs_Run{run_id}.fits.gz",
+    input:
+        gammas=dl2_test_files / "dl2_LST-1.Run{run_id}.h5",
+        config=config,
+    conda:
+        irf_env
+    resources:
+        mem_mb=8000,
+        time=10,
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        """
+        lstchain_create_irf_files \
+            -o {output} \
+            -g {input.gammas} \
+            --config {input.config} \
+        """
+
+
+rule plot_irf:
+    output:
+        plots / "{irf}/{irf}_Run{run_id}.pdf",
+    input:
+        data=irf / "irfs_Run{run_id}.fits.gz",
+        script=scripts / "plot_{irf}.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        plot_env
+    resources:
+        mem_mb=1000,
+        time=20,
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+#+end_src
+
+* DL3
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl3.smk :mkdirp yes
+:END:
+#+begin_src snakemake
+
+env = ENVS["lstchain"]
+bkg_env = ENVS["background"]
+
+# Having these as paths makes them easier to use
+dl2 = Path(OUTDIRS["dl2"])
+dl3 = Path(OUTDIRS["dl3"])
+irfs = Path(OUTDIRS["irfs"])
+bkg = Path(OUTDIRS["bkg"])
+models = Path(OUTDIRS["models"])
+
+irf_config = CONFIGS["irf_tool"]
+bkg_config = CONFIGS["bkg_model"]
+
+scripts = Path(SCRIPTS["dl3"])
+
+plots = Path(PLOTSDIRS["dl3"])
+
+
+rule dl3:
+    output:
+        dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
+    input:
+        data=dl2 / "dl2_LST-1.Run{run_id}.h5",
+        irf=irfs / "irf_Run{run_id}.fits.gz",
+        config=irf_config,
+    conda:
+        env
+    resources:
+        mem_mb=12000,
+        time=30,
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        """
+        lstchain_create_dl3_file  \
+            --input-dl2 {input.data}  \
+            --output-dl3-path $(dirname $(realpath {output}))  \
+            --input-irf {input.irf}  \
+            --config {input.config} \
+            --gzip \
+            --overwrite \
+        """
+
+
+# Using my fork here currently
+
+
+# TODO Write my own script.
+# no clear way to swap between runwise and stacked in my workflow :/
+# maybe define a function, that returns the corresponding bkg name to a run based on
+# a variable. I would need to parse that from the bkgmodel config and
+# also get it into the link bkg script ...
+# build_dir / "background/stacked_bkg_map.fits"
+# dont ask... result of my hacks, should be solved later upstream
+rule calc_background:
+    output:
+        expand(
+            dl3 / "dl3_LST-1.Run{run_id}.fits.fits",
+            run_id=RUN_IDS,
+        ),
+    input:
+        runs=expand(
+            dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
+            run_id=RUN_IDS,
+        ),
+        config=bkg_config,
+    conda:
+        bkg_env
+    log:
+        out=dl3 / "calc_bkg.log",
+        err=dl3 / "calc_bkg.err",
+    shell:
+        """
+        bkgmodel --config {input.config}
+        """
+
+
+# Use lstchain env here to ensure we can load it
+# run id is stacked only right now, but this way it can be expanded
+# data=build_dir / "background/{run_id}_bkg_map.fits", # stacked
+rule plot_background:
+    output:
+        plots / "background/{run_id}.pdf",
+    input:
+        data=background / "dl3_LST-1.Run{run_id}.fits.fits",  #runwise
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        script=scripts / "plot_bkg.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
+# bkg = build_dir / "background/stacked_bkg_map.fits"
+# dont ask... result of my hacks, should be solved later upstream
+rule dl3_hdu_index:
+    output:
+        dl3 / "hdu-index.fits.gz",
+    input:
+        runs=expand(
+            dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
+            run_id=RUN_IDS,
+        ),
+        bkg=expand(
+            dl3 / "dl3_LST-1.Run{run_id}.fits.fits",
+            run_id=RUN_IDS,
+        ),
+    params:
+        bkg_script=scripts / "link_bkg.py",
+        bkg_dir=lambda w, input: os.path.relpath(
+            Path(input.bkg[0]).parent, Path(input.runs[0]).parent
+        ),
+        bkg_files=lambda w, input: [Path(x).name for x in input.bkg],
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+        err=lambda wildcards, output: output.with_suffix(".err"),
+    resources:
+        time=15,
+    shell:
+        """
+        lstchain_create_dl3_index_files  \
+            --input-dl3-dir {build_dir}/dl3  \
+            --output-index-path {build_dir}/dl3  \
+            --file-pattern 'dl3_*.fits.gz'  \
+            --overwrite
+
+        python {params.bkg_script} \
+        --hdu-index-path {output} \
+        --bkg-dir {params.bkg_dir} \
+        --bkg-file {params.bkg_files}
+        """
+
+
+# Plots using dl3 files
+rule observation_plots:
+    input:
+        build_dir / "dl3/hdu-index.fits.gz",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script="scripts/events.py",
+    output:
+        build_dir / "plots/{analysis}/observation_plots.pdf",
+    resources:
+        mem_mb=64000,
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            -c {input.config} \
+            -o {output} \
+        """
+
+
+rule calc_theta2_per_obs:
+    output:
+        build_dir / "dl3/theta2/{run_id}.fits.gz",
+    input:
+        data=build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
+        script="scripts/calc_theta2_per_obs.py",
+        config=data_selection_config_path,
+        index=build_dir / "dl3/hdu-index.fits.gz",
+    wildcard_constraints:
+        run_id="\d+",  # dont match on "stacked".
+    resources:
+        mem_mb=16000,
+    conda:
+        gammapy_env
+    log:
+        build_dir / "logs/dl3/theta2/{run_id}.log",
+    shell:
+        "python {input.script} -i {build_dir}/dl3 -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
+
+
+rule stack_theta2:
+    output:
+        build_dir / "dl3/theta2/stacked.fits.gz",
+    input:
+        runs=expand(
+            build_dir / "dl3/theta2/{run_id}.fits.gz",
+            run_id=RUN_IDS,
+        ),
+        script="scripts/stack_theta2.py",
+    conda:
+        gammapy_env
+    log:
+        build_dir / "logs/dl3/theta2_stacked.log",
+    shell:
+        "python {input.script} -o {output} --input-files {input.runs} --log-file {log}"
+
+
+rule plot_theta:
+    output:
+        build_dir / "plots/theta2/{runid}.pdf",
+    input:
+        data=build_dir / "dl3/theta2/{runid}.fits.gz",
+        script="scripts/plot_theta2.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    conda:
+        gammapy_env
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
+rule bkg_exclusion:
+    input:
+        config=config_dir / "{analysis}/analysis.yaml",
+        script="scripts/make_exclusion_region.py",
+    output:
+        build_dir / "{analysis}/exclusion.fits.gz",
+    conda:
+        gammapy_env
+    shell:
+        "python {input.script} -c {input.config} -o {output}"
+
+
+rule calc_skymap_per_obs:
+    output:
+        build_dir / "dl3/skymap_dl3/{run_id}.fits",
+    input:
+        data=build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
+        script="scripts/calc_skymap_gammas.py",
+        config=irf_config_path,
+        index=build_dir / "dl3/hdu-index.fits.gz",
+    wildcard_constraints:
+        run_id="\d+",  # dont match on "stacked".
+    resources:
+        # mem_mb=16000,
+        time=5,
+    conda:
+        gammapy_env
+    shell:
+        "python {input.script} -i {build_dir}/dl3 -o {output} --obs-id {wildcards.run_id} --config {input.config}"
+
+
+rule plot_skymap_dl3:
+    output:
+        build_dir / "plots/skymap_dl3/{runid}.pdf",
+    input:
+        data=build_dir / "dl3/skymap_dl3/{runid}.fits",
+        script="scripts/plot_skymap_dl3.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    conda:
+        gammapy_env
+    resources:
+        time=5,
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
+rule calc_skymap:
+    resources:
+        mem_mb="64G",
+        time=10,
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/skymap/{run_id}.fits",
+    input:
+        data=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",  #?????????
+        config=irf_config_path,
+        script="scripts/calc_skymap.py",
+    shell:
+        "python {input.script} -i {input.data} -o {output} -c {input.config}"
+
+
+rule plot_skymap:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "plots/skymap/{run_id}.pdf",
+    input:
+        data=build_dir / "dl3/skymap/{run_id}.fits",
+        script="scripts/plot_skymap.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
+rule stack_skymaps:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/skymap/stacked.fits",
+    input:
+        data=expand(
+            build_dir / "dl3/skymap/{run_id}.fits",
+            run_id=RUN_IDS,
+        ),
+        script="scripts/stack_skymap.py",
+    shell:
+        "python {input.script} -i {input.data} -o {output}"
+
+
+rule stack_skymaps_dl3:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/skymap_dl3/stacked.fits",
+    input:
+        data=expand(
+            build_dir / "dl3/skymap_dl3/{run_id}.fits",
+            run_id=RUN_IDS,
+        ),
+        script="scripts/stack_skymap.py",
+    shell:
+        "python {input.script} -i {input.data} -o {output}"
+
+#+end_src
+
+* DL4
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl4.smk :mkdirp yes
+:END:
+
+#+begin_src snakemake
+
+# Create DL4 datasets, plot sensitivity, significance, ...
+rule dataset_3d:
+    input:
+        data=build_dir / "dl3/hdu-index.fits.gz",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script="scripts/write_datasets_manual.py",
+    output:
+        build_dir / "dl4/{analysis}/datasets.fits.gz",
+    conda:
+        gammapy_env
+    shell:
+        "python {input.script} -c {input.config} -o {output}"
+
+
+rule calc_sensitivity:
+    input:
+        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        script="scripts/calc_sensitivity.py",
+    output:
+        build_dir / "dl4/{analysis}/sensitivity.fits.gz",
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            --dataset-path {input.data} \
+            -o {output}
+        """
+
+
+rule calc_dl4_diagnostics:
+    output:
+        build_dir / "dl4/{analysis}/dl4_diagnostics.fits.gz",
+    input:
+        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script="scripts/calc_dl4_diagnostics.py",
+    resources:
+        mem_mb=16000,
+    conda:
+        gammapy_env
+    shell:
+        "python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
+
+
+rule peek_datasets:
+    output:
+        build_dir / "plots/{analysis}/dataset_peek.pdf",
+    input:
+        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        script="scripts/plot_dataset_peek.py",
+        config=config_dir / "{analysis}/analysis.yaml",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    conda:
+        gammapy_env
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
+
+
+rule plot_dl4:
+    output:
+        build_dir / "plots/{analysis}/{name}.pdf",
+    input:
+        data=build_dir / "dl4/{analysis}/{name}.fits.gz",
+        script="scripts/plot_{name}.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    conda:
+        gammapy_env
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+#+end_src
+
+* DL5
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl5.smk :mkdirp yes
+:END:
+
+#+begin_src snakemake
+
+rule calc_significance_map:
+    output:
+        build_dir / "dl4/{analysis}/significance_map.fits.gz",
+    input:
+        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        script="scripts/calc_significance_map.py",
+        config=config_dir / "{analysis}/analysis.yaml",
+    conda:
+        gammapy_env
+    shell:
+        "python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
+
+
+rule plot_significance_map:
+    output:
+        build_dir / "plots/{analysis}/significance_map.pdf",
+    input:
+        lima_map=build_dir / "dl4/{analysis}/significance_map.fits.gz",
+        exclusion_mask=build_dir / "{analysis}/exclusion.fits.gz",
+        script="scripts/plot_significance_map.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    conda:
+        gammapy_env
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} --lima-maps-input {input.lima_map} --exclusion-map-input {input.exclusion_mask} -o {output}"
+
+
+# Fit flux etc.
+rule calc_flux_points:
+    input:
+        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        config=config_dir / "{analysis}/analysis.yaml",
+        model=build_dir / "dl4/{analysis}/model-best-fit.yaml",
+        script="scripts/calc_flux_points.py",
+    output:
+        build_dir / "dl4/{analysis}/flux_points.fits.gz",
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            -c {input.config} \
+            --dataset-path {input.data} \
+            --best-model-path {input.model} \
+            -o {output}
+        """
+
+
+rule plot_flux_points:
+    input:
+        data=build_dir / "dl4/{analysis}/flux_points.fits.gz",
+        model=build_dir / "dl4/{analysis}/model-best-fit.yaml",
+        script="scripts/plot_flux_points.py",
+    output:
+        build_dir / "plots/{analysis}/flux_points.pdf",
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            -i {input.data} \
+            --best-model-path {input.model} \
+            -o {output}
+        """
+
+
+rule calc_light_curve:
+    input:
+        model=build_dir / "dl4/{analysis}/model-best-fit.yaml",
+        config=config_dir / "{analysis}/analysis.yaml",
+        dataset=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        script="scripts/calc_light_curve.py",
+    output:
+        build_dir / "dl4/{analysis}/light_curve.fits.gz",
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            -c {input.config} \
+            --dataset-path {input.dataset} \
+            --best-model-path {input.model} \
+            -o {output} \
+        """
+
+
+rule model_best_fit:
+    input:
+        config=config_dir / "{analysis}/analysis.yaml",
+        dataset=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        model=config_dir / "{analysis}/models.yaml",
+        script="scripts/fit-model.py",
+    output:
+        build_dir / "dl4/{analysis}/model-best-fit.yaml",
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            -c {input.config} \
+            --dataset-path {input.dataset} \
+            --model-config {input.model} \
+            -o {output} \
+        """
+#+end_src
+
+* DM
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dm.smk :mkdirp yes
+:END:
+
+#+begin_src snakemake
+#TODO
+#+end_src

@@ -22,12 +22,11 @@ CONFIGS = {
 
 build = Path("build") / config_dir.name
 OUTDIRS = {
-    "link_runs": (build / "run_selection").resolve(),
-    "run_selection": (build / "run_selection").resolve(),
+    "data_selection": (build / "data_selection").resolve(),
     "mc_nodes": (
         build / "mc_nodes"
     ).resolve(),  # This is not really configurable, its hard coded in the link script
-    "mc_merged": (build / "mc_merged").resolve(),
+    "mc": (build / "mc").resolve(),
     "models": (build / "models").resolve(),
     "dl1": (build / "dl1").resolve(),
     "dl2": (build / "dl2").resolve(),
@@ -35,12 +34,6 @@ OUTDIRS = {
     "irfs": (build / "irfs").resolve(),
     "dl4": (build / "dl4").resolve(),
     "dl5": (build / "dl5").resolve(),
-}
-PLOTDIRS = {
-    "link_runs": (build / "run_selection/plots").resolve(),
-    "run_selection": (build / "run_selection/plots").resolve(),
-    "mc": (build / "mc/plots").resolve(),
-    "irfs": (build / "irfs/plots").resolve(),
 }
 
 # Set all enviroments
@@ -55,8 +48,7 @@ ENVS = {
 
 scripts_dir = Path("scripts")
 SCRIPTS = {
-    "link_runs": (scripts_dir / "link_runs").resolve(),
-    "run_selection": (scripts_dir / "run_selection").resolve(),
+    "data_selection": (build / "data_selection").resolve(),
     "mc": (scripts_dir / "mc").resolve(),
     "dl1": (scripts_dir / "dl1").resolve(),
     "dl2": (scripts_dir / "dl2").resolve(),

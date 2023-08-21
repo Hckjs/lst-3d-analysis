@@ -43,7 +43,7 @@ rule merge_gamma_mc_per_node:
         --input-dir {params.directory} \
         --train-size {params.train_size} \
          --output-train {output.train} \
-        --output-test {output.test} 
+        --output-test {output.test}
         """
 
 

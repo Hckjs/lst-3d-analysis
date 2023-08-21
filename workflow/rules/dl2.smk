@@ -41,7 +41,7 @@ rule dl2:
             --input-file {input.data}  \
             --output-dir $(dirname {output}) \
             --path-models {input.model_dir}  \
-            --config {input.config} 
+            --config {input.config}
         """
 
 

@@ -1,7 +1,3 @@
-import json
-from itertools import chain
-
-
 # Definitions only, no actual target
 include: "definitions.smk"
 # Thats kind of all dl1

@@ -128,12 +128,12 @@ rule dl3_hdu_index:
             --input-dl3-dir {build_dir}/dl3  \
             --output-index-path {build_dir}/dl3  \
             --file-pattern 'dl3_*.fits.gz'  \
-            --overwrite 
+            --overwrite
 
         python {params.bkg_script} \
         --hdu-index-path {output} \
         --bkg-dir {params.bkg_dir} \
-        --bkg-file {params.bkg_files} 
+        --bkg-file {params.bkg_files}
         """
 
 

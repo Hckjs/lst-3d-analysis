@@ -1,18 +1,13 @@
-# "Preselect" runs and link (no data quality checks)
-# Choose runs observing the source and find the observations of these runs
-# TODO: Merge with run_selection?
-
-env = ENVS["link_runs"]
-config = CONFIGS["run_selection"]
-# Having these as paths makes them easier to use
-scripts = Path(SCRIPTS["link_runs"])
-out = Path(OUTDIRS["link_runs"])
-plots = Path(PLOTSDIRS["link_runs"])
+env = ENVS["data_selection"]
+config = CONFIGS["data_selection"]
+scripts = Path(SCRIPTS["data_selection"])
+out = Path(OUTDIRS["data_selection"])
+plots = Path(PLOTSDIRS["data_selection"])
 
 
 rule link_runs_stage:
     input:
-        OUTDIRS["link_runs"] / "all-linked.txt",
+        out / "all-linked.txt",
 
 
 localrules:
@@ -23,8 +18,6 @@ localrules:
     data_check,
 
 
-# Can not automatize this easily as it requires a password
-# Could read that from somewhere, but I think this is fine for now
 rule runlist:
     output:
         out / "runlist.html",
@@ -78,7 +71,7 @@ rule data_check:
         script=scripts / "data-check.py",
     conda:
         env
-    log:  # there is not really one good name here based on output
+    log:
         out=out / "datackeck.log",
         err=out / "datackeck.err",
     shell:
@@ -132,3 +125,52 @@ checkpoint link_paths:
         --dec {params.declination} \
         --runsummary {input.datacheck} \
         -o {output}"
+
+
+# Select runs based on datacheck values
+
+run_selection_plots = [
+    out / "plots/run_selection/moon-illumination.pdf",
+    out / "plots/run_selection/cosmics.pdf",
+    out / "plots/run_selection/cosmics-above.pdf",
+]
+
+
+rule run_selection_stage:
+    input:
+        run_selection_plots,
+
+
+rule gather_run_pointings:
+    output:
+        out / "run-pointings.csv",
+    input:
+        runs=out / "runs.json",
+        datacheck=out / "dl1-datachecks-masked.h5",
+        script=scripts / "gather-run-pointings.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: Path(output).with_suffix(".log"),
+        err=lambda wildcards, output: Path(output).with_suffix(".err"),
+    shell:
+        "python {input.script} \
+        --runs {input.runs} \
+        --runsummary {input.datacheck} \
+        -o {output}"
+
+
+rule plot_data_selection:
+    output:
+        out / "plots/{name}.pdf",
+    input:
+        data=out / "dl1-datachecks-masked.h5",
+        config=config / "dl1-selection-cuts-config.json",
+        script=scripts / "plot-{name}.py",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: Path(output).with_suffix(".log"),
+        err=lambda wildcards, output: Path(output).with_suffix(".err"),
+    shell:
+        "python {input.script} {input.data} -c {input.config} -o {output}"
