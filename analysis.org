@@ -151,7 +151,6 @@ It would be a shame to have the slurm overhead for every step here, so
 they are defined as `localrules`.
 
 
-
 #+begin_src snakemake
 
 env = ENVS["data_selection"]
@@ -161,9 +160,15 @@ out = Path(OUTDIRS["data_selection"])
 plots = out / "plots"
 
 
-rule link_runs_stage:
+run_selection_plots = [
+    plots / f"{name}.pdf"
+    for name in ["moon-illumination", "cosmics", "cosmics-above", "run-pointings"]
+]
+
+
+rule dl1:
     input:
-        out / "all-linked.txt",
+        run_selection_plots,
 
 
 localrules:
@@ -174,6 +179,7 @@ localrules:
     data_check,
 
 #+end_src
+
 
 There is one manual step required at this point:
 The runlist has to be downloaded from the lst1 website, which is password-protected.
@@ -216,8 +222,8 @@ rule select_datasets:
     conda:
         env
     log:
-        out=out / "runlist.log",
-        err=out / "runlist.err",
+        out=out / "select_datasets.log",
+        err=out / "select_datasets.err",
     shell:
         "python {input.script} {input.data} {output} -c {input.config}"
 
@@ -319,23 +325,6 @@ checkpoint link_paths:
 #+end_src
 
 ** Link
-
-#+begin_src snakemake
-
-# Select runs based on datacheck values
-
-run_selection_plots = [
-    out / "plots/run_selection/moon-illumination.pdf",
-    out / "plots/run_selection/cosmics.pdf",
-    out / "plots/run_selection/cosmics-above.pdf",
-]
-
-
-rule run_selection_stage:
-    input:
-        run_selection_plots,
-
-#+end_src
 
 #+begin_src snakemake
 

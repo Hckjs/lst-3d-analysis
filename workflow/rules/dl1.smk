@@ -5,9 +5,15 @@ out = Path(OUTDIRS["data_selection"])
 plots = out / "plots"
 
 
-rule link_runs_stage:
+run_selection_plots = [
+    plots / f"{name}.pdf"
+    for name in ["moon-illumination", "cosmics", "cosmics-above", "run-pointings"]
+]
+
+
+rule dl1:
     input:
-        out / "all-linked.txt",
+        run_selection_plots,
 
 
 localrules:
@@ -39,8 +45,8 @@ rule select_datasets:
     conda:
         env
     log:
-        out=out / "runlist.log",
-        err=out / "runlist.err",
+        out=out / "select_datasets.log",
+        err=out / "select_datasets.err",
     shell:
         "python {input.script} {input.data} {output} -c {input.config}"
 
@@ -126,20 +132,6 @@ checkpoint link_paths:
         --dec {params.declination} \
         --runsummary {input.datacheck} \
         -o {output}"
-
-
-# Select runs based on datacheck values
-
-run_selection_plots = [
-    out / "plots/run_selection/moon-illumination.pdf",
-    out / "plots/run_selection/cosmics.pdf",
-    out / "plots/run_selection/cosmics-above.pdf",
-]
-
-
-rule run_selection_stage:
-    input:
-        run_selection_plots,
 
 
 rule gather_run_pointings:
