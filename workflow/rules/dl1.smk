@@ -183,5 +183,5 @@ rule plot_run_pointings:
         err=plots / "run_pointings.err",
     shell:
         "python {input.script} \
-        --runs {input.pointings} \
+        --input {input.pointings} \
         --output {output}"

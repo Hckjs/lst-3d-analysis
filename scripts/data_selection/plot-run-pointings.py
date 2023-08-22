@@ -20,7 +20,7 @@ def main():
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("input_path")
+    parser.add_argument("-i", "--input_path", required=True)
     parser.add_argument("-o", "--output_path", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
