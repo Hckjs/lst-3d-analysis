@@ -27,7 +27,7 @@ from lstchain.io.io import (
 from sklearn.model_selection import train_test_split
 from tables import open_file
 
-from ..log import setup_logging
+from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 

@@ -7,14 +7,14 @@ import pandas as pd
 from astropy.coordinates import AltAz
 from lstchain.io.io import dl1_params_lstcam_key
 
-from ..link_utils import (
+from scriptutils.link_utils import (
     build_altaz,
     cos_zenith,
     euclidean_distance,
     get_pointings_of_irfs,
     sin_delta,
 )
-from ..log import setup_logging
+from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 

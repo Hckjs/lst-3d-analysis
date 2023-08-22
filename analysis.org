@@ -418,11 +418,27 @@ rule plot_run_pointings:
         --log-file {log} "
 #+end_src
 
-
 * MC
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/mc.smk :mkdirp yes
 :END:
+
+** TODO
+This is not very well separated from [[DL1]] unfortunately...
+The problem is, that I need to do some extra things in here, because there
+are no allsky test files.
+Otherwise I would use them directly (and link them in the previous step) and then
+also use the models, that exist for these files.
+That is pretty much what we do for the 1D-case (because for pointlike gammas diffuse test files
+actually exist!).
+
+A semi-clean solution would be to handle all linking of mc-related studd in here.
+Right now I link the nodes and model config(s) in [[DL1]] because of the way the scripts and
+workflow developed. It is a TODO to change that.
+
+Also plots are missing. There should at least be some rf performance plots.
+
+** Variables
 
 #+begin_src snakemake
 env = ENVS["lstchain"]
@@ -430,19 +446,33 @@ env = ENVS["lstchain"]
 scripts = Path(SCRIPTS["mc"])
 # Only the intermediate files end up in out, models are extra and final MCs are in dl1
 mc_nodes = Path(OUTDIRS["mc_nodes"])
-merged = Path(OUTDIRS["mc_merged"])
+mc_merged = Path(OUTDIRS["mc_merged"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
 plots = Path(PLOTSDIRS["link_runs"])
-
+train_size = 0.4, # TODO put in config?
 
 rule mc_stage_target:
     input:
         m=models_to_train,
 
+#+end_src
+
+** Create train and test files per node
+
+I am not quite sure if I am happy with the /all_gamma_nodes/ solution.
+Need to test it to make sure it works as expected.
+
+In the merge rule there is a hardcoded GammaDiffuse, which I also dont like much.
+Reason is simple: I dont need to merge protons, because we can use the "premerged" file since
+I do not need test files for them. But maybe it would be nicer to still do the merging(?).
+
+First of all, the individual runs of a single allsky node need to be merged.
+After this step there will 2 (train+test) diffuse gamma files per node.
+
+#+begin_src snakemake
 
 def all_gamma_nodes(wildcards):
-    "Is this considered a hack? I dont use the output of the checkpoint directly, but its needed"
     linked = checkpoints.run_ids.get(**wildcards).output
     all_gamma_nodes = [
         x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()
@@ -452,81 +482,36 @@ def all_gamma_nodes(wildcards):
 
 rule merge_gamma_mc_per_node:
     output:
-        train=merged / "GammaDiffuse/{node}_train.dl1.h5",
-        test=merged / "GammaDiffuse/{node}_test.dl1.h5",
+        train=mc_merged / "GammaDiffuse/{node}_train.dl1.h5",
+        test=mc_merged / "GammaDiffuse/{node}_test.dl1.h5",
     input:
         all_gamma_nodes,
     params:
-        train_size=0.4,
+        train_size=train_size,
         directory=lambda node: mc_nodes / f"GammaDiffuse/{node}",
     conda:
         env
     log:
-        out=merged / "merge_gamma_mc.log",
-        err=merged / "merge_gamma_mc.err",
+        merged / "merge_gamma_mc_{node}.log",
     shell:
         """
         python scripts/merge_mc_nodes.py \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
-         --output-train {output.train} \
-        --output-test {output.test}
+        --output-train {output.train} \
+        --output-test {output.test} \
+        --log-file {log}
         """
 
+#+end_src
 
-rule merge_train_or_test_of_all_nodes:
-    output:
-        dl1 / "{train_or_test}/{particle}_train.dl1.h5",
-    input:
-        files=expand(
-            merged / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
-            node=all_gamma_nodes,
-        ),
-    params:
-        directory=lambda wildcards: merged / f"{wildcards.particle}",
-        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
-        out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
-    conda:
-        env
-    log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
-    shell:
-        """
-        python scripts/merge_mc_nodes.py \
-        --input-dir {params.directory} \
-        --pattern {params.pattern} \
-        --{params.out_type} {output}
-        """
+After that is done, the gamma test files can be linked to match the observed runs.
+That is the IRF matching basically.
+This step is not really necessary with lstchain 0.10 as then the matching happens in the
+dl3 step and instead we would want an IRF for each mc node irrespective of the observed
+runs. That will also simplify things a bit, so that should be something I do next.
 
-
-rule train_models:
-    output:
-        models_to_train,
-    input:
-        gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
-        proton=dl1 / "train/proton_diffuse_merged.dl1.h5",
-        config=models / "mcpipe/lstchain_config.json",
-    resources:
-        mem_mb=64000,
-        cpus=8,
-        partition="long",
-        time=1200,
-    conda:
-        env
-    log:
-        out=models / "train_models.log",
-        err=models / "train_models.err",
-    shell:
-        """
-        lstchain_mc_trainpipe \
-        --fg {input.gamma} \
-        --fp {input.proton} \
-        --config {input.config} \
-        --output-dir {models}
-        """
-
-
+#+begin_src snakemake
 # Cant do this in link script because the merge into train and test did not happen yet at that stage
 rule link_test_nodes_to_dl1_runs:
     input:
@@ -549,14 +534,84 @@ rule link_test_nodes_to_dl1_runs:
     conda:
         env
     log:
-        out=models / "link_test_nodes_to_dl1_runs.log",
-        err=models / "link_test_nodes_to_dl1_runs.err",
+        models / "link_test_nodes_to_dl1_runs.log",
     shell:
         """
         python link-dl1.py \
         --dl1-dir {dl1} \
         --test-link-dir {params.dl1_test_dir} \
-        --mc-nodes-dir {params.mc_nodes_dir}
+        --mc-nodes-dir {params.mc_nodes_dir} \
+        --log-file {log}
+        """
+
+#+end_src
+
+
+** Train models
+
+There is only one set of models for the whole trajectory and not one for each node in order
+to make better use of the training statistic.
+The proton file is already merged, so I only need to merge the diffuse gammas here
+although merging protons too would not be a big deal.
+
+#+begin_src snakemake
+
+rule merge_train_or_test_of_all_nodes:
+    output:
+        dl1 / "{train_or_test}/{particle}_train.dl1.h5",
+    input:
+        files=expand(
+            merged / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
+            node=all_gamma_nodes,
+        ),
+    params:
+        directory=lambda wildcards: merged / f"{wildcards.particle}",
+        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
+        out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
+    conda:
+        env
+    log:
+        out=lambda wildcards, output: output.with_suffix(".log"),
+    shell:
+        """
+        python scripts/merge_mc_nodes.py \
+        --input-dir {params.directory} \
+        --pattern {params.pattern} \
+        --{params.out_type} {output}
+        """
+
+#+end_src
+
+For the training it is just the lstchain script.
+That requires a lot of resources, because they load all of the data into RAM at once...
+
+
+#+begin_src snakemake
+
+rule train_models:
+    output:
+        models_to_train,
+    input:
+        gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
+        proton=dl1 / "train/proton_diffuse_merged.dl1.h5",
+        config=models / "mcpipe/lstchain_config.json",
+    resources:
+        mem_mb=64000,
+        cpus=8,
+        partition="long",
+        time=1200,
+    conda:
+        env
+    log:
+        models / "train_models.log",
+    shell:
+        """
+        lstchain_mc_trainpipe \
+        --fg {input.gamma} \
+        --fp {input.proton} \
+        --config {input.config} \
+        --output-dir {models} \
+        > {log} 2>&1
         """
 
 #+end_src
