@@ -168,6 +168,7 @@ run_selection_plots = [
 
 rule dl1:
     input:
+        out / "all-linked.txt",
         run_selection_plots,
 
 
@@ -205,7 +206,7 @@ rule runlist:
         """
 #+end_src
 
-** Select relevant runs
+** Select relevant runs based on runlist
 
 First of all, we need to select runs observing our source(s) of interest.
 This is done purely based on the `runlist.html` without any notion of data quality.
@@ -228,6 +229,8 @@ rule select_datasets:
         "python {input.script} {input.data} {output} -c {input.config}"
 
 #+end_src
+
+** Data quality checks
 
 #+begin_src snakemake
 
@@ -278,6 +281,8 @@ rule data_check:
 
 #+end_src
 
+** Define runs to be used for the analysis
+
 #+begin_src snakemake
 
 rule run_ids:
@@ -296,6 +301,7 @@ rule run_ids:
         "python {input.script} {input.data} {output} -c {input.config}"
 
 #+end_src
+
 
 #+begin_src snakemake
 
@@ -324,7 +330,7 @@ checkpoint link_paths:
 
 #+end_src
 
-** Link
+** Plots
 
 #+begin_src snakemake
 
@@ -352,21 +358,20 @@ rule gather_run_pointings:
 
 rule plot_data_selection:
     output:
-        out / "plots/{name}.pdf",
+        plots / "{name}.pdf",
     input:
         data=out / "dl1-datachecks-masked.h5",
-        config=config / "dl1-selection-cuts-config.json",
+        config=out / "dl1-selection-cuts-config.json",
         script=scripts / "plot-{name}.py",
     conda:
         env
     log:
-        out=out / "{name}.log",
-        err=out / "{name}.err",
+        out=plots / "{name}.log",
+        err=plots / "{name}.err",
     shell:
         "python {input.script} {input.data} -c {input.config} -o {output}"
 
 #+end_src
-
 
 * MC
 :PROPERTIES:

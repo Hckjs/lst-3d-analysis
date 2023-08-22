@@ -13,6 +13,7 @@ run_selection_plots = [
 
 rule dl1:
     input:
+        out / "all-linked.txt",
         run_selection_plots,
 
 
@@ -155,15 +156,15 @@ rule gather_run_pointings:
 
 rule plot_data_selection:
     output:
-        out / "plots/{name}.pdf",
+        plots / "{name}.pdf",
     input:
         data=out / "dl1-datachecks-masked.h5",
-        config=config / "dl1-selection-cuts-config.json",
+        config=out / "dl1-selection-cuts-config.json",
         script=scripts / "plot-{name}.py",
     conda:
         env
     log:
-        out=out / "{name}.log",
-        err=out / "{name}.err",
+        out=plots / "{name}.log",
+        err=plots / "{name}.err",
     shell:
         "python {input.script} {input.data} -c {input.config} -o {output}"
