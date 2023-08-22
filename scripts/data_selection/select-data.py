@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from astropy.time import Time
 
-from ..config import Config
-from ..log import setup_logging
+from scriptutils.config import Config
+from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 

@@ -8,9 +8,9 @@ from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_moon
 from astropy.table import Table
 from astropy.time import Time
 
-from ..config import Config
-from ..log import setup_logging
-from ..stats import bounds_std as bounds
+from scriptutils.config import Config
+from scriptutils.log import setup_logging
+from scriptutils.stats import bounds_std as bounds
 
 log = logging.getLogger(__name__)
 

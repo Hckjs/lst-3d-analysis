@@ -9,7 +9,7 @@ from astropy.table import vstack
 from ctapipe.io import read_table
 from rich.progress import track
 
-from ..log import setup_logging
+from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 
