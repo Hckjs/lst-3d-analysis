@@ -446,7 +446,7 @@ env = ENVS["lstchain"]
 scripts = Path(SCRIPTS["mc"])
 # Only the intermediate files end up in out, models are extra and final MCs are in dl1
 mc_nodes = Path(OUTDIRS["mc_nodes"])
-mc_merged = Path(OUTDIRS["mc_merged"])
+mc_merged = Path(OUTDIRS["mc"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
 plots = Path(PLOTSDIRS["link_runs"])
