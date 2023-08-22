@@ -167,7 +167,7 @@ rule gather_run_pointings:
         "python {input.script} \
         --runs {input.runs} \
         --runsummary {input.datacheck} \
-        -o {output}"
+        --output {output}"
 
 
 rule plot_run_pointings:
@@ -183,6 +183,5 @@ rule plot_run_pointings:
         err=plots / "run_pointings.err",
     shell:
         "python {input.script} \
-        --runs {input.runs} \
-        --runsummary {input.datacheck} \
-        -o {output}"
+        --runs {input.pointings} \
+        --output {output}"
