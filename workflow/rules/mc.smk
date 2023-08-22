@@ -1,12 +1,13 @@
 env = ENVS["lstchain"]
-# Having these as paths makes them easier to use
 scripts = Path(SCRIPTS["mc"])
-# Only the intermediate files end up in out, models are extra and final MCs are in dl1
+mc = Path(OUTDIRS["mc"])
+
+# Need some extra dirs
 mc_nodes = Path(OUTDIRS["mc_nodes"])
-mc_merged = Path(OUTDIRS["mc"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
-plots = Path(PLOTSDIRS["link_runs"])
+
+plots = mc / "plots"
 train_size = (0.4,)  # TODO put in config?
 
 
@@ -25,8 +26,8 @@ def all_gamma_nodes(wildcards):
 
 rule merge_gamma_mc_per_node:
     output:
-        train=mc_merged / "GammaDiffuse/{node}_train.dl1.h5",
-        test=mc_merged / "GammaDiffuse/{node}_test.dl1.h5",
+        train=mc / "GammaDiffuse/{node}_train.dl1.h5",
+        test=mc / "GammaDiffuse/{node}_test.dl1.h5",
     input:
         all_gamma_nodes,
     params:
@@ -35,7 +36,7 @@ rule merge_gamma_mc_per_node:
     conda:
         env
     log:
-        merged / "merge_gamma_mc_{node}.log",
+        mc / "merge_gamma_mc_{node}.log",
     shell:
         """
         python scripts/merge_mc_nodes.py \
@@ -54,9 +55,7 @@ rule link_test_nodes_to_dl1_runs:
             dl1 / "dl1_LST-1.Run{run_id}.h5",
             run_id=RUN_IDS,
         ),
-        test_files=expand(
-            merged / "GammaDiffuse/{node}_test.dl1.h5", node=all_gamma_nodes
-        ),
+        test_files=expand(mc / "GammaDiffuse/{node}_test.dl1.h5", node=all_gamma_nodes),
     output:
         runs=expand(
             dl1 / "test/dl1_LST-1.Run{run_id}.h5",
@@ -65,7 +64,7 @@ rule link_test_nodes_to_dl1_runs:
     # Just to avoid complex things in the command below
     params:
         dl1_test_dir=dl1 / "test",
-        mc_nodes_dir=merged / "GammaDiffuse",  # these are the merged train/test ones
+        mc_nodes_dir=mc / "GammaDiffuse",  # these are the merged train/test ones
     conda:
         env
     log:
@@ -82,20 +81,20 @@ rule link_test_nodes_to_dl1_runs:
 
 rule merge_train_or_test_of_all_nodes:
     output:
-        dl1 / "{train_or_test}/{particle}_train.dl1.h5",
+        dl1 / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
     input:
         files=expand(
-            merged / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
+            mc / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
             node=all_gamma_nodes,
         ),
     params:
-        directory=lambda wildcards: merged / f"{wildcards.particle}",
+        directory=lambda wildcards: mc / f"{wildcards.particle}",
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
         out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
+        mc / "merge_all_{particle}_{train_or_test}.log",
     shell:
         """
         python scripts/merge_mc_nodes.py \
