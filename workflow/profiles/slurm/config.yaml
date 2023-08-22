@@ -6,8 +6,8 @@ cluster: mkdir -p build/logs/{rule} &&
   --job-name={rule}
   --time={resources.time}
   --parsable
-  --output=build/logs/%j.out
-  --error=build/logs/%j.err
+  --output=build/logs/{rule}/%j.out
+  --error=build/logs/{rule}/%j.err
 resources:
   - cpus=100
 default-resources:
