@@ -10,7 +10,7 @@ plots = Path(PLOTSDIRS["link_runs"])
 train_size = (0.4,)  # TODO put in config?
 
 
-rule mc_stage_target:
+rule mc:
     input:
         m=models_to_train,
 
