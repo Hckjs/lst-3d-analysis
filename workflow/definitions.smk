@@ -33,6 +33,7 @@ OUTDIRS = {
     ).resolve(),  # This is not really configurable, its hard coded in the link script
     "mc": (build / "mc").resolve(),
     "models": (build / "models").resolve(),
+    "models_link": (build / "models/mcpipe").resolve(),
     "dl1": (build / "dl1").resolve(),
     "dl2": (build / "dl2").resolve(),
     "dl3": (build / "dl3").resolve(),

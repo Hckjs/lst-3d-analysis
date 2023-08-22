@@ -2,6 +2,9 @@ env = ENVS["data_selection"]
 config = CONFIGS["data_selection"]
 scripts = Path(SCRIPTS["data_selection"])
 out = Path(OUTDIRS["data_selection"])
+dl1_link_location = Path(OUTDIRS["dl1"])
+mc_link_location = Path(OUTDIRS["mc_nodes"])
+models_link_location = Path(OUTDIRS["models_link"])
 plots = out / "plots"
 
 
@@ -121,6 +124,9 @@ checkpoint link_paths:
     params:
         production=PRODUCTION,
         declination=DECLINATION,
+        dl1=dl1_link_location,
+        mc_nodes=mc_link_location,
+        models=models_link_location,
     conda:
         env
     log:
@@ -132,6 +138,9 @@ checkpoint link_paths:
         --prod {params.production} \
         --dec {params.declination} \
         --runsummary {input.datacheck} \
+        --dl1-link-dir {params.dl1} \
+        --mc-nodes-link-dir {params.mc_nodes} \
+        --models-link-dir {params.models} \
         -o {output}"
 
 
