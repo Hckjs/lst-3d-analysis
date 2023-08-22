@@ -64,10 +64,9 @@ rule merge_datachecks:
     conda:
         env
     log:
-        out=out / "merge_datacheck.log",
-        err=out / "merge_datacheck.err",
+        out / "merge_datacheck.log",
     shell:
-        "python {input.script} {input.data} {output.output}"
+        "python {input.script} {input.data} {output.output} --log-file {log}"
 
 
 rule data_check:
@@ -83,19 +82,17 @@ rule data_check:
     conda:
         env
     log:
-        out=out / "datacheck.log",
-        err=out / "datacheck.err",
+        out / "datacheck.log",
     shell:
-        "\
-        python \
-            {input.script} \
-            {input.runlist} \
-            {input.datachecks} \
-            --config {input.config} \
-            --output-runlist {output.runlist} \
-            --output-datachecks {output.datachecks} \
-            --output-config {output.config} \
-        "
+        "python \
+        {input.script} \
+        {input.runlist} \
+        {input.datachecks} \
+        --config {input.config} \
+        --output-runlist {output.runlist} \
+        --output-datachecks {output.datachecks} \
+        --output-config {output.config} \
+        --log-file {log}"
 
 
 rule run_ids:
@@ -108,10 +105,14 @@ rule run_ids:
     conda:
         env
     log:
-        out=out / "check_runlist.log",
-        err=out / "check_runlist.err",
+        out / "check_runlist.log",
     shell:
-        "python {input.script} {input.data} {output} -c {input.config}"
+        "python \
+        {input.script} \
+        {input.data} \
+        {output} \
+        -c {input.config} \
+        --log-file {log}"
 
 
 checkpoint link_paths:
@@ -130,10 +131,10 @@ checkpoint link_paths:
     conda:
         env
     log:
-        out=out / "link_paths.log",
-        err=out / "link_paths.err",
+        out / "link_paths.log",
     shell:
-        "python {input.script} \
+        "python \
+        {input.script} \
         --runs {input.runs} \
         --prod {params.production} \
         --dec {params.declination} \
@@ -141,6 +142,7 @@ checkpoint link_paths:
         --dl1-link-dir {params.dl1} \
         --mc-nodes-link-dir {params.mc_nodes} \
         --models-link-dir {params.models} \
+        --log-file {log} \
         -o {output}"
 
 
@@ -154,10 +156,14 @@ rule plot_data_selection:
     conda:
         env
     log:
-        out=plots / "{name}.log",
-        err=plots / "{name}.err",
+        plots / "{name}.log",
     shell:
-        "python {input.script} {input.data} -c {input.config} -o {output}"
+        "python \
+        {input.script} \
+        {input.data} \
+        -c {input.config} \
+        -o {output} \
+        --log-file {log} "
 
 
 rule gather_run_pointings:
@@ -170,13 +176,13 @@ rule gather_run_pointings:
     conda:
         env
     log:
-        out=out / "run_pointings.log",
-        err=out / "run_pointings.err",
+        out / "run_pointings.log",
     shell:
         "python {input.script} \
         --runs {input.runs} \
         --runsummary {input.datacheck} \
-        --output {output}"
+        --output {output} \
+        --log-file {log} "
 
 
 rule plot_run_pointings:
@@ -188,9 +194,9 @@ rule plot_run_pointings:
     conda:
         env
     log:
-        out=plots / "run_pointings.log",
-        err=plots / "run_pointings.err",
+        plots / "run_pointings.log",
     shell:
         "python {input.script} \
         --input {input.pointings} \
-        --output {output}"
+        --output {output} \
+        --log-file {log} "
