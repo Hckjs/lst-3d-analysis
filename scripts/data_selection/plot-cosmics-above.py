@@ -15,6 +15,8 @@ def main():
     parser.add_argument("input_path")
     parser.add_argument("-o", "--output_path", required=True)
     parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
     config = Config.parse_file(args.config)
