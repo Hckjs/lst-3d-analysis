@@ -2,8 +2,9 @@ from argparse import ArgumentParser
 
 from astropy.table import Table
 from astropy.time import Time
-from config import Config
 from matplotlib import pyplot as plt
+
+from scriptutils.config import Config
 
 parser = ArgumentParser()
 parser.add_argument("input_path")

@@ -135,6 +135,22 @@ checkpoint link_paths:
         -o {output}"
 
 
+rule plot_data_selection:
+    output:
+        plots / "{name}.pdf",
+    input:
+        data=out / "dl1-datachecks-masked.h5",
+        config=out / "dl1-selection-cuts-config.json",
+        script=scripts / "plot-{name}.py",
+    conda:
+        env
+    log:
+        out=plots / "{name}.log",
+        err=plots / "{name}.err",
+    shell:
+        "python {input.script} {input.data} -c {input.config} -o {output}"
+
+
 rule gather_run_pointings:
     output:
         out / "run-pointings.csv",
@@ -154,17 +170,19 @@ rule gather_run_pointings:
         -o {output}"
 
 
-rule plot_data_selection:
+rule plot_run_pointings:
     output:
-        plots / "{name}.pdf",
+        plots / "run-pointings.pdf",
     input:
-        data=out / "dl1-datachecks-masked.h5",
-        config=out / "dl1-selection-cuts-config.json",
-        script=scripts / "plot-{name}.py",
+        pointings=out / "run-pointings.csv",
+        script=scripts / "plot-run-pointings.py",
     conda:
         env
     log:
-        out=plots / "{name}.log",
-        err=plots / "{name}.err",
+        out=plots / "run_pointings.log",
+        err=plots / "run_pointings.err",
     shell:
-        "python {input.script} {input.data} -c {input.config} -o {output}"
+        "python {input.script} \
+        --runs {input.runs} \
+        --runsummary {input.datacheck} \
+        -o {output}"

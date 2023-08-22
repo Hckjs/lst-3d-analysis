@@ -150,7 +150,7 @@ There are some rules, that are really not computationally heavy.
 It would be a shame to have the slurm overhead for every step here, so
 they are defined as `localrules`.
 
-
+#+name: dl1_vars
 #+begin_src snakemake
 
 env = ENVS["data_selection"]
@@ -250,6 +250,7 @@ rule merge_datachecks:
 
 #+end_src
 
+#+name: data_check
 #+begin_src snakemake
 
 rule data_check:
@@ -332,6 +333,37 @@ checkpoint link_paths:
 
 ** Plots
 
+Plotting the data-selection part is very easy.
+Since multiple plots can be constructed from the output of the [[nameref:data_check][datacheck-rule]],
+there is just one [[nameref:plot_data_selection][rule]] to handle these and the script-name is constructed from the wildcard
+/name/, which is the name of the output plot.
+It could also be multiple rules as not all of them need all of the input files,
+but this is how we constructed it a while back for the 1D-analysis.
+
+#+name: plot_data_selection
+#+begin_src snakemake
+
+rule plot_data_selection:
+    output:
+        plots / "{name}.pdf",
+    input:
+        data=out / "dl1-datachecks-masked.h5",
+        config=out / "dl1-selection-cuts-config.json",
+        script=scripts / "plot-{name}.py",
+    conda:
+        env
+    log:
+        out=plots / "{name}.log",
+        err=plots / "{name}.err",
+    shell:
+        "python {input.script} {input.data} -c {input.config} -o {output}"
+
+#+end_src
+
+For the run pointings, a new dile containing just these is constructed.
+This is actually not a big step and could be done in the plot script aswell,
+but I like having the csv file with the pointing directions.
+
 #+begin_src snakemake
 
 rule gather_run_pointings:
@@ -352,26 +384,25 @@ rule gather_run_pointings:
         --runsummary {input.datacheck} \
         -o {output}"
 
-#+end_src
 
-#+begin_src snakemake
-
-rule plot_data_selection:
+rule plot_run_pointings:
     output:
-        plots / "{name}.pdf",
+        plots / "run-pointings.pdf",
     input:
-        data=out / "dl1-datachecks-masked.h5",
-        config=out / "dl1-selection-cuts-config.json",
-        script=scripts / "plot-{name}.py",
+        pointings=out / "run-pointings.csv",
+        script=scripts / "plot-run-pointings.py",
     conda:
         env
     log:
-        out=plots / "{name}.log",
-        err=plots / "{name}.err",
+        out=plots / "run_pointings.log",
+        err=plots / "run_pointings.err",
     shell:
-        "python {input.script} {input.data} -c {input.config} -o {output}"
-
+        "python {input.script} \
+        --runs {input.runs} \
+        --runsummary {input.datacheck} \
+        -o {output}"
 #+end_src
+
 
 * MC
 :PROPERTIES:

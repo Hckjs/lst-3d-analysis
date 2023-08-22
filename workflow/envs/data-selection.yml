@@ -16,4 +16,4 @@ dependencies:
   - pre-commit
   - pip:
       - lstchain~=0.9.13
-      - ./scriptutils
+      - ../../scriptutils
