@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 
 from astropy.table import Table
@@ -6,16 +7,18 @@ from matplotlib import pyplot as plt
 
 from scriptutils.config import Config
 
-parser = ArgumentParser()
-parser.add_argument("input_path")
-parser.add_argument("-o", "--output_path", required=True)
-parser.add_argument("-c", "--config", required=True)
-args = parser.parse_args()
-
-config = Config.parse_file(args.config)
+log = logging.getLogger(__name__)
 
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument("input_path")
+    parser.add_argument("-o", "--output_path", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    args = parser.parse_args()
+
+    config = Config.parse_file(args.config)
+
     runsummary = Table.read(args.input_path)
     runsummary = runsummary[runsummary["mask_run_selection"]]
     time = Time(runsummary["time"], format="unix", scale="utc")

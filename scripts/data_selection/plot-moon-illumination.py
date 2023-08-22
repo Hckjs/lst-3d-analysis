@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 
 from astroplan.moon import moon_illumination
@@ -9,17 +10,23 @@ from matplotlib import colors
 from matplotlib import pyplot as plt
 
 from scriptutils.config import Config
+from scriptutils.log import setup_logging
 
-parser = ArgumentParser()
-parser.add_argument("input_path")
-parser.add_argument("-o", "--output_path", required=True)
-parser.add_argument("-c", "--config", required=True)
-args = parser.parse_args()
-
-config = Config.parse_file(args.config)
+log = logging.getLogger(__name__)
 
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument("input_path")
+    parser.add_argument("-o", "--output_path", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+    config = Config.parse_file(args.config)
+
     runsummary = Table.read(args.input_path)
     runsummary = runsummary[runsummary["mask_run_selection"]]
     time = Time(runsummary["time"], format="unix", scale="utc")

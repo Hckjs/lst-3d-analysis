@@ -8,7 +8,7 @@ from astropy.coordinates import AltAz, EarthLocation
 from astropy.table import Table
 from astropy.time import Time
 
-from ..log import setup_logging
+from scriptutils.log import setup_logging
 
 template_target_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa
 

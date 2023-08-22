@@ -1,4 +1,5 @@
 import json
+import logging
 from argparse import ArgumentParser
 from itertools import chain
 
@@ -8,14 +9,9 @@ from astropy.coordinates import AltAz, EarthLocation
 from astropy.table import Table
 from astropy.time import Time
 
-parser = ArgumentParser()
-parser.add_argument("--runs", required=True)
-parser.add_argument("--runsummary", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
-with open(args.runs, "r") as f:
-    runs = json.load(f)
+log = logging.getLogger(__name__)
 
 
 @u.quantity_input
@@ -69,6 +65,18 @@ def get_pointings_of_irfs(filelist) -> AltAz:
 
 
 def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("--runs", required=True)
+    parser.add_argument("--runsummary", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+
+    with open(args.runs, "r") as f:
+        runs = json.load(f)
+
     run_ids = list(chain(*runs.values()))
     runsummary = Table.read(args.runsummary)
 

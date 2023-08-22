@@ -21,7 +21,53 @@ from scriptutils.log import setup_logging
 log = logging.getLogger(__name__)
 
 
-def main() -> None:
+def main() -> None:  # noqa: PLR-915
+    parser = ArgumentParser()
+    parser.add_argument("--runs", required=True)
+    parser.add_argument("--prod", required=True)
+    parser.add_argument("--dec", required=True)
+    parser.add_argument("--runsummary", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+
+    with open(args.runs, "r") as f:
+        runs = json.load(f)
+    n_runs = len(set(chain(*runs.values())))
+    log.info(f"Checking {n_runs} runs")
+
+    build_dir = Path(args.output_path).parent
+    outdir_dl1 = build_dir / "dl1/"
+    filename_dl1 = "dl1_LST-1.Run{run_id}.h5"
+    template_target_dl1 = (
+        (Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1)
+        .resolve()
+        .as_posix()
+    )
+    template_linkname_dl1 = (outdir_dl1 / filename_dl1).resolve().as_posix()
+
+    # This is what changes compared to 1D
+    # We link unmerged dl1 nodes here!
+    outdir_nodes = build_dir / "mc_nodes"
+    template_target_nodes = (
+        "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}"  # noqa
+    )
+    linkname_nodes = outdir_nodes
+
+    # filename_irf = "irf_Run{run_id}.fits.gz"
+    template_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa: E501
+
+    template_target_protons_dl1 = "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}/Protons/dl1_{prod}_{dec}_Protons_merged.h5"  # noqa: E501
+    linkname_protons_dl1 = outdir_dl1 / "train/proton_diffuse_merged.dl1.h5"
+
+    # Just link to get the proper configs for training
+    outdir_model = build_dir / "models/mcpipe/"
+    template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/"
+    template_linkname_model = outdir_model
+
     prod = args.prod
     dec = args.dec
 
@@ -102,48 +148,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--runs", required=True)
-    parser.add_argument("--prod", required=True)
-    parser.add_argument("--dec", required=True)
-    parser.add_argument("--runsummary", required=True)
-    parser.add_argument("-o", "--output-path", required=True)
-    args = parser.parse_args()
-
-    setup_logging(logfile=args.log_file, verbose=args.verbose)
-
-    with open(args.runs, "r") as f:
-        runs = json.load(f)
-    n_runs = len(set(chain(*runs.values())))
-    log.info(f"Checking {n_runs} runs")
-
-    build_dir = Path(args.output_path).parent
-    outdir_dl1 = build_dir / "dl1/"
-    filename_dl1 = "dl1_LST-1.Run{run_id}.h5"
-    template_target_dl1 = (
-        (Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1)
-        .resolve()
-        .as_posix()
-    )
-    template_linkname_dl1 = (outdir_dl1 / filename_dl1).resolve().as_posix()
-
-    # This is what changes compared to 1D
-    # We link unmerged dl1 nodes here!
-    outdir_nodes = build_dir / "mc_nodes"
-    template_target_nodes = (
-        "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}"  # noqa
-    )
-    linkname_nodes = outdir_nodes
-
-    # filename_irf = "irf_Run{run_id}.fits.gz"
-    template_irf = "/fefs/aswg/data/mc/IRF/AllSky/{prod}/TestingDataset/{dec}/{node}/irf_{prod}_{node}.fits.gz"  # noqa: E501
-
-    template_target_protons_dl1 = "/fefs/aswg/data/mc/DL1/AllSky/{prod}/TrainingDataset/{dec}/Protons/dl1_{prod}_{dec}_Protons_merged.h5"  # noqa: E501
-    linkname_protons_dl1 = outdir_dl1 / "train/proton_diffuse_merged.dl1.h5"
-
-    # Just link to get the proper configs for training
-    outdir_model = build_dir / "models/mcpipe/"
-    template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/"
-    template_linkname_model = outdir_model
-
     main()

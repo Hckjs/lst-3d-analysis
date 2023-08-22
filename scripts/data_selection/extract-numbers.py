@@ -1,15 +1,13 @@
+import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
 import numpy as np
 from astropy.table import Table
 
-parser = ArgumentParser()
-parser.add_argument("input_path")
-parser.add_argument("output_directory")
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
-outdir = Path(args.output_directory)
+log = logging.getLogger(__name__)
 
 
 def to_num(n: int) -> str:
@@ -17,6 +15,16 @@ def to_num(n: int) -> str:
 
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument("input_path")
+    parser.add_argument("output_directory")
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+    outdir = Path(args.output_directory)
+
     tbl = Table.read("build/dl1-datachecks-masked.h5")
 
     mask_source = tbl["mask_run_id"]
