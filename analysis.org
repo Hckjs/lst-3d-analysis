@@ -121,10 +121,10 @@ def RUN_IDS(wildcards):
 
 def MC_NODES(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
-    mc = Path(OUTDIRS["mc"])
-    mc_nodes = Path(OUTDIRS["mc_nodes"])
-    nodes = [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
-    return [mc / f"{wildcards.particle}/{node}_{wildcards.train_or_test}.dl1.h5"
+    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}"
+    mc_nodes = Path(OUTDIRS["mc_nodes"])/ f"{wildcards.particle}"
+    nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
+    return [out/f"{node}_{wildcards.train_or_test}.dl1.h5"
             for node in nodes]
 
 models_to_train = [
