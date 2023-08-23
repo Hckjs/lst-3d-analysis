@@ -51,10 +51,10 @@ rule merge_gamma_mc_per_node:
         train=mc / "GammaDiffuse/{node}_train.dl1.h5",
         test=mc / "GammaDiffuse/{node}_test.dl1.h5",
     input:
-        expand(mc_nodes / "GammaDiffuse/{node}_{{train_or_test}}.dl1.h5", node=MC_NODES),
+        out / "mc-linked.txt",
     params:
         train_size=train_size,
-        directory=lambda node: mc_nodes / f"GammaDiffuse/{node}",
+        directory=lambda wildcards: mc_nodes / f"GammaDiffuse/{wildcards.node}",
     conda:
         env
     log:
@@ -66,7 +66,7 @@ rule merge_gamma_mc_per_node:
         --train-size {params.train_size} \
         --output-train {output.train} \
         --output-test {output.test} \
-        --log-file {log}
+        > {log} 2>%1
         """
 
 
@@ -74,10 +74,10 @@ rule merge_proton_mc_per_node:
     output:
         train=mc / "Proton/{node}_train.dl1.h5",
     input:
-        expand(mc_nodes / "Proton/{node}_{{train_or_test}}.dl1.h5", node=MC_NODES),
+        out / "mc-linked.txt",
     params:
         train_size=1.0,
-        directory=lambda node: mc_nodes / f"Proton/{node}",
+        directory=lambda wildcards: mc_nodes / f"Proton/{wildcards.node}",
     conda:
         env
     log:
@@ -88,7 +88,7 @@ rule merge_proton_mc_per_node:
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
-        --log-file {log}
+        > {log} 2>%1
         """
 
 
@@ -113,7 +113,8 @@ rule merge_train_or_test_of_all_nodes:
         python scripts/merge_mc_nodes.py \
         --input-dir {params.directory} \
         --pattern {params.pattern} \
-        --{params.out_type} {output}
+        --{params.out_type} {output} \
+        > {log} 2>%1
         """
 
 

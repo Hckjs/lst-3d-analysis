@@ -27,8 +27,6 @@ from lstchain.io.io import (
 from sklearn.model_selection import train_test_split
 from tables import open_file
 
-from scriptutils.log import setup_logging
-
 log = logging.getLogger(__name__)
 
 HDF5_ZSTD_FILTERS = tables.Filters(
@@ -115,11 +113,8 @@ def main():
         default="*.h5",
         help="Glob pattern to match files",
     )
-    parser.add_argument("--log-file")
-    parser.add_argument("-v", "--verbose", action="store_true")
 
     args = parser.parse_args()
-    setup_logging(logfile=args.log_file, verbose=args.verbose)
     train_size = args.train_size
 
     log.info(f"Merging files in {args.input_dir} with pattern {args.pattern}")
