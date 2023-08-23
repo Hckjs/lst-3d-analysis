@@ -23,14 +23,14 @@ rule mc:
 
 checkpoint link_mc:
     output:
-        out / "mc-linked.txt",
+        dummy=out / "mc-linked.txt",
+        config=model_config / "lstchain_config.json",
     input:
         script=scripts / "link-mc.py",
     params:
         production=PRODUCTION,
         declination=DECLINATION,
         mc_nodes=mc_nodes,
-        model_config=model_config,
     conda:
         link_env
     log:
@@ -41,9 +41,9 @@ checkpoint link_mc:
         --prod {params.production} \
         --dec {params.declination} \
         --mc-nodes-link-dir {params.mc_nodes} \
-        --model-config-link-path {params.model_config} \
+        --model-config-link-path {output.config} \
         --log-file {log} \
-        --output-path {output}"
+        --output-path {output.dummy}"
 
 
 rule merge_gamma_mc_per_node:
