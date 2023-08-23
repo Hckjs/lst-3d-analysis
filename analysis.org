@@ -517,13 +517,13 @@ rule merge_gamma_mc_per_node:
 
 rule merge_proton_mc_per_node:
     output:
-        train=mc / "Proton/{node}_train.dl1.h5",
+        train=mc / "Protons/{node}_train.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts/"merge_mc_nodes.py",
     params:
         train_size=1.0,
-        directory=lambda wildcards: mc_nodes / f"Proton/{wildcards.node}",
+        directory=lambda wildcards: mc_nodes / f"Protons/{wildcards.node}",
     conda:
         env
     log:
@@ -582,7 +582,7 @@ rule train_models:
         models_to_train,
     input:
         gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
-        proton=dl1 / "train/Proton_train.dl1.h5",
+        proton=dl1 / "train/Protons_train.dl1.h5",
         config=model_config / "lstchain_config.json",
     resources:
         mem_mb=64000,
