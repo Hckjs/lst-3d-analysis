@@ -75,7 +75,11 @@ def RUN_IDS(wildcards):
 # SHould be the same for protons
 def MC_NODES(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output).exists()
-    return [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
+    nodes = [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
+    return expand(
+        mc / "{{wildcards.particle}}/{node}_{{wildcards.train_or_test}}.dl1.h5",
+        node=nodes,
+    )
 
 
 models_to_train = [

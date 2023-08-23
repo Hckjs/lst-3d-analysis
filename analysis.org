@@ -121,7 +121,11 @@ def RUN_IDS(wildcards):
 # SHould be the same for protons
 def MC_NODES(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output).exists()
-    return [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
+    nodes = [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
+    return expand(
+        mc / "{{wildcards.particle}}/{node}_{{wildcards.train_or_test}}.dl1.h5",
+        node=nodes,
+    )
 
 models_to_train = [
     Path(OUTDIRS["models"]) / "reg_energy.sav",
@@ -540,10 +544,7 @@ rule merge_train_or_test_of_all_nodes:
     output:
         dl1 / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
     input:
-        files=expand(
-            mc / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
-            node=MC_NODES,
-        ),
+        MC_NODES
     params:
         directory=lambda wildcards: mc / f"{wildcards.particle}",
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",

@@ -97,10 +97,7 @@ rule merge_train_or_test_of_all_nodes:
     output:
         dl1 / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
     input:
-        files=expand(
-            mc / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
-            node=MC_NODES,
-        ),
+        MC_NODES,
     params:
         directory=lambda wildcards: mc / f"{wildcards.particle}",
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
