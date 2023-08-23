@@ -17,7 +17,7 @@ train_size = 0.4
 
 rule mc:
     input:
-        link=out / "mc-linked.txt",
+        link=mc / "mc-linked.txt",
         models=models_to_train,
 
 
