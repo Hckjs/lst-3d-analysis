@@ -16,12 +16,29 @@ rule mc:
         m=models_to_train,
 
 
-def all_gamma_nodes(wildcards):
-    linked = checkpoints.run_ids.get(**wildcards).output
-    all_gamma_nodes = [
-        x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()
-    ]
-    return all_gamma_nodes
+checkpoint link_mc:
+    output:
+        out / "mc-linked.txt",
+    input:
+        script=scripts / "link-mc.py",
+    params:
+        production=PRODUCTION,
+        declination=DECLINATION,
+        mc_nodes=mc_link_location,
+        models=models_link_location,
+    conda:
+        env
+    log:
+        out / "link_mc.log",
+    shell:
+        "python \
+        {input.script} \
+        --prod {params.production} \
+        --dec {params.declination} \
+        --mc-nodes-link-dir {params.mc_nodes} \
+        --models-link-dir {params.models} \
+        --log-file {log} \
+        --output-path {output}"
 
 
 rule merge_gamma_mc_per_node:
@@ -29,7 +46,9 @@ rule merge_gamma_mc_per_node:
         train=mc / "GammaDiffuse/{node}_train.dl1.h5",
         test=mc / "GammaDiffuse/{node}_test.dl1.h5",
     input:
-        all_gamma_nodes,
+        # put the all linked here and in the merge train test to amek sure
+        # this is valid!
+        x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir(),
     params:
         train_size=train_size,
         directory=lambda node: mc_nodes / f"GammaDiffuse/{node}",

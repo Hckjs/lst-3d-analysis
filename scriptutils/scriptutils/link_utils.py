@@ -1,7 +1,21 @@
+import logging
+
 import astropy.units as u
 import numpy as np
 from astropy.coordinates import AltAz, EarthLocation, angular_separation
 from astropy.time import Time
+
+log = logging.getLogger(__name__)
+
+
+def link(target, linkname, unlink=True):
+    "unlink: whether to remove preexisting link"
+    log.debug(f"Creating link at position {linkname} pointing to {target}")
+    linkname.parent.mkdir(exist_ok=True, parents=True)
+    if linkname.exists() and linkname.is_symlink() and unlink:
+        log.debug("Removing existing link")
+        linkname.unlink()
+    linkname.symlink_to(target)
 
 
 def sin_delta(altaz: AltAz):

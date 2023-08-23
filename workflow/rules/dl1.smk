@@ -16,7 +16,7 @@ run_selection_plots = [
 
 rule dl1:
     input:
-        out / "all-linked.txt",
+        out / "runs-linked.txt",
         run_selection_plots,
 
 
@@ -95,7 +95,7 @@ rule data_check:
         --log-file {log}"
 
 
-rule run_ids:
+checkpoint run_ids:
     output:
         out / "runs.json",
     input:
@@ -115,35 +115,26 @@ rule run_ids:
         --log-file {log}"
 
 
-checkpoint link_paths:
+checkpoint link_runs:
     output:
-        out / "all-linked.txt",
+        out / "runs-linked.txt",
     input:
         runs=out / "runs.json",
         datacheck=out / "dl1-datachecks-masked.h5",
-        script=scripts / "link-paths.py",
+        script=scripts / "link-runs.py",
     params:
-        production=PRODUCTION,
-        declination=DECLINATION,
         dl1=dl1_link_location,
-        mc_nodes=mc_link_location,
-        models=models_link_location,
     conda:
         env
     log:
-        out / "link_paths.log",
+        out / "link_runs.log",
     shell:
         "python \
         {input.script} \
         --runs {input.runs} \
-        --prod {params.production} \
-        --dec {params.declination} \
-        --runsummary {input.datacheck} \
         --dl1-link-dir {params.dl1} \
-        --mc-nodes-link-dir {params.mc_nodes} \
-        --models-link-dir {params.models} \
         --log-file {log} \
-        -o {output}"
+        --output-path {output}"
 
 
 rule plot_data_selection:
