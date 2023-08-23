@@ -18,6 +18,7 @@ train_size = 0.4
 rule mc:
     input:
         link=out / "mc-linked.txt",
+        models=models_to_train,
 
 
 checkpoint link_mc:
@@ -40,7 +41,7 @@ checkpoint link_mc:
         --prod {params.production} \
         --dec {params.declination} \
         --mc-nodes-link-dir {params.mc_nodes} \
-        --models-link-dir {params.model_config} \
+        --model-config-link-path {params.model_config} \
         --log-file {log} \
         --output-path {output}"
 

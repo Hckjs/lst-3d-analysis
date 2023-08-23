@@ -441,7 +441,8 @@ train_size = 0.4
 
 rule mc:
     input:
-        link=out / "mc-linked.txt"
+        link=out / "mc-linked.txt",
+        models=models_to_train,
 
 #+end_src
 
@@ -468,21 +469,13 @@ checkpoint link_mc:
         --prod {params.production} \
         --dec {params.declination} \
         --mc-nodes-link-dir {params.mc_nodes} \
-        --models-link-dir {params.model_config} \
+        --model-config-link-path {params.model_config} \
         --log-file {log} \
         --output-path {output}"
 
 #+end_src
 
 ** Create train and test files per node
-
-
-I am not quite sure if I am happy with the /all_gamma_nodes/ solution.
-Need to test it to make sure it works as expected.
-
-In the merge rule there is a hardcoded GammaDiffuse, which I also dont like much.
-Reason is simple: I dont need to merge protons, because we can use the "premerged" file since
-I do not need test files for them. But maybe it would be nicer to still do the merging(?).
 
 First of all, the individual runs of a single allsky node need to be merged.
 After this step there will 2 (train+test) diffuse gamma files per node.
@@ -581,7 +574,7 @@ rule train_models:
     input:
         gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
         proton=dl1 / "train/Proton_train.dl1.h5",
-        config=model_config / "lstchain_config.json", 
+        config=model_config / "lstchain_config.json",
     resources:
         mem_mb=64000,
         cpus=8,
