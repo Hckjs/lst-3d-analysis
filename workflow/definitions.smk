@@ -72,23 +72,6 @@ def RUN_IDS(wildcards):
     return sorted(set(chain(*runs.values())))
 
 
-# SHould be the same for protons
-def MC_NODES(wildcards):
-    exists = Path(checkpoints.link_mc.get(**wildcards).output).exists()
-    nodes = [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
-    return expand(
-        mc / "{{wildcards.particle}}/{node}_{{wildcards.train_or_test}}.dl1.h5",
-        node=nodes,
-    )
-
-
-models_to_train = [
-    Path(OUTDIRS["models"]) / "reg_energy.sav",
-    Path(OUTDIRS["models"]) / "cls_gh.sav",
-    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
-    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
-]
-
 # TODO: cuts are not really IRFs, should separate that.
 # Add radmax here if 1D
 irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
