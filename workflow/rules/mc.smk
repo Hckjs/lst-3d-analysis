@@ -23,7 +23,7 @@ rule mc:
 
 checkpoint link_mc:
     output:
-        dummy=out / "mc-linked.txt",
+        dummy=mc / "mc-linked.txt",
         config=model_config / "lstchain_config.json",
     input:
         script=scripts / "link-mc.py",
@@ -34,7 +34,7 @@ checkpoint link_mc:
     conda:
         link_env
     log:
-        out / "link_mc.log",
+        mc / "link_mc.log",
     shell:
         "python \
         {input.script} \
@@ -51,7 +51,7 @@ rule merge_gamma_mc_per_node:
         train=mc / "GammaDiffuse/{node}_train.dl1.h5",
         test=mc / "GammaDiffuse/{node}_test.dl1.h5",
     input:
-        out / "mc-linked.txt",
+        mc / "mc-linked.txt",
     params:
         train_size=train_size,
         directory=lambda wildcards: mc_nodes / f"GammaDiffuse/{wildcards.node}",
@@ -74,7 +74,7 @@ rule merge_proton_mc_per_node:
     output:
         train=mc / "Proton/{node}_train.dl1.h5",
     input:
-        out / "mc-linked.txt",
+        mc / "mc-linked.txt",
     params:
         train_size=1.0,
         directory=lambda wildcards: mc_nodes / f"Proton/{wildcards.node}",
