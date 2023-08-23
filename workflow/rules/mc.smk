@@ -1,4 +1,5 @@
 env = ENVS["lstchain"]
+link_env = ENVS["data_selection"]
 scripts = Path(SCRIPTS["mc"])
 mc = Path(OUTDIRS["mc"])
 
@@ -30,7 +31,7 @@ checkpoint link_mc:
         mc_nodes=mc_nodes,
         models=models,
     conda:
-        env
+        link_env
     log:
         out / "link_mc.log",
     shell:
