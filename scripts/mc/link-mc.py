@@ -40,8 +40,10 @@ def main():
     linkname_model = Path(args.model_config_link_path)
     link(target_model, linkname_model)
 
-    log.info(f"Touch dummy output at {args.output_path}")
-    Path(args.output_path).touch()
+    output = Path(args.output_path)
+    log.debug(f"Touch dummy output at {output}")
+    output.touch()
+    log.debug(output.exists())
 
 
 if __name__ == "__main__":

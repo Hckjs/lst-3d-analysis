@@ -43,6 +43,7 @@ checkpoint link_mc:
         --mc-nodes-link-dir {params.mc_nodes} \
         --model-config-link-path {output.config} \
         --log-file {log} \
+        --verbose \
         --output-path {output.dummy}"
 
 
