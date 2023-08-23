@@ -113,8 +113,20 @@ def main():
         default="*.h5",
         help="Glob pattern to match files",
     )
-
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+
+    # Cant import from utils here because this is executed in the lstchain env
+    if args.verbose is True:
+        log.level = logging.DEBUG
+    else:
+        log.level = logging.INFO
+
+    if args.log_file:
+        file_handler = logging.FileHandler(args.log_file)
+        log.addHandler(file_handler)
+
     train_size = args.train_size
 
     log.info(f"Merging files in {args.input_dir} with pattern {args.pattern}")

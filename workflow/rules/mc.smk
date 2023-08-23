@@ -21,6 +21,10 @@ rule mc:
         models=models_to_train,
 
 
+localrules:
+    link_mc,
+
+
 checkpoint link_mc:
     output:
         dummy=mc / "mc-linked.txt",
@@ -61,14 +65,12 @@ rule merge_gamma_mc_per_node:
     log:
         mc / "merge_gamma_mc_{node}.log",
     shell:
-        """
-        python scripts/merge_mc_nodes.py \
+        "python scripts/merge_mc_nodes.py \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
         --output-test {output.test} \
-        > {log} 2>%1
-        """
+        --log-file {log}"
 
 
 rule merge_proton_mc_per_node:
@@ -84,13 +86,11 @@ rule merge_proton_mc_per_node:
     log:
         mc / "merge_proton_mc_{node}.log",
     shell:
-        """
-        python scripts/merge_mc_nodes.py \
+        "python scripts/merge_mc_nodes.py \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
-        > {log} 2>%1
-        """
+        --log-file {log}"
 
 
 rule merge_train_or_test_of_all_nodes:
@@ -115,10 +115,11 @@ rule merge_train_or_test_of_all_nodes:
         --input-dir {params.directory} \
         --pattern {params.pattern} \
         --{params.out_type} {output} \
-        > {log} 2>%1
+        --log-file {log}
         """
 
 
+# TODO Any chance to get logging in here?
 rule train_models:
     output:
         models_to_train,
@@ -141,6 +142,5 @@ rule train_models:
         --fg {input.gamma} \
         --fp {input.proton} \
         --config {input.config} \
-        --output-dir {models} \
-        > {log} 2>&1
+        --output-dir {models}
         """

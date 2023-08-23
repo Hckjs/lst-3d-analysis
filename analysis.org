@@ -444,6 +444,9 @@ rule mc:
         link=mc / "mc-linked.txt",
         models=models_to_train,
 
+localrules:
+    link_mc,
+
 #+end_src
 
 ** Link nodes
@@ -497,14 +500,12 @@ rule merge_gamma_mc_per_node:
     log:
         mc / "merge_gamma_mc_{node}.log",
     shell:
-        """
-        python scripts/merge_mc_nodes.py \
+        "python scripts/merge_mc_nodes.py \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
         --output-test {output.test} \
-        > {log} 2>%1
-        """
+        --log-file {log}"
 
 rule merge_proton_mc_per_node:
     output:
@@ -519,13 +520,11 @@ rule merge_proton_mc_per_node:
     log:
         mc / "merge_proton_mc_{node}.log",
     shell:
-        """
-        python scripts/merge_mc_nodes.py \
+        "python scripts/merge_mc_nodes.py \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
-        > {log} 2>%1
-        """
+        --log-file {log}"
 
 #+end_src
 
@@ -559,7 +558,7 @@ rule merge_train_or_test_of_all_nodes:
         --input-dir {params.directory} \
         --pattern {params.pattern} \
         --{params.out_type} {output} \
-        > {log} 2>%1
+        --log-file {log}
         """
 
 #+end_src
@@ -570,6 +569,7 @@ That requires a lot of resources, because they load all of the data into RAM at 
 
 #+begin_src snakemake
 
+# TODO Any chance to get logging in here?
 rule train_models:
     output:
         models_to_train,
@@ -592,8 +592,7 @@ rule train_models:
         --fg {input.gamma} \
         --fp {input.proton} \
         --config {input.config} \
-        --output-dir {models} \
-        > {log} 2>&1
+        --output-dir {models}
         """
 
 #+end_src
