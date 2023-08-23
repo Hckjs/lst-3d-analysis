@@ -49,7 +49,7 @@ rule merge_gamma_mc_per_node:
         train=mc / "GammaDiffuse/{node}_train.dl1.h5",
         test=mc / "GammaDiffuse/{node}_test.dl1.h5",
     input:
-        GAMMA_NODES,
+        expand(mc_nodes / "GammaDiffuse/{node}_{{train_or_test}}.dl1.h5", node=MC_NODES),
     params:
         train_size=train_size,
         directory=lambda node: mc_nodes / f"GammaDiffuse/{node}",
@@ -72,7 +72,7 @@ rule merge_proton_mc_per_node:
     output:
         train=mc / "Proton/{node}_train.dl1.h5",
     input:
-        PROTON_NODES,
+        expand(mc_nodes / "Proton/{node}_{{train_or_test}}.dl1.h5", node=MC_NODES),
     params:
         train_size=1.0,
         directory=lambda node: mc_nodes / f"Proton/{node}",
@@ -96,7 +96,7 @@ rule merge_train_or_test_of_all_nodes:
     input:
         files=expand(
             mc / "{{particle}}/{node}_{{train_or_test}}.dl1.h5",
-            node=all_gamma_nodes,
+            node=MC_NODES,
         ),
     params:
         directory=lambda wildcards: mc / f"{wildcards.particle}",
@@ -120,7 +120,7 @@ rule train_models:
         models_to_train,
     input:
         gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
-        proton=dl1 / "train/Proton_merged.dl1.h5",
+        proton=dl1 / "train/Proton_train.dl1.h5",
         config=models / "mcpipe/lstchain_config.json",
     resources:
         mem_mb=64000,
