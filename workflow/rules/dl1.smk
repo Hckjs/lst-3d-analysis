@@ -3,8 +3,6 @@ config = CONFIGS["data_selection"]
 scripts = Path(SCRIPTS["data_selection"])
 out = Path(OUTDIRS["data_selection"])
 dl1_link_location = Path(OUTDIRS["dl1"])
-mc_link_location = Path(OUTDIRS["mc_nodes"])
-models_link_location = Path(OUTDIRS["models_link"])
 plots = out / "plots"
 
 

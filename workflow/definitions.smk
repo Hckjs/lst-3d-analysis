@@ -72,14 +72,10 @@ def RUN_IDS(wildcards):
     return sorted(set(chain(*runs.values())))
 
 
-def GAMMA_NODES(wildcards):
+# SHould be the same for protons
+def MC_NODES(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output).exists()
     return [x.name for x in (mc_nodes / "GammaDiffuse").glob("*") if x.is_dir()]
-
-
-def PROTON_NODES(wildcards):
-    exists = Path(checkpoints.link_mc.get(**wildcards).output).exists()
-    return [x.name for x in (mc_nodes / "Proton").glob("*") if x.is_dir()]
 
 
 models_to_train = [
