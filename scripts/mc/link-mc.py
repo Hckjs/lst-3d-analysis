@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 def main():
     parser = ArgumentParser()
     parser.add_argument("--mc-nodes-link-dir", required=True)
-    parser.add_argument("--models-link-dir", required=True)
+    parser.add_argument("--model-config-link-path", required=True)
     parser.add_argument("-o", "--output-path", required=True)
     parser.add_argument("--prod", required=True)
     parser.add_argument("--dec", required=True)
@@ -37,7 +37,7 @@ def main():
     # Link model training config
     template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/"
     target_model = Path(template_target_model.format(prod=prod, dec=dec))
-    linkname_model = Path(args.models_link_dir)
+    linkname_model = Path(args.model_config_link_path)
     link(target_model, linkname_model)
 
     Path(args.output_path).touch()

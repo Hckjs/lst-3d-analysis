@@ -29,7 +29,7 @@ checkpoint link_mc:
         production=PRODUCTION,
         declination=DECLINATION,
         mc_nodes=mc_nodes,
-        models=models,
+        model_config=model_config,
     conda:
         link_env
     log:
@@ -40,7 +40,7 @@ checkpoint link_mc:
         --prod {params.production} \
         --dec {params.declination} \
         --mc-nodes-link-dir {params.mc_nodes} \
-        --models-link-dir {params.models} \
+        --models-link-dir {params.model_config} \
         --log-file {log} \
         --output-path {output}"
 
@@ -122,7 +122,7 @@ rule train_models:
     input:
         gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
         proton=dl1 / "train/Proton_train.dl1.h5",
-        config=models / "mcpipe/lstchain_config.json",
+        config=model_config / "lstchain_config.json",
     resources:
         mem_mb=64000,
         cpus=8,
