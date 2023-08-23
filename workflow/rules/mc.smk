@@ -56,7 +56,8 @@ rule merge_gamma_mc_per_node:
         train=mc / "GammaDiffuse/{node}_train.dl1.h5",
         test=mc / "GammaDiffuse/{node}_test.dl1.h5",
     input:
-        mc / "mc-linked.txt",
+        dummy=mc / "mc-linked.txt",
+        script=scripts / "merge_mc_nodes.py",
     params:
         train_size=train_size,
         directory=lambda wildcards: mc_nodes / f"GammaDiffuse/{wildcards.node}",
@@ -65,7 +66,7 @@ rule merge_gamma_mc_per_node:
     log:
         mc / "merge_gamma_mc_{node}.log",
     shell:
-        "python scripts/merge_mc_nodes.py \
+        "python {input.script} \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
@@ -77,7 +78,8 @@ rule merge_proton_mc_per_node:
     output:
         train=mc / "Proton/{node}_train.dl1.h5",
     input:
-        mc / "mc-linked.txt",
+        dummy=mc / "mc-linked.txt",
+        script=scripts / "merge_mc_nodes.py",
     params:
         train_size=1.0,
         directory=lambda wildcards: mc_nodes / f"Proton/{wildcards.node}",
@@ -86,7 +88,7 @@ rule merge_proton_mc_per_node:
     log:
         mc / "merge_proton_mc_{node}.log",
     shell:
-        "python scripts/merge_mc_nodes.py \
+        "python {input.script} \
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
@@ -97,7 +99,8 @@ rule merge_train_or_test_of_all_nodes:
     output:
         dl1 / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
     input:
-        MC_NODES,
+        nodes=MC_NODES,
+        script=scripts / "merge_mc_nodes.py",
     params:
         directory=lambda wildcards: mc / f"{wildcards.particle}",
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
@@ -108,7 +111,7 @@ rule merge_train_or_test_of_all_nodes:
         mc / "merge_all_{particle}_{train_or_test}.log",
     shell:
         """
-        python scripts/merge_mc_nodes.py \
+        "python {input.script} \
         --input-dir {params.directory} \
         --pattern {params.pattern} \
         --{params.out_type} {output} \
