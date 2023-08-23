@@ -35,7 +35,9 @@ def main():
     link(target_nodes, linkname_nodes)
 
     # Link model training config
-    template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}/lstchain.json"
+    template_target_model = (
+        "/fefs/aswg/data/models/AllSky/{prod}/{dec}/lstchain_config.json"
+    )
     target_model = Path(template_target_model.format(prod=prod, dec=dec))
     linkname_model = Path(args.model_config_link_path)
     link(target_model, linkname_model)
@@ -43,7 +45,6 @@ def main():
     output = Path(args.output_path)
     log.debug(f"Touch dummy output at {output}")
     output.touch()
-    log.debug(output.exists())
 
 
 if __name__ == "__main__":
