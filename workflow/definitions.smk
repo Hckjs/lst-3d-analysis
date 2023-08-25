@@ -8,6 +8,13 @@ env_dir = Path("workflow/envs")
 config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
 main_config_path = (config_dir / "lst_agn.json").absolute()
 build = Path("build") / config_dir.name
+
+# Using the one used for the dl1 MCs as I dont reprocess anything
+# Best might be to reproduce dl1 mc and data?
+# For now this is fine as mcpipe uses the default config from lstchain
+# (at least in my test production) and lstchain versions dont differ much in the output
+# (hopefully). Thats a fat TODO though...
+lstchain_config = build / "lstchain_config.json"
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 
 with open(main_config_path, "r") as f:
@@ -32,8 +39,6 @@ OUTDIRS = {
         build / "mc_nodes"
     ).absolute(),  # This is not really configurable, its hard coded in the link script
     "mc": (build / "mc").absolute(),
-    "models": (build / "models").absolute(),
-    "models_link": (build / "models/mcpipe").absolute(),
     "dl1": (build / "dl1").absolute(),
     "dl2": (build / "dl2").absolute(),
     "dl3": (build / "dl3").absolute(),
@@ -74,10 +79,29 @@ def RUN_IDS(wildcards):
 
 def MC_NODES(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
-    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}"
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / f"{wildcards.particle}"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
+    return nodes
+
+
+def MC_NODES_DL1(wildcards):
+    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}/dl1"
+    nodes = MC_NODES(wildcards)
     return [out / f"{node}_{wildcards.train_or_test}.dl1.h5" for node in nodes]
+
+
+def MC_NODES_DL2(wildcards):
+    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}/dl2"
+    nodes = MC_NODES(wildcards)
+    return [out / f"{node}_{wildcards.train_or_test}.dl2.h5" for node in nodes]
+
+
+def MC_NODES_IRFs(wildcards):
+    exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
+    out = Path(OUTDIRS["irfs"])
+    mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
+    nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
+    return [out / f"irfs_{node}_.fits.gz" for node in nodes]
 
 
 models_to_train = [

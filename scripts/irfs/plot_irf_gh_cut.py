@@ -1,18 +1,20 @@
+import logging
 from argparse import ArgumentParser
 
 from astropy import units as u
 from astropy.table import Table
 from matplotlib import pyplot as plt
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
-energy_unit = u.TeV
+log = logging.getLogger(__name__)
 
 
-def main(input_path, output):
+def main(input_path, output, log_file, verbose):
+    setup_logging(logfile=log_file, verbose=verbose)
+
+    energy_unit = u.TeV
+
     gh_cuts = Table.read(input_path, hdu="GH_CUTS")
 
     fig, ax = plt.subplots()
@@ -47,4 +49,10 @@ def main(input_path, output):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
     main(**vars(args))

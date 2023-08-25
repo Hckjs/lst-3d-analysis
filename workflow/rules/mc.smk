@@ -1,13 +1,15 @@
 env = ENVS["lstchain"]
 link_env = ENVS["data_selection"]
+plot_env = ENVS["gammapy"]
 scripts = Path(SCRIPTS["mc"])
 mc = Path(OUTDIRS["mc"])
+models = mc / "models"
 
 # Need some extra dirs
 mc_nodes = Path(OUTDIRS["mc_nodes"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
-model_config = models / "config"
+config = lstchain_config
 
 plots = mc / "plots"
 
@@ -28,7 +30,7 @@ localrules:
 checkpoint link_mc:
     output:
         dummy=mc / "mc-linked.txt",
-        config=model_config / "lstchain_config.json",
+        config=config,
     input:
         script=scripts / "link-mc.py",
     params:
@@ -53,8 +55,8 @@ checkpoint link_mc:
 
 rule merge_gamma_mc_per_node:
     output:
-        train=mc / "GammaDiffuse/{node}_train.dl1.h5",
-        test=mc / "GammaDiffuse/{node}_test.dl1.h5",
+        train=mc / "GammaDiffuse/dl1/{node}_train.dl1.h5",
+        test=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts / "merge_mc_nodes.py",
@@ -76,7 +78,7 @@ rule merge_gamma_mc_per_node:
 
 rule merge_proton_mc_per_node:
     output:
-        train=mc / "Protons/{node}_train.dl1.h5",
+        train=mc / "Protons/dl1/{node}_train.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts / "merge_mc_nodes.py",
@@ -97,9 +99,9 @@ rule merge_proton_mc_per_node:
 
 rule merge_train_or_test_of_all_nodes:
     output:
-        dl1 / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
+        mc / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
     input:
-        nodes=MC_NODES,
+        nodes=MC_NODES_DL1,
         script=scripts / "merge_mc_nodes.py",
     params:
         directory=lambda wildcards: mc / f"{wildcards.particle}",
@@ -124,9 +126,9 @@ rule train_models:
     output:
         models_to_train,
     input:
-        gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
-        proton=dl1 / "train/Protons_train.dl1.h5",
-        config=model_config / "lstchain_config.json",
+        gamma=mc / "train/GammaDiffuse_train.dl1.h5",
+        proton=mc / "train/Protons_train.dl1.h5",
+        config=config,
     resources:
         mem_mb=64000,
         cpus=8,

@@ -1,18 +1,20 @@
+import logging
 from argparse import ArgumentParser
 
 from astropy import units as u
 from gammapy.irf import load_irf_dict_from_file
 from matplotlib import pyplot as plt
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
-energy_unit = u.TeV
+log = logging.getLogger(__name__)
 
 
-def main(input_path, output):
+def main(input_path, output, log_file, verbose):
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+
+    energy_unit = u.TeV
+
     edisp = load_irf_dict_from_file(input_path)["edisp"]
 
     fig, ax = plt.subplots()
@@ -38,4 +40,10 @@ def main(input_path, output):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
     main(**vars(args))

@@ -1,16 +1,18 @@
+import logging
 from argparse import ArgumentParser
 
 import numpy as np
 from gammapy.irf import load_irf_dict_from_file
 from matplotlib import pyplot as plt
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
+
+log = logging.getLogger(__name__)
 
 
-def main(input_path, output):
+def main(input_path, output, log_file, verbose):
+    setup_logging(logfile=log_file, verbose=verbose)
+
     aeff = load_irf_dict_from_file(input_path)["aeff"]
 
     e_true = aeff.axes["energy_true"]
@@ -49,4 +51,10 @@ def main(input_path, output):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
     main(**vars(args))

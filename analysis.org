@@ -6,6 +6,7 @@
 :END:
 
 #+begin_src snakemake
+
 # Definitions only, no actual target
 include: "definitions.smk"
 include: "rules/dl1.smk"
@@ -55,6 +56,13 @@ env_dir = Path("workflow/envs")
 config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
 main_config_path = (config_dir / "lst_agn.json").absolute()
 build = Path("build") / config_dir.name
+
+# Using the one used for the dl1 MCs as I dont reprocess anything
+# Best might be to reproduce dl1 mc and data?
+# For now this is fine as mcpipe uses the default config from lstchain
+# (at least in my test production) and lstchain versions dont differ much in the output
+# (hopefully). Thats a fat TODO though...
+lstchain_config = build / "lstchain_config.json"
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 
 with open(main_config_path, "r") as f:
@@ -79,8 +87,6 @@ OUTDIRS = {
         build / "mc_nodes"
     ).absolute(),  # This is not really configurable, its hard coded in the link script
     "mc": (build / "mc").absolute(),
-    "models": (build / "models").absolute(),
-    "models_link": (build / "models/mcpipe").absolute(),
     "dl1": (build / "dl1").absolute(),
     "dl2": (build / "dl2").absolute(),
     "dl3": (build / "dl3").absolute(),
@@ -121,11 +127,30 @@ def RUN_IDS(wildcards):
 
 def MC_NODES(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
-    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}"
     mc_nodes = Path(OUTDIRS["mc_nodes"])/ f"{wildcards.particle}"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
+    return nodes
+
+def MC_NODES_DL1(wildcards):
+    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}/dl1"
+    nodes = MC_NODES(wildcards)
     return [out/f"{node}_{wildcards.train_or_test}.dl1.h5"
             for node in nodes]
+
+def MC_NODES_DL2(wildcards):
+    out = Path(OUTDIRS["mc"]) / f"{wildcards.particle}/dl2"
+    nodes = MC_NODES(wildcards)
+    return [out/f"{node}_{wildcards.train_or_test}.dl2.h5"
+            for node in nodes]
+
+def MC_NODES_IRFs(wildcards):
+    exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
+    out = Path(OUTDIRS["irfs"])
+    mc_nodes = Path(OUTDIRS["mc_nodes"])/ "GammaDiffuse"
+    nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
+    return [out/f"irfs_{node}_.fits.gz" for node in nodes]
+
+
 
 models_to_train = [
     Path(OUTDIRS["models"]) / "reg_energy.sav",
@@ -422,7 +447,6 @@ rule plot_run_pointings:
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/mc.smk :mkdirp yes
 :END:
-
 ** TODO things
 Also plots are missing. There should at least be some rf performance plots.
 
@@ -431,14 +455,16 @@ Also plots are missing. There should at least be some rf performance plots.
 #+begin_src snakemake
 env = ENVS["lstchain"]
 link_env = ENVS["data_selection"]
+plot_env = ENVS["gammapy"]
 scripts = Path(SCRIPTS["mc"])
 mc = Path(OUTDIRS["mc"])
+models = mc / "models"
 
 # Need some extra dirs
 mc_nodes = Path(OUTDIRS["mc_nodes"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
-model_config = models / "config"
+config = lstchain_config
 
 plots = mc / "plots"
 
@@ -446,10 +472,12 @@ plots = mc / "plots"
 train_size = 0.4
 
 
+
 rule mc:
     input:
         link=mc / "mc-linked.txt",
         models=models_to_train,
+
 
 localrules:
     link_mc,
@@ -462,7 +490,7 @@ localrules:
 checkpoint link_mc:
     output:
         dummy=mc / "mc-linked.txt",
-        config=model_config / "lstchain_config.json",
+        config=config,
     input:
         script=scripts / "link-mc.py",
     params:
@@ -495,8 +523,8 @@ After this step there will 2 (train+test) diffuse gamma files per node.
 
 rule merge_gamma_mc_per_node:
     output:
-        train=mc / "GammaDiffuse/{node}_train.dl1.h5",
-        test=mc / "GammaDiffuse/{node}_test.dl1.h5",
+        train=mc / "GammaDiffuse/dl1/{node}_train.dl1.h5",
+        test=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts/"merge_mc_nodes.py",
@@ -517,7 +545,7 @@ rule merge_gamma_mc_per_node:
 
 rule merge_proton_mc_per_node:
     output:
-        train=mc / "Protons/{node}_train.dl1.h5",
+        train=mc / "Protons/dl1/{node}_train.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts/"merge_mc_nodes.py",
@@ -537,7 +565,6 @@ rule merge_proton_mc_per_node:
 
 #+end_src
 
-
 ** Train models
 
 There is only one set of models for the whole trajectory and not one for each node in order
@@ -547,9 +574,9 @@ to make better use of the training statistic.
 
 rule merge_train_or_test_of_all_nodes:
     output:
-        dl1 / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
+        mc / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
     input:
-        nodes=MC_NODES,
+        nodes=MC_NODES_DL1,
         script=scripts/"merge_mc_nodes.py",
     params:
         directory=lambda wildcards: mc / f"{wildcards.particle}",
@@ -581,9 +608,9 @@ rule train_models:
     output:
         models_to_train,
     input:
-        gamma=dl1 / "train/GammaDiffuse_train.dl1.h5",
-        proton=dl1 / "train/Protons_train.dl1.h5",
-        config=model_config / "lstchain_config.json",
+        gamma=mc / "train/GammaDiffuse_train.dl1.h5",
+        proton=mc / "train/Protons_train.dl1.h5",
+        config=config,
     resources:
         mem_mb=64000,
         cpus=8,
@@ -608,17 +635,20 @@ rule train_models:
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dl2.smk :mkdirp yes
 :END:
+
+** Definition
 #+begin_src snakemake
 
+irf_config = CONFIGS["irf_tool"]
+mc = Path(OUTDIRS["mc"])
+irf = mc / "irfs"
 env = ENVS["lstchain"]
-# Having these as paths makes them easier to use
+irf_scripts = Path(SCRIPTS["irfs"])
 scripts = Path(SCRIPTS["dl2"])
 dl2 = Path(OUTDIRS["dl2"])
 models = Path(OUTDIRS["models"])
-plots = Path(PLOTSDIRS["dl2"])
-# TODO i dont like this path too much, but for now keep it
-# At least its clear where the config comes from
-config = models / "mcpipe/lstchain_config.json"
+plots = dl2 / "plots"
+config = lstchain_config
 
 
 rule dl2_stage:
@@ -627,130 +657,74 @@ rule dl2_stage:
             dl2 / "dl2_LST-1.Run{run_id}.h5",
             run_id=RUN_IDS,
         ),
+        irfs=MC_NODES_IRFs
 
+
+#+end_src
+
+** Create DL2
+
+#+begin_src snakemake
 
 rule dl2:
     resources:
         mem_mb=64000,
         cpus=4,
     output:
-        dl2 / "{potentially_test}dl2_LST-1.Run{run_id}.h5",
+        "{somepath}/dl2" / "{base}.dl2.h5",
     input:
-        data=dl1 / "{potentially_test}dl1_LST-1.Run{run_id}.h5",
+        data = "{somepath}/dl1" / "{base}.dl1.h5",
         config=config,
         models=models_to_train,
     conda:
         env
-    # allow wildcard to be empty to also match observed runs
-    wildcard_constraints:
-        potentially_test=".*",
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        ...
     shell:
         """
         lstchain_dl1_to_dl2  \
             --input-file {input.data}  \
             --output-dir $(dirname {output}) \
-            --path-models {input.model_dir}  \
+            --path-models {models}  \
             --config {input.config}
         """
 
+#+end_src
 
-rule cuts_dl2_dl3:
-    resources:
-        mem_mb="64G",
-        time=10,
-    conda:
-        lstchain_env
-    output:
-        build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
-    input:
-        dl2=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
-        irf=build_dir / "irf/irf_Run{run_id}.fits.gz",
-        config=irf_config_path,
-        script="scripts/calc_counts_after_cuts.py",
-    shell:
-        "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output}"
+** IRFs
+#+begin_src snakemake
 
-
-rule stack_cuts_dl2_dl3:
-    conda:
-        lstchain_env
-    output:
-        build_dir / "dl3/counts/after_gh_theta_cut_{norm}_stacked.h5",
-    input:
-        data=expand(
-            build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
-            run_id=RUN_IDS,
-        ),
-        script="scripts/stack_counts_after_cuts.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
-    shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --norm {wildcards.norm}"
-
-
-rule plot_cuts_dl2_dl3:
-    conda:
-        lstchain_env
-    output:
-        build_dir / "plots/counts_after_gh_theta_cut_{norm}.pdf",
-    input:
-        data=build_dir / "dl3/counts/after_gh_theta_cut_{norm}.h5",
-        script="scripts/plot_counts_after_cuts.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
-    shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-
-# Really using the lstchain env should be fine, but I want to not
-# use the lstchain env for plots at all. TODO: One Plot env?
-irf_env = ENVS["lstchain"]
-plot_env = ENVS["gammapy"]
-# Having these as paths makes them easier to use
-scripts = Path(SCRIPTS["irfs"])
-out = Path(OUTDIRS["irfs"])
-dl2_test_files = Path(OUTDIRS["dl2"]) / "test"
-plots = Path(PLOTSDIRS["dl2"])
-config = CONFIGS["irf_tool"]
-
-
-rule irf_stage:
-    input:
-        expand(
-            plots / "{irf}/{irf}_Run{run_id}.pdf", run_id=RUN_IDS, irf=irfs_to_produce
-        ),
-
-
+# TODO Logging
 rule irf:
     output:
-        out / "irfs_Run{run_id}.fits.gz",
+        irf / "irf_{node}.fits.gz",
     input:
-        gammas=dl2_test_files / "dl2_LST-1.Run{run_id}.h5",
-        config=config,
+        gammas=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
+        config=irf_config,
     conda:
-        irf_env
+        env
     resources:
         mem_mb=8000,
         time=10,
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        irf / "irf_{node}.log"
     shell:
         """
         lstchain_create_irf_files \
             -o {output} \
             -g {input.gammas} \
-            --config {input.config} \
+            --config {input.config}
         """
+#+end_src
 
 
+#+begin_src snakemake
 rule plot_irf:
     output:
-        plots / "{irf}/{irf}_Run{run_id}.pdf",
+        "{somedir}/plots/{irf}_{base}.pdf",
     input:
-        data=irf / "irfs_Run{run_id}.fits.gz",
-        script=scripts / "plot_{irf}.py",
+        data="{somedir}/irfs_{base}.fits.gz",
+        script=irf_scripts / "plot_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
         plot_env
@@ -758,16 +732,21 @@ rule plot_irf:
         mem_mb=1000,
         time=20,
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        "{somedir}/plots/{irf}.log"
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+        "MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+        -i {input.data} \
+        -o {output} \
+        --log-file {log}"
+
 #+end_src
 
 * DL3
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dl3.smk :mkdirp yes
 :END:
+** definitions
 #+begin_src snakemake
 
 env = ENVS["lstchain"]
@@ -1082,6 +1061,68 @@ rule stack_skymaps_dl3:
         script="scripts/stack_skymap.py",
     shell:
         "python {input.script} -i {input.data} -o {output}"
+
+#+end_src
+
+** Cuts dl3 (kinda irf)
+This wont work as it needs the "final" irf file!
+#+begin_src snakemake
+
+rule cuts_dl2_dl3:
+    resources:
+        mem_mb="64G",
+        time=10,
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
+    input:
+        dl2=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",
+        irf=build_dir / "irf/irf_Run{run_id}.fits.gz",
+        config=irf_config_path,
+        script="scripts/calc_counts_after_cuts.py",
+    shell:
+        "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output}"
+
+
+
+#+end_src
+
+#+begin_src snakemake
+
+
+rule stack_cuts_dl2_dl3:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "dl3/counts/after_gh_theta_cut_{norm}_stacked.h5",
+    input:
+        data=expand(
+            build_dir / "dl3/counts/after_gh_theta_cut_{run_id}.h5",
+            run_id=RUN_IDS,
+        ),
+        script="scripts/stack_counts_after_cuts.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --norm {wildcards.norm}"
+
+#+end_src
+
+#+begin_src snakemake
+
+rule plot_cuts_dl2_dl3:
+    conda:
+        lstchain_env
+    output:
+        build_dir / "plots/counts_after_gh_theta_cut_{norm}.pdf",
+    input:
+        data=build_dir / "dl3/counts/after_gh_theta_cut_{norm}.h5",
+        script="scripts/plot_counts_after_cuts.py",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
 
 #+end_src
 
