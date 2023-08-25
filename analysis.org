@@ -87,6 +87,7 @@ OUTDIRS = {
         build / "mc_nodes"
     ).absolute(),  # This is not really configurable, its hard coded in the link script
     "mc": (build / "mc").absolute(),
+    "models": (build / "models").absolute(),
     "dl1": (build / "dl1").absolute(),
     "dl2": (build / "dl2").absolute(),
     "dl3": (build / "dl3").absolute(),
