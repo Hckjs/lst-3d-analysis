@@ -13,13 +13,13 @@ config = lstchain_config
 rule dl2_stage:
     input:
         runs=expand(
-            dl2 / "dl2_LST-1.Run{run_id}.h5",
+            dl2 / "LST-1.Run{run_id}.dl2.h5",
             run_id=RUN_IDS,
         ),
         irfs=MC_NODES_IRFs,
 
 
-rule dl2:
+rule dl1_to_dl2:
     resources:
         mem_mb=64000,
         cpus=4,
@@ -32,7 +32,7 @@ rule dl2:
     conda:
         env
     log:
-        ...,
+        "{somepath}/dl2/dl1_to_dl2_{base}.log",
     shell:
         """
         lstchain_dl1_to_dl2  \

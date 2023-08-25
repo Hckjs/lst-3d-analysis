@@ -16,11 +16,16 @@ scripts = Path(SCRIPTS["dl3"])
 plots = Path(PLOTSDIRS["dl3"])
 
 
+# TODO CHeck if this works and then do it for all levels
+def dl3_filename(wildcards):
+    return f"dl3_LST-1.Run{wildcards.run_id}.fits.fits"
+
+
 rule dl3:
     output:
-        dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
+        dl3 / "dl3_LST-1.Run{run_id}.fits.gz",  # TODO Can i change that naming or does the create_hdu_index script fail then?
     input:
-        data=dl2 / "dl2_LST-1.Run{run_id}.h5",
+        data=dl2 / "LST-1.Run{run_id}.dl2.h5",
         irf=irfs / "irf_Run{run_id}.fits.gz",
         config=irf_config,
     conda:

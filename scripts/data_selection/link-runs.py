@@ -12,6 +12,14 @@ from scriptutils.log import setup_logging
 log = logging.getLogger(__name__)
 
 
+def rename_dl1(name):
+    """
+    Remove the leading dl1_ and replace the suffix.
+    dl1_LST-1.RunXXXXX.h5 -> LST-1.RunXXXXX.dl1.h5
+    """
+    return Path(name.strip("dl1_")).with_suffix(".dl1.h5")
+
+
 def main() -> None:  # noqa: PLR-915
     parser = ArgumentParser()
     parser.add_argument("--runs", required=True)
@@ -34,7 +42,7 @@ def main() -> None:  # noqa: PLR-915
     template_target_dl1 = (
         Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1
     ).as_posix()
-    template_linkname_dl1 = (outdir_dl1 / filename_dl1).as_posix()
+    template_linkname_dl1 = (outdir_dl1 / rename_dl1(filename_dl1)).as_posix()
 
     progress = tqdm(total=n_runs)
     for night, run_ids in runs.items():

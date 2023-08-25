@@ -654,7 +654,7 @@ config = lstchain_config
 rule dl2_stage:
     input:
         runs=expand(
-            dl2 / "dl2_LST-1.Run{run_id}.h5",
+            dl2 / "LST-1.Run{run_id}.dl2.h5",
             run_id=RUN_IDS,
         ),
         irfs=MC_NODES_IRFs
@@ -666,7 +666,7 @@ rule dl2_stage:
 
 #+begin_src snakemake
 
-rule dl2:
+rule dl1_to_dl2:
     resources:
         mem_mb=64000,
         cpus=4,
@@ -679,7 +679,7 @@ rule dl2:
     conda:
         env
     log:
-        ...
+        "{somepath}/dl2/dl1_to_dl2_{base}.log"
     shell:
         """
         lstchain_dl1_to_dl2  \
@@ -766,12 +766,16 @@ scripts = Path(SCRIPTS["dl3"])
 
 plots = Path(PLOTSDIRS["dl3"])
 
+# TODO CHeck if this works and then do it for all levels
+def dl3_filename(wildcards):
+    return f"dl3_LST-1.Run{wildcards.run_id}.fits.fits"
+
 
 rule dl3:
     output:
-        dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
+        dl3 / "dl3_LST-1.Run{run_id}.fits.gz", # TODO Can i change that naming or does the create_hdu_index script fail then?
     input:
-        data=dl2 / "dl2_LST-1.Run{run_id}.h5",
+        data=dl2 / "LST-1.Run{run_id}.dl2.h5",
         irf=irfs / "irf_Run{run_id}.fits.gz",
         config=irf_config,
     conda:
