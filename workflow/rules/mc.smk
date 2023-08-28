@@ -99,7 +99,7 @@ rule merge_proton_mc_per_node:
 
 rule merge_train_or_test_of_all_nodes:
     output:
-        mc / "{train_or_test}/{particle}_{train_or_test}.dl1.h5",
+        mc / "{particle}/{particle}_{train_or_test}.dl1.h5",
     input:
         nodes=MC_NODES_DL1,
         script=scripts / "merge_mc_nodes.py",
@@ -110,7 +110,7 @@ rule merge_train_or_test_of_all_nodes:
     conda:
         env
     log:
-        mc / "merge_all_{particle}_{train_or_test}.log",
+        mc / "{particle}/merge_all_{particle}_{train_or_test}.log",
     shell:
         """
         python {input.script} \
@@ -126,8 +126,8 @@ rule train_models:
     output:
         models_to_train,
     input:
-        gamma=mc / "train/GammaDiffuse_train.dl1.h5",
-        proton=mc / "train/Protons_train.dl1.h5",
+        gamma=mc / "GammaDiffuse/GammaDiffuse_train.dl1.h5",
+        proton=mc / "Protons/Protons_train.dl1.h5",
         config=config,
     resources:
         mem_mb=64000,
