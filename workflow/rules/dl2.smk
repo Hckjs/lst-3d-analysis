@@ -8,7 +8,7 @@ models = Path(OUTDIRS["models"])
 config = lstchain_config
 
 
-rule dl2_stage:
+rule dl2:
     input:
         runs=expand(
             dl2 / "LST-1.Run{run_id}.dl2.h5",
