@@ -88,7 +88,7 @@ rule merge_proton_mc_per_node:
     conda:
         env
     log:
-        mc / "Proton/merge_proton_mc_{node}.log",
+        mc / "Protons/merge_proton_mc_{node}.log",
     shell:
         "python {input.script} \
         --input-dir {params.directory} \
