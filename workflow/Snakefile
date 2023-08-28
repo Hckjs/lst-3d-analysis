@@ -2,9 +2,9 @@
 include: "definitions.smk"
 include: "rules/dl1.smk"
 include: "rules/mc.smk"
+include: "rules/dl2.smk"
 
 
-# include: "rules/dl2.smk"
 # include: "rules/dl3.smk"
 # include: "rules/dl4.smk"
 # include: "rules/dl5.smk"
