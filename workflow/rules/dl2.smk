@@ -1,12 +1,10 @@
-irf_config = CONFIGS["irf_tool"]
-mc = Path(OUTDIRS["mc"])
-irf = mc / "irfs"
 env = ENVS["lstchain"]
+irfs = Path(OUTDIRS["irfs"])
+irf_config = CONFIGS["irf_tool"]
 irf_scripts = Path(SCRIPTS["irfs"])
-scripts = Path(SCRIPTS["dl2"])
 dl2 = Path(OUTDIRS["dl2"])
+dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
-plots = dl2 / "plots"
 config = lstchain_config
 
 
@@ -46,7 +44,7 @@ rule dl1_to_dl2:
 # TODO Logging
 rule irf:
     output:
-        irf / "irf_{node}.fits.gz",
+        irfs / "irf_{node}.fits.gz",
     input:
         gammas=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
         config=irf_config,
@@ -56,7 +54,7 @@ rule irf:
         mem_mb=8000,
         time=10,
     log:
-        irf / "irf_{node}.log",
+        irfs / "irf_{node}.log",
     shell:
         """
         lstchain_create_irf_files \
