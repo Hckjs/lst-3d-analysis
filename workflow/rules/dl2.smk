@@ -22,9 +22,9 @@ rule dl1_to_dl2:
         mem_mb=64000,
         cpus=4,
     output:
-        "{somepath}/dl2" / "{base}.dl2.h5",
+        Path("{somepath}/dl2") / "{base}.dl2.h5",
     input:
-        data="{somepath}/dl1" / "{base}.dl1.h5",
+        data=Path("{somepath}/dl1") / "{base}.dl1.h5",
         config=config,
         models=models_to_train,
     conda:
