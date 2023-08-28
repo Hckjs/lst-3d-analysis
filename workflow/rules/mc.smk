@@ -66,7 +66,7 @@ rule merge_gamma_mc_per_node:
     conda:
         env
     log:
-        mc / "merge_gamma_mc_{node}.log",
+        mc / "GammaDiffuse/merge_gamma_mc_{node}.log",
     shell:
         "python {input.script} \
         --input-dir {params.directory} \
@@ -88,7 +88,7 @@ rule merge_proton_mc_per_node:
     conda:
         env
     log:
-        mc / "merge_proton_mc_{node}.log",
+        mc / "Proton/merge_proton_mc_{node}.log",
     shell:
         "python {input.script} \
         --input-dir {params.directory} \
