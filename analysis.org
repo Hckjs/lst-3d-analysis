@@ -589,7 +589,7 @@ rule merge_train_or_test_of_all_nodes:
         mc / "merge_all_{particle}_{train_or_test}.log",
     shell:
         """
-        "python {input.script} \
+        python {input.script} \
         --input-dir {params.directory} \
         --pattern {params.pattern} \
         --{params.out_type} {output} \
