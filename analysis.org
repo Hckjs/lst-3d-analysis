@@ -580,7 +580,7 @@ rule merge_train_or_test_of_all_nodes:
         nodes=MC_NODES_DL1,
         script=scripts/"merge_mc_nodes.py",
     params:
-        directory=lambda wildcards: mc / f"{wildcards.particle}",
+        directory=lambda wildcards: mc / f"{wildcards.particle}/dl1",
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
         out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
     conda:
