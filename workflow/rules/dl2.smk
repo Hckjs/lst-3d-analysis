@@ -15,9 +15,6 @@ rule dl2:
 
 
 rule dl1_to_dl2:
-    resources:
-        mem_mb=64000,
-        cpus=4,
     output:
         Path("{somepath}/dl2") / "{base}.dl2.h5",
     input:
@@ -26,6 +23,9 @@ rule dl1_to_dl2:
         models=models_to_train,
     conda:
         env
+    resources:
+        mem_mb=64000,
+        cpus=4,
     log:
         "{somepath}/dl2/dl1_to_dl2_{base}.log",
     shell:
@@ -38,7 +38,6 @@ rule dl1_to_dl2:
         """
 
 
-# TODO Logging
 rule irf:
     output:
         irfs / "irfs_{node}.fits.gz",
@@ -63,9 +62,9 @@ rule irf:
 
 rule plot_irf:
     output:
-        "{somedir}/plots/{irf}_{base}.pdf",
+        "{somepath}/plots/{irf}_{base}.pdf",
     input:
-        data="{somedir}/irfs_{base}.fits.gz",
+        data="{somepath}/irfs_{base}.fits.gz",
         script=irf_scripts / "plot_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
@@ -74,7 +73,7 @@ rule plot_irf:
         mem_mb=1000,
         time=20,
     log:
-        "{somedir}/plots/{irf}_{base}.log",
+        "{somepath}/plots/{irf}_{base}.log",
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \

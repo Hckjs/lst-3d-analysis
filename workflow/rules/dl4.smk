@@ -12,22 +12,6 @@ rule dataset_3d:
         "python {input.script} -c {input.config} -o {output}"
 
 
-rule calc_sensitivity:
-    input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        script="scripts/calc_sensitivity.py",
-    output:
-        build_dir / "dl4/{analysis}/sensitivity.fits.gz",
-    conda:
-        gammapy_env
-    shell:
-        """
-        python {input.script} \
-            --dataset-path {input.data} \
-            -o {output}
-        """
-
-
 rule calc_dl4_diagnostics:
     output:
         build_dir / "dl4/{analysis}/dl4_diagnostics.fits.gz",

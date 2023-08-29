@@ -102,7 +102,7 @@ def MC_NODES_IRFs(wildcards):
     out = Path(OUTDIRS["irfs"])
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
-    return [out / f"irfs_{node}_.fits.gz" for node in nodes]
+    return [out / f"irfs_{node}.fits.gz" for node in nodes]
 
 
 def DL2_FILES(wildcards):

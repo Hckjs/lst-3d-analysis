@@ -1,6 +1,11 @@
 #+title: Analysis
 #+property: header-args :exports code
 
+* TODO Missing things and bugs
+- logging waith lstchain scripts
+- run pointings
+- irf plots
+
 * Main Snakefile
 :PROPERTIES:
  :header-args:  :tangle ./workflow/Snakefile :mkdirp yes
@@ -149,7 +154,7 @@ def MC_NODES_IRFs(wildcards):
     out = Path(OUTDIRS["irfs"])
     mc_nodes = Path(OUTDIRS["mc_nodes"])/ "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
-    return [out/f"irfs_{node}_.fits.gz" for node in nodes]
+    return [out/f"irfs_{node}.fits.gz" for node in nodes]
 
 
 def DL2_FILES(wildcards):
@@ -496,9 +501,6 @@ rule plot_run_pointings:
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/mc.smk :mkdirp yes
 :END:
-** TODO things
-Also plots are missing. There should at least be some rf performance plots.
-
 ** Variables
 
 #+begin_src snakemake
@@ -684,8 +686,22 @@ rule train_models:
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dl2.smk :mkdirp yes
 :END:
+This stage contains:
+- dl1 to dl2 for data
+- dl1 to dl2 for test mc
+- calculate IRFs (at MC nodes!)
+- Plot IRFs
+
+It is not very complicated, because the annoying work of linking and organizing files
+has been done before.
 
 ** Definition
+
+The target is actually super simple here:
+All IRFs and all dl2 files.
+
+These are defined in [[variables]] and include the linking checkpoints.
+
 #+begin_src snakemake
 env = ENVS["lstchain"]
 irfs = Path(OUTDIRS["irfs"])
@@ -696,24 +712,21 @@ dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
 config = lstchain_config
 
-
 rule dl2:
     input:
         irfs=MC_NODES_IRFs,
         runs=DL2_FILES,
-
-
 #+end_src
 
 ** Create DL2
 
+Here we just use the lstchain script with the newly created models.
+The `{somepath}` wildcard makes it so that this rule works for both the
+observed runs and the MC. Organizing files starts to pay off!
+
 #+name: dl1_to_dl2_rule
 #+begin_src snakemake
-
 rule dl1_to_dl2:
-    resources:
-        mem_mb=64000,
-        cpus=4,
     output:
         Path("{somepath}/dl2") / "{base}.dl2.h5",
     input:
@@ -722,6 +735,9 @@ rule dl1_to_dl2:
         models=models_to_train,
     conda:
         env
+    resources:
+        mem_mb=64000,
+        cpus=4,
     log:
         "{somepath}/dl2/dl1_to_dl2_{base}.log"
     shell:
@@ -732,13 +748,20 @@ rule dl1_to_dl2:
             --path-models {models}  \
             --config {input.config}
         """
-
 #+end_src
 
 ** IRFs
-#+begin_src snakemake
+Calculating IRFs is an easy `lstchain` task.
+Note that these mc nodes are now not connected to the data at all (opposed to how it was
+done in the old 1D-analysis).
+This gives us more flexibility with regard to how that matching should be done and
+is more in line with the `lstchain 0.10` way of doing things, where the dl3 step
+gets all IRFs every time. That is needed to interpolate the IRFs, but works the same
+way when selecting the nearest one.
+In older `lstchain`-versions you would have to match by hand and give the script
+a single set of IRFs for a single observed run.
 
-# TODO Logging
+#+begin_src snakemake
 rule irf:
     output:
         irfs / "irfs_{node}.fits.gz",
@@ -761,14 +784,16 @@ rule irf:
         """
 #+end_src
 
-somedir to reuse the rule after lstchain created the effective irf at dl3 stage
+Plotting is a single rule although every IRF is saved individually.
+This works by naming the plot scripts in a predictable way of
+`plot_{irf}.py` and have them all behave the same way w.r.t. cli arguments.
 
 #+begin_src snakemake
 rule plot_irf:
     output:
-        "{somedir}/plots/{irf}_{base}.pdf",
+        "{somepath}/plots/{irf}_{base}.pdf",
     input:
-        data="{somedir}/irfs_{base}.fits.gz",
+        data="{somepath}/irfs_{base}.fits.gz",
         script=irf_scripts / "plot_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
@@ -777,7 +802,7 @@ rule plot_irf:
         mem_mb=1000,
         time=20,
     log:
-        "{somedir}/plots/{irf}_{base}.log"
+        "{somepath}/plots/{irf}_{base}.log"
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \
@@ -791,9 +816,14 @@ rule plot_irf:
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dl3.smk :mkdirp yes
 :END:
+This stage is rather complex.
+On the one hand, creating dl3 files from dl2 and IRFs is not difficult at all with the
+existing `lstchain` infrastructure. There are a lot of plots created here and skymaps are calculated, but that is not complicated, just a lot of rules. On the other hand
+
+
+
 ** definitions
 #+begin_src snakemake
-
 env = ENVS["lstchain"]
 bkg_env = ENVS["background"]
 
@@ -811,6 +841,9 @@ scripts = Path(SCRIPTS["dl3"])
 
 plots = Path(PLOTSDIRS["dl3"])
 
+#+end_src
+** Create DL3 Data
+#+begin_src snakemake
 # TODO CHeck if this works and then do it for all levels
 def dl3_filename(wildcards):
     return f"dl3_LST-1.Run{wildcards.run_id}.fits.fits"
@@ -935,6 +968,10 @@ rule dl3_hdu_index:
         --bkg-dir {params.bkg_dir} \
         --bkg-file {params.bkg_files}
         """
+
+#+end_src
+** Plot dl3 stuff
+#+begin_src snakemake
 
 
 # Plots using dl3 files
@@ -1111,6 +1148,7 @@ rule stack_skymaps_dl3:
     shell:
         "python {input.script} -i {input.data} -o {output}"
 
+
 #+end_src
 
 ** Cuts dl3 (kinda irf)
@@ -1180,6 +1218,8 @@ rule plot_cuts_dl2_dl3:
  :header-args:  :tangle ./workflow/rules/dl4.smk :mkdirp yes
 :END:
 
+** Create MapDataset
+
 #+begin_src snakemake
 
 # Create DL4 datasets, plot sensitivity, significance, ...
@@ -1196,22 +1236,11 @@ rule dataset_3d:
         "python {input.script} -c {input.config} -o {output}"
 
 
-rule calc_sensitivity:
-    input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        script="scripts/calc_sensitivity.py",
-    output:
-        build_dir / "dl4/{analysis}/sensitivity.fits.gz",
-    conda:
-        gammapy_env
-    shell:
-        """
-        python {input.script} \
-            --dataset-path {input.data} \
-            -o {output}
-        """
+#+end_src
 
+** Plot DL4 statistics
 
+#+begin_src snakemake
 rule calc_dl4_diagnostics:
     output:
         build_dir / "dl4/{analysis}/dl4_diagnostics.fits.gz",
@@ -1252,9 +1281,10 @@ rule plot_dl4:
         gammapy_env
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
 #+end_src
 
-* DL5
+* TODO DL5
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dl5.smk :mkdirp yes
 :END:
@@ -1367,7 +1397,7 @@ rule model_best_fit:
         """
 #+end_src
 
-* DM
+* TODO DM
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dm.smk :mkdirp yes
 :END:
