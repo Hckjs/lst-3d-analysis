@@ -97,12 +97,17 @@ def MC_NODES_DL2(wildcards):
     return [out / f"{node}_{wildcards.train_or_test}.dl2.h5" for node in nodes]
 
 
+# TODO: cuts are not really IRFs, should separate that.
+# Add radmax here if 1D
+irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
+
+
 def MC_NODES_IRFs(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
-    out = Path(OUTDIRS["irfs"])
+    out = Path(OUTDIRS["irfs"]) / "plots"
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
-    return [out / f"irfs_{node}.fits.gz" for node in nodes]
+    return [out / f"{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce]
 
 
 def DL2_FILES(wildcards):
@@ -117,8 +122,3 @@ models_to_train = [
     Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
     Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
 ]
-
-
-# TODO: cuts are not really IRFs, should separate that.
-# Add radmax here if 1D
-irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
