@@ -1,4 +1,5 @@
 env = ENVS["lstchain"]
+plot_env = ENVS["gammapy"]
 irfs = Path(OUTDIRS["irfs"])
 irf_config = CONFIGS["irf_tool"]
 irf_scripts = Path(SCRIPTS["irfs"])

@@ -51,7 +51,7 @@ OUTDIRS = {
 # Set all enviroments
 ENVS = {
     "lstchain": config_agn.get("lstchain_enviroment", "lstchain-v0.10.3"),
-    "gammapy": (env_dir / "agn_analysis.yml").absolute(),
+    "gammapy": (env_dir / "agn-analysis.yml").absolute(),
     "data_selection": (env_dir / "data-selection.yml").absolute(),
     "background": (env_dir / "background.yml").absolute(),
     "dark_matter": (env_dir / "dark_matter.yml").absolute(),
