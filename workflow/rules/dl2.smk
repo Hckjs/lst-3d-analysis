@@ -65,13 +65,15 @@ rule plot_irf:
         "{somepath}/plots/{irf}_{base}.pdf",
     input:
         data="{somepath}/irfs_{base}.fits.gz",
-        script=irf_scripts / "plot_{irf}.py",
+        script=irf_scripts / "plot_irf_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
         plot_env
     resources:
         mem_mb=1000,
         time=20,
+    wildcard_constraints:
+        irf="|".join(irfs_to_produce),
     log:
         "{somepath}/plots/{irf}_{base}.log",
     shell:

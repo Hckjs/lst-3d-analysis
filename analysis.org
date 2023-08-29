@@ -783,6 +783,10 @@ rule irf:
 Plotting is a single rule although every IRF is saved individually.
 This works by naming the plot scripts in a predictable way of
 `plot_{irf}.py` and have them all behave the same way w.r.t. cli arguments.
+The wildcard constraint makes it possible to have two wildcards in the output filename.
+Otherwise `irf` could match on e.g. `aeff_node_xzy_...` and `base` would only match
+on the last part. Maybe one could also change the behaviour of the regex matching there,
+but I think this solution is pretty nice.
 
 #+begin_src snakemake
 rule plot_irf:
@@ -790,13 +794,15 @@ rule plot_irf:
         "{somepath}/plots/{irf}_{base}.pdf",
     input:
         data="{somepath}/irfs_{base}.fits.gz",
-        script=irf_scripts / "plot_{irf}.py",
+        script=irf_scripts / "plot_irf_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
         plot_env
     resources:
         mem_mb=1000,
         time=20,
+    wildcard_constraints:
+        irf="|".join(irfs_to_produce)
     log:
         "{somepath}/plots/{irf}_{base}.log"
     shell:
