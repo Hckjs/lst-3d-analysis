@@ -766,7 +766,7 @@ rule irf:
     output:
         irfs / "irfs_{node}.fits.gz",
     input:
-        gammas=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
+        gammas=mc / "GammaDiffuse/dl2/{node}_test.dl2.h5",
         config=irf_config,
     conda:
         env
