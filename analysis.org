@@ -1,4 +1,5 @@
 #+title: Analysis
+#+property: header-args :exports code
 
 * Main Snakefile
 :PROPERTIES:
@@ -151,6 +152,12 @@ def MC_NODES_IRFs(wildcards):
     return [out/f"irfs_{node}_.fits.gz" for node in nodes]
 
 
+def DL2_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    print(ids)
+    out = Path(OUTDIRS["dl2"])
+    return [out / "LST-1.Run{run_id}.dl2.h5" for run_id in ids]
+
 
 models_to_train = [
     Path(OUTDIRS["models"]) / "reg_energy.sav",
@@ -175,17 +182,27 @@ irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
 
 This stage is arguably the most comlicated one.
 On the one hand, I do not even produce the dl1 files, instead using the LSTOSA files,
-but on the other hand this is where the magic happens as we go from "files somewhere on the cluster"
-to "nicely organized in the build directory".
+but on the other hand this is where the magic happens as we go from
+"files somewhere on the cluster" to "nicely organized in the build directory".
 At a previous point in time, this was referred to as linking and selecting rather than dl1,
-but I wanted to have a structure where every stage was one datalevel, because I disliked the
-"preselection, selection, selecting mcs" naming, that followed from the previous structure.
+but I wanted to have a structure where every stage was more or less one datalevel,
+because I disliked the "preselection, selection, selecting mcs" naming,
+that followed from the previous structure.
+
+*Note:* If there is a need to calculate DL1 as well, this is pretty straightforward here:
+Just link the DL0 instead and have a rule, that creates dl1 from that similar to
+[[nameref:dl1_to_dl2_rule][the dl1 to dl2 rule]].
+That would then also need to be done for the simulations as well and you probably want to use your own
+`lstchain`-config instead of linking the one used for the models like its done right now.
+
 
 ** Define stuff
 Important here (besides having the paths defined):
 There are some rules, that are really not computationally heavy.
 It would be a shame to have the slurm overhead for every step here, so
-they are defined as `localrules`.
+they are `localrules`.
+The linking step creates a dummy file `runs-linked.txt`, that acts as a checkpoint for
+the later steps.
 
 #+name: dl1_vars
 #+begin_src snakemake
@@ -220,16 +237,13 @@ localrules:
 #+end_src
 
 
-There is one manual step required at this point:
+There is one manual step required before this point:
 The runlist has to be downloaded from the lst1 website, which is password-protected.
 As I want to have this public, I cannot put the credentials here.
 It is just a simple `curl` command, so not a big deal.
 
 *Note:* The analysis will not know of new runs until you redownload the runlist.
 That should not matter most of the times, but keep it in mind!
-
-*NOTE:* It seems that snakemake sometimes deletes the output dir althoug the runlist is downloaded.
-I don't understand whats happening there.
 
 #+begin_src snakemake
 
@@ -248,6 +262,9 @@ rule runlist:
 
 First of all, we need to select runs observing our source(s) of interest.
 This is done purely based on the `runlist.html` without any notion of data quality.
+There is a column `Source Name` in there, which should match the source.
+A natural expansion here would be to select multiple source names at once if thats useful
+for the further analysis steps (-> Background model?)
 
 #+begin_src snakemake
 
@@ -270,6 +287,16 @@ rule select_datasets:
 
 ** Data quality checks
 
+The next step is discarding runs, that, for one reason or another, do not
+qualify for further analysis.
+Luckily, [[https://github.com/cta-observatory/lstosa][LSTOSA]] produces datacheck-files, that we can use here.
+A datacheck-file contains runwise statistics of some quantities commonly used to gauge
+data quality, for example the rate of cosmic events, which directly translates to
+some form of efficiency as the rate of hadrons arriving at earth is considered to be constant.
+
+For ease of use, we merge the runwise datachecks first and make the selection on that
+merged object.
+
 #+begin_src snakemake
 
 rule merge_datachecks:
@@ -286,6 +313,11 @@ rule merge_datachecks:
         "python {input.script} {input.data} {output.output} --log-file {log}"
 
 #+end_src
+
+That selection is based on one of the config files, where e.g. thresholds for the cosmics rate are set.
+As a result, the rule produces:
+- A list of selected runs
+- Cuts and masked datacheck for plots
 
 #+name: data_check
 #+begin_src snakemake
@@ -319,6 +351,14 @@ rule data_check:
 
 ** Define runs to be used for the analysis
 
+With the list of runs from [[nameref:data_check]], we can go ahead and
+link the runs from the global data-directory to our build-directory.
+This simplifies rules massively.
+Before doing that, we first convert the runlist.
+That is pretty arbitrary and could also be done in a single step.
+I do not know exactly why we did it this way, but it works, right?
+
+
 #+begin_src snakemake
 
 checkpoint run_ids:
@@ -342,7 +382,15 @@ checkpoint run_ids:
 
 #+end_src
 
+Now we arrive at the first checkpoint!
+It is important to have this as a checkpoint, because a priori
+you do not know which runs you select for the analysis.
+It is known a few steps before this to be exact, but since this is the last
+(run-)linking related rule, I decided to make this the checkpoint.
+From now on out, all run ids are known just by looking into the `<build_dir>/dl1`
+folder.
 
+#+name: link_runs_checkpoint
 #+begin_src snakemake
 
 checkpoint link_runs:
@@ -401,9 +449,11 @@ rule plot_data_selection:
 
 #+end_src
 
-For the run pointings, a new dile containing just these is constructed.
+For the run pointings, a new file containing just these is constructed.
 This is actually not a big step and could be done in the plot script aswell,
-but I like having the csv file with the pointing directions.
+but I like having the csv file with the pointing directions easily accesible.
+
+TODO This is not working!
 
 #+begin_src snakemake
 
@@ -650,17 +700,15 @@ config = lstchain_config
 
 rule dl2:
     input:
-        runs=expand(
-            dl2 / "LST-1.Run{run_id}.dl2.h5",
-            run_id=RUN_IDS,
-        ),
-        irfs=MC_NODES_IRFs
+        irfs=MC_NODES_IRFs,
+        runs=DL2_FILES,
 
 
 #+end_src
 
 ** Create DL2
 
+#+name: dl1_to_dl2_rule
 #+begin_src snakemake
 
 rule dl1_to_dl2:
@@ -694,7 +742,7 @@ rule dl1_to_dl2:
 # TODO Logging
 rule irf:
     output:
-        irfs / "irf_{node}.fits.gz",
+        irfs / "irfs_{node}.fits.gz",
     input:
         gammas=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
         config=irf_config,
@@ -704,7 +752,7 @@ rule irf:
         mem_mb=8000,
         time=10,
     log:
-        irfs / "irf_{node}.log"
+        irfs / "irfs_{node}.log"
     shell:
         """
         lstchain_create_irf_files \

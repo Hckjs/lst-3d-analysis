@@ -10,11 +10,8 @@ config = lstchain_config
 
 rule dl2:
     input:
-        runs=expand(
-            dl2 / "LST-1.Run{run_id}.dl2.h5",
-            run_id=RUN_IDS,
-        ),
         irfs=MC_NODES_IRFs,
+        runs=DL2_FILES,
 
 
 rule dl1_to_dl2:
@@ -44,7 +41,7 @@ rule dl1_to_dl2:
 # TODO Logging
 rule irf:
     output:
-        irfs / "irf_{node}.fits.gz",
+        irfs / "irfs_{node}.fits.gz",
     input:
         gammas=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
         config=irf_config,
@@ -54,7 +51,7 @@ rule irf:
         mem_mb=8000,
         time=10,
     log:
-        irfs / "irf_{node}.log",
+        irfs / "irfs_{node}.log",
     shell:
         """
         lstchain_create_irf_files \
