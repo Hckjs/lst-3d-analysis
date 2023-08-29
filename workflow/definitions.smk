@@ -109,7 +109,7 @@ def DL2_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     print(ids)
     out = Path(OUTDIRS["dl2"])
-    return [out / "LST-1.Run{run_id}.dl2.h5" for run_id in ids]
+    return [out / f"LST-1.Run{run_id}.dl2.h5" for run_id in ids]
 
 
 models_to_train = [
