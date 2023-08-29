@@ -95,7 +95,7 @@ rule data_check:
 
 checkpoint run_ids:
     output:
-        out / "runs.json",
+        runlist=out / "runs.json",
     input:
         data=out / "runlist-checked.csv",
         config=config,

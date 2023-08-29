@@ -73,7 +73,7 @@ SCRIPTS = {
 # TODO This is the most critical part as the further evaluation depends on this checkpoint
 # Have to make sure this works as expected
 def RUN_IDS(wildcards):
-    with open(checkpoints.run_ids.get(**wildcards).output, "r") as f:
+    with open(checkpoints.run_ids.get(**wildcards).output.runlist, "r") as f:
         runs = json.load(f)
     return sorted(set(chain(*runs.values())))
 
