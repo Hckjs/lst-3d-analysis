@@ -1,13 +1,25 @@
+env = ENVS["gammapy"]
+
+dl3 = Path(OUTDIRS["dl3"])
+dl4 = Path(OUTDIRS["dl4"])
+scripts = Path(SCRIPTS["dl4"])
+
+
+rule dl4:
+    input:
+        [dl4 / "{analysis}/datasets.fits.gz" for analysis in analyses],
+
+
 # Create DL4 datasets, plot sensitivity, significance, ...
 rule dataset_3d:
     input:
         data=build_dir / "dl3/hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
-        script="scripts/write_datasets_manual.py",
+        script="scripts/write_datasets_3d.py",
     output:
         build_dir / "dl4/{analysis}/datasets.fits.gz",
     conda:
-        gammapy_env
+        env
     shell:
         "python {input.script} -c {input.config} -o {output}"
 

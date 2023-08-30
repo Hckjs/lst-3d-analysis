@@ -61,6 +61,9 @@ env_dir = Path("workflow/envs")
 config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
 main_config_path = (config_dir / "lst_agn.json").absolute()
 build = Path("build") / config_dir.name
+analyses = [
+    x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
+]
 
 # Using the one used for the dl1 MCs as I dont reprocess anything
 # Best might be to reproduce dl1 mc and data?
@@ -1243,6 +1246,21 @@ rule plot_cuts_dl2_dl3:
  :header-args:  :tangle ./workflow/rules/dl4.smk :mkdirp yes
 :END:
 
+** Definitions
+
+#+begin_src snakemake
+env = ENVS["gammapy"]
+
+dl3 = Path(OUTDIRS["dl3"])
+dl4 = Path(OUTDIRS["dl4"])
+scripts = Path(SCRIPTS["dl4"])
+
+rule dl4:
+    input:
+        [dl4 / "{analysis}/datasets.fits.gz" for analysis in analyses]
+
+#+end_src
+
 ** Create MapDataset
 
 #+begin_src snakemake
@@ -1252,11 +1270,11 @@ rule dataset_3d:
     input:
         data=build_dir / "dl3/hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
-        script="scripts/write_datasets_manual.py",
+        script="scripts/write_datasets_3d.py",
     output:
         build_dir / "dl4/{analysis}/datasets.fits.gz",
     conda:
-        gammapy_env
+        env
     shell:
         "python {input.script} -c {input.config} -o {output}"
 

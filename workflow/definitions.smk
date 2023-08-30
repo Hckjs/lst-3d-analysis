@@ -8,6 +8,9 @@ env_dir = Path("workflow/envs")
 config_dir = Path(config.get("config_dir", "../lst-analysis-config"))
 main_config_path = (config_dir / "lst_agn.json").absolute()
 build = Path("build") / config_dir.name
+analyses = [
+    x.name for x in config_dir.iterdir() if x.name.startswith("analysis") and x.is_dir()
+]
 
 # Using the one used for the dl1 MCs as I dont reprocess anything
 # Best might be to reproduce dl1 mc and data?
