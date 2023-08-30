@@ -182,12 +182,6 @@ def IRF_FILES(wildcards):
     return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
 
 
-def BKG_FILES(wildcards):
-    ids = RUN_IDS(wildcards)
-    out = Path(OUTDIRS["dl3"])
-    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]
-
-
 models_to_train = [
     Path(OUTDIRS["models"]) / "reg_energy.sav",
     Path(OUTDIRS["models"]) / "cls_gh.sav",
@@ -926,10 +920,10 @@ rule dl2_to_dl3:
 
 rule calc_background:
     output:
-        BKG_FILES,
+        bkg=expand(dl3 / "bkg_run_id.fits.gz", run_id=RUN_IDS), # cant use function in output
     input:
         runs=DL3_FILES,
-        config=bkg_config, # thats not the normal pybkgmodel config, but more keys
+        config=bkg_config,
         script=scripts/"calc_background.py"
     conda:
         bkg_env
@@ -965,7 +959,7 @@ rule dl3_hdu_index:
         dl3 / "hdu-index.fits.gz",
     input:
         runs=DL3_FILES,
-        bkg=BKG_FILES,
+        bkg=expand(dl3 / "bkg_run_id.fits.gz", run_id=RUN_IDS),
     params:
         bkg_script=scripts / "link_bkg.py",
         bkg_dir=dl3,

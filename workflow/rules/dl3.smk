@@ -53,10 +53,10 @@ rule dl2_to_dl3:
 
 rule calc_background:
     output:
-        BKG_FILES,
+        bkg=expand(dl3 / "bkg_run_id.fits.gz", run_id=RUN_IDS),  # cant use function in output
     input:
         runs=DL3_FILES,
-        config=bkg_config,  # thats not the normal pybkgmodel config, but more keys
+        config=bkg_config,
         script=scripts / "calc_background.py",
     conda:
         bkg_env
@@ -93,7 +93,7 @@ rule dl3_hdu_index:
         dl3 / "hdu-index.fits.gz",
     input:
         runs=DL3_FILES,
-        bkg=BKG_FILES,
+        bkg=expand(dl3 / "bkg_run_id.fits.gz", run_id=RUN_IDS),
     params:
         bkg_script=scripts / "link_bkg.py",
         bkg_dir=dl3,
