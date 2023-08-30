@@ -12,7 +12,7 @@ irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 
 
-rule dl3_stage:
+rule dl3:
     input:
         dl3 / "hdu-index.fits.gz",
 
