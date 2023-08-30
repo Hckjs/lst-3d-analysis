@@ -4,7 +4,6 @@ bkg_env = ENVS["background"]
 dl2 = Path(OUTDIRS["dl2"])
 dl3 = Path(OUTDIRS["dl3"])
 irfs = Path(OUTDIRS["irfs"])
-bkg = Path(OUTDIRS["bkg"])
 
 scripts = Path(SCRIPTS["dl3"])
 
