@@ -21,7 +21,8 @@ def main(input_path, output, log_file, verbose):
     np.atleast_1d(offsets.center)
     np.atleast_1d(offsets.bin_width)
     # TODO Create my own plots, this is more of a placeholder
-    psf.peek()
+    # and it even breaks right now due to tight layout and colorbar ...
+    # psf.peek()
 
     fig = plt.gcf()
     fig.savefig(output)

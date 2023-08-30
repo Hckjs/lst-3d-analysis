@@ -116,6 +116,24 @@ def DL2_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl2.h5" for run_id in ids]
 
 
+def DL3_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
+
+
+def IRF_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
+
+
+def BKG_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]
+
+
 models_to_train = [
     Path(OUTDIRS["models"]) / "reg_energy.sav",
     Path(OUTDIRS["models"]) / "cls_gh.sav",

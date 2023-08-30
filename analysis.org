@@ -167,6 +167,24 @@ def DL2_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl2.h5" for run_id in ids]
 
 
+def DL3_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
+
+
+def IRF_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
+
+
+def BKG_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]
+
+
 models_to_train = [
     Path(OUTDIRS["models"]) / "reg_energy.sav",
     Path(OUTDIRS["models"]) / "cls_gh.sav",
@@ -758,6 +776,12 @@ way when selecting the nearest one.
 In older `lstchain`-versions you would have to match by hand and give the script
 a single set of IRFs for a single observed run.
 
+Another noteworthy thing here is, that we include the energy dispersion fix
+for pyirf. This was discussed in the lst-analysis call from 2023-08-28 and
+on the ICRC before that. Basically `pirf` produced wrongly normalized energy dispersion
+files, which actually seems to have an impact on higher level analyses.
+The script comes directly from the pyirf release (https://github.com/cta-observatory/pyirf/releases/tag/v0.10.0).
+
 #+begin_src snakemake
 rule irf:
     output:
@@ -765,6 +789,7 @@ rule irf:
     input:
         gammas=mc / "GammaDiffuse/dl2/{node}_test.dl2.h5",
         config=irf_config,
+        edisp_script=irf_scripts / "fix_edisp.py",
     conda:
         env
     resources:
@@ -778,6 +803,8 @@ rule irf:
             -o {output} \
             -g {input.gammas} \
             --config {input.config}
+
+        python {input.edisp_script} {output}
         """
 #+end_src
 
@@ -821,159 +848,151 @@ rule plot_irf:
 :END:
 This stage is rather complex.
 On the one hand, creating dl3 files from dl2 and IRFs is not difficult at all with the
-existing `lstchain` infrastructure. There are a lot of plots created here and skymaps are calculated, but that is not complicated, just a lot of rules. On the other hand
+existing `lstchain` infrastructure.
+There are a lot of plots created here and skymaps are calculated,
+but that is not complicated, just a lot of rules.
+On the other hand, we need a background for the dl4 datasets.
+That is not a default `lstchain` task and needs to be done by hand.
+There is a `pybkgmodel` based script, that produces a background for every observation
+and then a small helper script to add the background "IRF" to the hdu-index.
 
+** Definitions
+Nothing crazy here.
+Note, that the `irfs` path usually relates to the grid IRFs and the
+"final" IRFs, that are linked in the dl3 files, lie in the dl3 path.
 
-
-** definitions
 #+begin_src snakemake
 env = ENVS["lstchain"]
 bkg_env = ENVS["background"]
 
-# Having these as paths makes them easier to use
 dl2 = Path(OUTDIRS["dl2"])
 dl3 = Path(OUTDIRS["dl3"])
 irfs = Path(OUTDIRS["irfs"])
 bkg = Path(OUTDIRS["bkg"])
-models = Path(OUTDIRS["models"])
+
+scripts = Path(SCRIPTS["dl3"])
 
 irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 
-scripts = Path(SCRIPTS["dl3"])
-
-plots = Path(PLOTSDIRS["dl3"])
+rule dl3_stage:
+    input:
+        dl3 / "hdu-index.fits.gz",
 
 #+end_src
+
 ** Create DL3 Data
+
+
+
 #+begin_src snakemake
-# TODO CHeck if this works and then do it for all levels
-def dl3_filename(wildcards):
-    return f"dl3_LST-1.Run{wildcards.run_id}.fits.fits"
 
-
-rule dl3:
+rule dl2_to_dl3:
     output:
-        dl3 / "dl3_LST-1.Run{run_id}.fits.gz", # TODO Can i change that naming or does the create_hdu_index script fail then?
+        run=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+        irf=dl3 / "irfs_{run_id}.fits.gz"
     input:
         data=dl2 / "LST-1.Run{run_id}.dl2.h5",
-        irf=irfs / "irf_Run{run_id}.fits.gz",
+        irfs=MC_NODES_IRFs,
         config=irf_config,
+    params:
+        interp="linear", # nope
+        irf_pattern='irfs_*.fits.gz',
+        out=dl3,
+        in_irfs=irfs,
     conda:
         env
     resources:
         mem_mb=12000,
         time=30,
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        dl3 / "create_dl3_{run_id}.log"
     shell:
         """
         lstchain_create_dl3_file  \
             --input-dl2 {input.data}  \
-            --output-dl3-path $(dirname $(realpath {output}))  \
-            --input-irf {input.irf}  \
+            --output-dl3-path {params.out}  \
+            --input-irf-path {params.in_irfs}  \
+            --irf-file-pattern {params.irf_pattern} \
+            --final-irf-file {output.irf} \
             --config {input.config} \
+            --use-nearest-irf-node \
             --gzip \
             --overwrite \
         """
 
 
-# Using my fork here currently
-
-
-# TODO Write my own script.
-# no clear way to swap between runwise and stacked in my workflow :/
-# maybe define a function, that returns the corresponding bkg name to a run based on
-# a variable. I would need to parse that from the bkgmodel config and
-# also get it into the link bkg script ...
-# build_dir / "background/stacked_bkg_map.fits"
-# dont ask... result of my hacks, should be solved later upstream
 rule calc_background:
     output:
-        expand(
-            dl3 / "dl3_LST-1.Run{run_id}.fits.fits",
-            run_id=RUN_IDS,
-        ),
+        BKG_FILES,
     input:
-        runs=expand(
-            dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
-            run_id=RUN_IDS,
-        ),
-        config=bkg_config,
+        runs=DL3_FILES,
+        config=bkg_config, # thats not the normal pybkgmodel config, but more keys
+        script=scripts/"calc_background.py"
     conda:
         bkg_env
     log:
-        out=dl3 / "calc_bkg.log",
-        err=dl3 / "calc_bkg.err",
+        dl3 / "calc_bkg.log",
     shell:
+        """python {input.script} \
+        --input-runs {input.runs} \
+        --config {input.config} \
+        --output {output} \
+        --log-file {log}
         """
-        bkgmodel --config {input.config}
-        """
-
 
 # Use lstchain env here to ensure we can load it
-# run id is stacked only right now, but this way it can be expanded
-# data=build_dir / "background/{run_id}_bkg_map.fits", # stacked
 rule plot_background:
     output:
-        plots / "background/{run_id}.pdf",
+        dl3 / "plots/bkg_{run_id}.pdf",
     input:
-        data=background / "dl3_LST-1.Run{run_id}.fits.fits",  #runwise
+        data=dl3 / "bkg_{run_id}.fits.gz",
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
         script=scripts / "plot_bkg.py",
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        dl3 / "plots/bkg_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
 # bkg = build_dir / "background/stacked_bkg_map.fits"
-# dont ask... result of my hacks, should be solved later upstream
 rule dl3_hdu_index:
     output:
         dl3 / "hdu-index.fits.gz",
     input:
-        runs=expand(
-            dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
-            run_id=RUN_IDS,
-        ),
-        bkg=expand(
-            dl3 / "dl3_LST-1.Run{run_id}.fits.fits",
-            run_id=RUN_IDS,
-        ),
+        runs=DL3_FILES,
+        bkg=BKG_FILES,
     params:
         bkg_script=scripts / "link_bkg.py",
-        bkg_dir=lambda w, input: os.path.relpath(
-            Path(input.bkg[0]).parent, Path(input.runs[0]).parent
-        ),
-        bkg_files=lambda w, input: [Path(x).name for x in input.bkg],
+        bkg_dir=dl3,
+        outdir=dl3
     conda:
         env
     log:
-        out=lambda wildcards, output: output.with_suffix(".log"),
-        err=lambda wildcards, output: output.with_suffix(".err"),
+        dl3 / "hdu_index.log",
     resources:
         time=15,
     shell:
         """
         lstchain_create_dl3_index_files  \
-            --input-dl3-dir {build_dir}/dl3  \
-            --output-index-path {build_dir}/dl3  \
-            --file-pattern 'dl3_*.fits.gz'  \
+            --input-dl3-dir {params.outdir}  \
+            --output-index-path {params.outdir}  \
+            --file-pattern '*.dl3.fits.gz'  \
             --overwrite
 
         python {params.bkg_script} \
         --hdu-index-path {output} \
         --bkg-dir {params.bkg_dir} \
-        --bkg-file {params.bkg_files}
+        --bkg-file {input.bkg}
         """
 
 #+end_src
 ** Plot dl3 stuff
+:PROPERTIES:
+:header-args:    :tangle no
+:END:
 #+begin_src snakemake
 
 
@@ -1155,6 +1174,9 @@ rule stack_skymaps_dl3:
 #+end_src
 
 ** Cuts dl3 (kinda irf)
+:PROPERTIES:
+:header-args:    :tangle no
+:END:
 This wont work as it needs the "final" irf file!
 #+begin_src snakemake
 

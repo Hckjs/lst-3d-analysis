@@ -1,41 +1,18 @@
-data:
-    mask: 'build/crab_sample/dl3/dl3*.fits.gz'
-    cuts: 'none'
-
-# TODO Where to specify that you want the other side?
-mode: 'runwise_exclusion'
-    #mode: 'runwise_exclusion'
-
-output:
-    directory: 'build/crab_sample/background'
-    prefix: ''
-    overwrite: True
-
+hdu_type: "3D"
 run_matching:
-    time_delta: '1 day' # some large number for testing
-    pointing_delta: '1 deg' # needs to be large enough to match the other pointing (in icrs!)
+  max_cos_zenith_diff: 0.2
 
-# TODO probably way finer
-# TODO Align with other irfs
+# TODO Align with other irfs?
 binning:
-    mode: 'rectangular'
-    extension:
-    x:
-        min: '-1.5 deg'
-        max: '1.5 deg'
-        nbins: 50
-    y:
-        min: '-1.5 deg'
-        max: '1.5 deg'
-        nbins: 50
-    energy:
-        min: '500 GeV'
-        max: '50 TeV'
-        nbins: 10
+  offset:
+    max: "1.5 deg"
+    n_bins: 10
+  energy:
+    min: "500 GeV"
+    max: "50 TeV"
+    n_bins: 10
 
-exclusion_regions:
-#    type: list
-#    - {type: 'circle', x: 83.633080, y: 22.014500, rad: 0.2, unit: 'deg', frame: 'icrs'}
-    - 'icrs; circle(83.633, 22.014, 0.3d)'
-
-# run_matching: {val: 1, unit: 'arcmin'}
+exclusion:
+  radius: "0.35 deg"
+  sources:
+    - { "frame": "icrs", "ra": "83.633 deg", "dec": "22.014 deg" }

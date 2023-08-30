@@ -45,6 +45,7 @@ rule irf:
     input:
         gammas=mc / "GammaDiffuse/dl2/{node}_test.dl2.h5",
         config=irf_config,
+        edisp_script=irf_scripts / "fix_edisp.py",
     conda:
         env
     resources:
@@ -58,6 +59,8 @@ rule irf:
             -o {output} \
             -g {input.gammas} \
             --config {input.config}
+
+        python {input.edisp_script} {output}
         """
 
 
