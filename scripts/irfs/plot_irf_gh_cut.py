@@ -31,19 +31,20 @@ def main(input_path, output, log_file, verbose):
     ax.set_xlabel(f"$E_{{\\mathrm{{reco}}}} / {energy_unit}$")
     ax.set_ylabel("Gammaness")
 
-    # ax.bar(
-    #     gh_cuts["center"].quantity.to_value(energy_unit),
-    #     -(1 - gh_cuts["cut"]),
-    #     bottom=1,
-    #     width=gh_cuts["high"] - gh_cuts["low"],
-    #     color="gray",
-    #     alpha=0.1,
-    #     label="Selected Events",
-    # )
+    ax.bar(
+        gh_cuts["center"].quantity.to_value(energy_unit),
+        gh_cuts["cut"],
+        bottom=0,
+        width=gh_cuts["high"] - gh_cuts["low"],
+        color="gray",
+        alpha=0.1,
+        label="Discarded Region",
+    )
 
-    ax.set_ylim(0, 1)
+    ax.set_ylim(0, 1.05)
 
     ax.set_xscale("log")
+    ax.legend()
 
     fig.savefig(output)
 

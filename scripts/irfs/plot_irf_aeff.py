@@ -38,7 +38,7 @@ def main(input_path, output, log_file, verbose):
             xerr=e_true.bin_width / 2,
             ls="",
             label=f"Offset: {label}",
-            color="black",
+            color="C0",
             alpha=alpha,
         )
     ax.set_xlabel(rf"$E_{{\mathrm{{true}}}}$ / {e_true.center.unit}")
