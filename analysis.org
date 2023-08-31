@@ -880,8 +880,11 @@ rule dl3:
 #+end_src
 
 ** Create DL3 Data
-
-
+*** Individual runs
+Thats just lstchain here.
+Using the (new at the time) interface of 0.10.x, this is incompatible with
+previous versions. I could make an attempt to support that as well, but I do not
+see why I would use previous versions again, so might as well force it.
 
 #+begin_src snakemake
 
@@ -918,7 +921,29 @@ rule dl2_to_dl3:
             --gzip \
             --overwrite \
         """
+#+end_src
 
+*** Background
+Before we can create the index, a background must be created.
+After some back and forth with pybkgmodel, I decided to write my own script.
+Its content is subject to change, but some design goals will probably stay the same, so
+the workflow will not change much (hopefully):
+1) Runwise background. There can be identical models, but every run gets a background model
+   file with the run_id included. Not changing this around when eventually producing
+   stacked models makes the dl3 construction simpler.
+2) One call to the script creates all backgrounds.
+   This is opposed to the one to one matching used throughout the workflow,
+   but it makes me more flexible w.r.t script development.
+   All runs are available at once meaning I can match and group them however I want.
+   I could still read all runs every time as it is not THAT expensive (main part being
+   the transformations of the event list and not I/O of the datastore and metadata),
+   but this way you could e.g. create N background models for N zenith bins and
+   use them for all runs in the bin thus effectively constructing less models.
+
+There is a basic plot script here as well for visual inspection of things like
+radial symmetry and empty bins.
+
+#+begin_src snakemake
 
 rule calc_background:
     output:
@@ -954,8 +979,21 @@ rule plot_background:
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
+#+end_src
+*** Index
+After the background files are there, we can construct the dl3 index files.
+Strictly speaking this could be done before as well as long as you do not read the files
+before the background models are there, but this way around you can be sure dl3 is
+done and working once the index is there.
 
-# bkg = build_dir / "background/stacked_bkg_map.fits"
+The actual work consists of calling the lstchain script and then adding
+new rows to the table, that link to the background files.
+The script is very basic and assumes, that you can sort the background files and get the
+same order as when sorting the observations.
+That is true as long as the name of the background file contains the run_id
+and there are no shenanigans with the leading 0.
+
+#+begin_src snakemake
 rule dl3_hdu_index:
     output:
         dl3 / "hdu-index.fits.gz",
@@ -991,13 +1029,11 @@ rule dl3_hdu_index:
 :PROPERTIES:
 :header-args:    :tangle no
 :END:
+*** Obs plots
 #+begin_src snakemake
-
-
-# Plots using dl3 files
 rule observation_plots:
     input:
-        build_dir / "dl3/hdu-index.fits.gz",
+        dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script="scripts/events.py",
     output:
@@ -1012,16 +1048,17 @@ rule observation_plots:
             -c {input.config} \
             -o {output} \
         """
-
-
+#+end_src
+*** Theta 2
+#+begin_src snakemake
 rule calc_theta2_per_obs:
     output:
-        build_dir / "dl3/theta2/{run_id}.fits.gz",
+        dl3 / "theta2/{run_id}.fits.gz",
     input:
-        data=build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
+        data=dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
         script="scripts/calc_theta2_per_obs.py",
         config=data_selection_config_path,
-        index=build_dir / "dl3/hdu-index.fits.gz",
+        index=dl3 / "hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
     resources:
@@ -1036,10 +1073,10 @@ rule calc_theta2_per_obs:
 
 rule stack_theta2:
     output:
-        build_dir / "dl3/theta2/stacked.fits.gz",
+        dl3 / "theta2/stacked.fits.gz",
     input:
         runs=expand(
-            build_dir / "dl3/theta2/{run_id}.fits.gz",
+            dl3 / "theta2/{run_id}.fits.gz",
             run_id=RUN_IDS,
         ),
         script="scripts/stack_theta2.py",
@@ -1055,35 +1092,26 @@ rule plot_theta:
     output:
         build_dir / "plots/theta2/{runid}.pdf",
     input:
-        data=build_dir / "dl3/theta2/{runid}.fits.gz",
+        data=dl3 / "theta2/{runid}.fits.gz",
         script="scripts/plot_theta2.py",
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
     conda:
         gammapy_env
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
-rule bkg_exclusion:
-    input:
-        config=config_dir / "{analysis}/analysis.yaml",
-        script="scripts/make_exclusion_region.py",
-    output:
-        build_dir / "{analysis}/exclusion.fits.gz",
-    conda:
-        gammapy_env
-    shell:
-        "python {input.script} -c {input.config} -o {output}"
+#+end_src
+*** Skymaps
 
-
+#+begin_src snakemake
 rule calc_skymap_per_obs:
     output:
-        build_dir / "dl3/skymap_dl3/{run_id}.fits",
+        dl3 / "skymap_dl3/{run_id}.fits",
     input:
-        data=build_dir / "dl3/dl3_LST-1.Run{run_id}.fits.gz",
+        data=dl3 / "dl3_LST-1.Run{run_id}.fits.gz",
         script="scripts/calc_skymap_gammas.py",
         config=irf_config_path,
-        index=build_dir / "dl3/hdu-index.fits.gz",
+        index=dl3 / "hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
     resources:
@@ -1099,7 +1127,7 @@ rule plot_skymap_dl3:
     output:
         build_dir / "plots/skymap_dl3/{runid}.pdf",
     input:
-        data=build_dir / "dl3/skymap_dl3/{runid}.fits",
+        data=dl3 / "skymap_dl3/{runid}.fits",
         script="scripts/plot_skymap_dl3.py",
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
     conda:
@@ -1110,58 +1138,15 @@ rule plot_skymap_dl3:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
-rule calc_skymap:
-    resources:
-        mem_mb="64G",
-        time=10,
-    conda:
-        lstchain_env
-    output:
-        build_dir / "dl3/skymap/{run_id}.fits",
-    input:
-        data=build_dir / "dl2/dl2_LST-1.Run{run_id}.h5",  #?????????
-        config=irf_config_path,
-        script="scripts/calc_skymap.py",
-    shell:
-        "python {input.script} -i {input.data} -o {output} -c {input.config}"
-
-
-rule plot_skymap:
-    conda:
-        lstchain_env
-    output:
-        build_dir / "plots/skymap/{run_id}.pdf",
-    input:
-        data=build_dir / "dl3/skymap/{run_id}.fits",
-        script="scripts/plot_skymap.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
-    shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-
-rule stack_skymaps:
-    conda:
-        lstchain_env
-    output:
-        build_dir / "dl3/skymap/stacked.fits",
-    input:
-        data=expand(
-            build_dir / "dl3/skymap/{run_id}.fits",
-            run_id=RUN_IDS,
-        ),
-        script="scripts/stack_skymap.py",
-    shell:
-        "python {input.script} -i {input.data} -o {output}"
-
 
 rule stack_skymaps_dl3:
     conda:
         lstchain_env
     output:
-        build_dir / "dl3/skymap_dl3/stacked.fits",
+        dl3 / "skymap_dl3/stacked.fits",
     input:
         data=expand(
-            build_dir / "dl3/skymap_dl3/{run_id}.fits",
+            dl3 / "skymap_dl3/{run_id}.fits",
             run_id=RUN_IDS,
         ),
         script="scripts/stack_skymap.py",

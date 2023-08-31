@@ -10,6 +10,7 @@ parser.add_argument("--bkg-file", nargs="+")
 args = parser.parse_args()
 
 
+# TODO Logging (but its in the lstchain env, so just basic logs)
 def main(hdu_index_path, bkg_dir, bkg_file):
     t = Table.read(hdu_index_path)
     ids = sorted(np.unique(t["OBS_ID"]))

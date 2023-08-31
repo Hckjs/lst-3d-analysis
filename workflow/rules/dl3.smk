@@ -87,7 +87,6 @@ rule plot_background:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
-# bkg = build_dir / "background/stacked_bkg_map.fits"
 rule dl3_hdu_index:
     output:
         dl3 / "hdu-index.fits.gz",
