@@ -39,6 +39,10 @@ def main() -> None:  # noqa: PLR-915
     outdir_dl1 = Path(args.dl1_link_dir)
 
     filename_dl1 = "dl1_LST-1.Run{run_id}.h5"
+    # TODO the lstchain version is hardcoded here! Thats not good...
+    # Need to check which ones are available and select somehow
+    # There is no 0.10 for older fildes yet...
+    # But also no 0.9 for new ones...
     template_target_dl1 = (
         Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1
     ).as_posix()
