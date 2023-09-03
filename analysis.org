@@ -70,9 +70,7 @@ analyses = [
 # For now this is fine as mcpipe uses the default config from lstchain
 # (at least in my test production) and lstchain versions dont differ much in the output
 # (hopefully). Thats a fat TODO though...
-#lstchain_config = build / "lstchain_config.json"
-# For now use my own config, because the 0.9 one seems to be broken with 0.10 This is suboptimal...
-lstchain_config = config_dir / "lstchain_config.json"
+lstchain_config = build / "lstchain_config.json"
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 
 with open(main_config_path, "r") as f:
