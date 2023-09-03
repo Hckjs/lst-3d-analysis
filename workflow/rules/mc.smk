@@ -73,6 +73,7 @@ rule merge_gamma_mc_per_node:
         --train-size {params.train_size} \
         --output-train {output.train} \
         --output-test {output.test} \
+        --pattern 'dl1_*.h5' \
         --log-file {log}"
 
 
