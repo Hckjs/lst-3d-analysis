@@ -35,12 +35,17 @@ def main():
     link(target_nodes, linkname_nodes)
 
     # Link model training config
-    template_target_model = (
-        "/fefs/aswg/data/models/AllSky/{prod}/{dec}/lstchain_config.json"
-    )
+    template_target_model = "/fefs/aswg/data/models/AllSky/{prod}/{dec}"
     target_model = Path(template_target_model.format(prod=prod, dec=dec))
+    # config name might not be lstchain_config.json, but contain data, prod id...
+    candidates_config = [x for x in target_model.glob("*lstchain*.json")]
+    if len(candidates_config) == 0:
+        raise Exception("config not found")
+    elif len(candidates_config > 1):
+        raise Exception(f"Found multiple candidates: {candidates_config}")
+    target_config = candidates_config[0]
     linkname_model = Path(args.model_config_link_path)
-    link(target_model, linkname_model)
+    link(target_config, linkname_model)
 
     output = Path(args.output_path)
     log.debug(f"Touch dummy output at {output}")
