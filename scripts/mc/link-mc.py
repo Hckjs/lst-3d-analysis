@@ -41,7 +41,7 @@ def main():
     candidates_config = [x for x in target_model.glob("*lstchain*.json")]
     if len(candidates_config) == 0:
         raise Exception("config not found")
-    elif len(candidates_config > 1):
+    elif len(candidates_config) > 1:
         raise Exception(f"Found multiple candidates: {candidates_config}")
     target_config = candidates_config[0]
     linkname_model = Path(args.model_config_link_path)
