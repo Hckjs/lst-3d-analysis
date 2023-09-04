@@ -344,7 +344,7 @@ def main():
     location = EarthLocation.of_site("Roque de los Muchachos")
     e_reco = MapAxis.from_energy_bounds(
         u.Quantity(e_binning["min"]),
-        u.Quantity(e_binning["ax"]),
+        u.Quantity(e_binning["max"]),
         e_binning["n_bins"],
         name="energy",
     )
