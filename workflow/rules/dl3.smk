@@ -93,7 +93,7 @@ rule dl3_hdu_index:
         dl3 / "hdu-index.fits.gz",
     input:
         runs=DL3_FILES,
-        bkg=expand(dl3 / "bkg_run_id.fits.gz", run_id=RUN_IDS),
+        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS),
     params:
         bkg_script=scripts / "link_bkg.py",
         bkg_dir=dl3,
@@ -110,7 +110,8 @@ rule dl3_hdu_index:
             --input-dl3-dir {params.outdir}  \
             --output-index-path {params.outdir}  \
             --file-pattern '*.dl3.fits.gz'  \
-            --overwrite
+            --overwrite \
+            --log-file {log}
 
         python {params.bkg_script} \
         --hdu-index-path {output} \
