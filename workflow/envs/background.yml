@@ -9,3 +9,5 @@ dependencies:
   - rich
   - pip:
       - ../../scriptutils
+variables:
+  GAMMAPY_DATA: /fefs/aswg/workspace/lukas.nickel/gammapy_data/gammapy-datasets/1.1
