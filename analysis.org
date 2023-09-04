@@ -1000,7 +1000,7 @@ rule calc_background:
         --config {input.config} \
         --log-file {log}
 
-        python {params.link_script} \
+        python {input.link_script} \
         --hdu-index-path {input.index} \
         --bkg-dir {params.bkg_dir} \
         """
