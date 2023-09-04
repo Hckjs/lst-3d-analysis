@@ -45,9 +45,10 @@ rule dl2_to_dl3:
             --irf-file-pattern {params.irf_pattern} \
             --final-irf-file {output.irf} \
             --config {input.config} \
-            --use-nearest-irf-node \
             --gzip \
             --overwrite \
+            --log-file {log} \
+            --interp-method {params.interp}
         """
 
 
