@@ -914,6 +914,7 @@ rule dl2_to_dl3:
             --irf-file-pattern {params.irf_pattern} \
             --config {input.config} \
             --gzip \
+            --use-nearest-irf-node \
             --overwrite \
             --log-file {log}
         """
