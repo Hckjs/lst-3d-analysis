@@ -7,4 +7,3 @@ dependencies:
   - gammapy
   - pip:
       - ../../scriptutils
-      - git+https://github.com/LukasNickel/pybkgmodel.git@ad73f13c06e7c9f174c792358f427bded3386aab
