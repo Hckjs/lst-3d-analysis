@@ -5,5 +5,7 @@ dependencies:
   - python>=3.8
   - pip
   - gammapy
+  - pandas
+  - rich
   - pip:
       - ../../scriptutils
