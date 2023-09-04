@@ -14,6 +14,7 @@ bkg_config = CONFIGS["bkg_model"]
 rule dl3:
     input:
         dl3 / "hdu-index.fits.gz",
+        dl3 / "bkg-exists",
 
 
 rule dl2_to_dl3:
@@ -49,28 +50,58 @@ rule dl2_to_dl3:
         """
 
 
+rule dl3_hdu_index:
+    output:
+        dl3 / "hdu-index.fits.gz",
+    input:
+        runs=DL3_FILES,
+    params:
+        outdir=dl3,
+    conda:
+        env
+    log:
+        dl3 / "hdu_index.log",
+    resources:
+        time=15,
+    shell:
+        """
+        lstchain_create_dl3_index_files  \
+            --input-dl3-dir {params.outdir}  \
+            --output-index-path {params.outdir}  \
+            --file-pattern '*.dl3.fits.gz'  \
+            --overwrite \
+            --log-file {log}
+        """
+
+
 rule calc_background:
     output:
         #        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS), # cant use function in output
         dummy=dl3 / "bkg-exists",
     input:
         runs=DL3_FILES,
+        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
-        script=scripts / "calc_background.py",
+        calc_script=scripts / "calc_background.py",
+        link_bkg_script=scripts / "link_bkg.py",
     params:
-        indir=dl3,
-        outdir=dl3,
+        obs_dir=dl3,
+        bkg_dir=dl3,
     conda:
         bkg_env
     log:
         dl3 / "calc_bkg.log",
     shell:
-        """python {input.script} \
-        --input-dir {params.indir} \
-        --output-dir {params.outdir} \
+        """python {input.calc_script} \
+        --input-dir {params.obs_dir} \
+        --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
         --config {input.config} \
         --log-file {log}
+
+        python {params.link_script} \
+        --hdu-index-path {input.index} \
+        --bkg-dir {params.bkg_dir} \
         """
 
 
@@ -88,36 +119,3 @@ rule plot_background:
         dl3 / "plots/bkg_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-
-rule dl3_hdu_index:
-    output:
-        dl3 / "hdu-index.fits.gz",
-    input:
-        runs=DL3_FILES,
-        dummy=dl3 / "bkg-exists",
-    params:
-        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS),
-        bkg_script=scripts / "link_bkg.py",
-        bkg_dir=dl3,
-        outdir=dl3,
-    conda:
-        env
-    log:
-        dl3 / "hdu_index.log",
-    resources:
-        time=15,
-    shell:
-        """
-        lstchain_create_dl3_index_files  \
-            --input-dl3-dir {params.outdir}  \
-            --output-index-path {params.outdir}  \
-            --file-pattern '*.dl3.fits.gz'  \
-            --overwrite \
-            --log-file {log}
-
-        python {params.bkg_script} \
-        --hdu-index-path {output} \
-        --bkg-dir {params.bkg_dir} \
-        --bkg-file {params.bkg}
-        """

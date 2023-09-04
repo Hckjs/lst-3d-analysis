@@ -875,6 +875,7 @@ bkg_config = CONFIGS["bkg_model"]
 rule dl3:
     input:
         dl3 / "hdu-index.fits.gz",
+        dl3/"bkg-exists"
 
 #+end_src
 
@@ -920,8 +921,40 @@ rule dl2_to_dl3:
         """
 #+end_src
 
+*** Index
+The actual work consists of calling the lstchain script and then adding
+new rows to the table, that link to the background files.
+The script is very basic and assumes, that you can sort the background files and get the
+same order as when sorting the observations.
+That is true as long as the name of the background file contains the run_id
+and there are no shenanigans with the leading 0.
+
+#+begin_src snakemake
+rule dl3_hdu_index:
+    output:
+        dl3 / "hdu-index.fits.gz",
+    input:
+        runs=DL3_FILES,
+    params:
+        outdir=dl3
+    conda:
+        env
+    log:
+        dl3 / "hdu_index.log",
+    resources:
+        time=15,
+    shell:
+        """
+        lstchain_create_dl3_index_files  \
+            --input-dl3-dir {params.outdir}  \
+            --output-index-path {params.outdir}  \
+            --file-pattern '*.dl3.fits.gz'  \
+            --overwrite \
+            --log-file {log}
+        """
+
+#+end_src
 *** Background
-Before we can create the index, a background must be created.
 After some back and forth with pybkgmodel, I decided to write my own script.
 Its content is subject to change, but some design goals will probably stay the same, so
 the workflow will not change much (hopefully):
@@ -948,22 +981,28 @@ rule calc_background:
         dummy=dl3/"bkg-exists"
     input:
         runs=DL3_FILES,
+        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
-        script=scripts/"calc_background.py"
+        calc_script=scripts/"calc_background.py",
+        link_bkg_script=scripts / "link_bkg.py",
     params:
-        indir=dl3,
-        outdir=dl3,
+        obs_dir=dl3,
+        bkg_dir=dl3,
     conda:
         bkg_env
     log:
         dl3 / "calc_bkg.log",
     shell:
-        """python {input.script} \
-        --input-dir {params.indir} \
-        --output-dir {params.outdir} \
+        """python {input.calc_script} \
+        --input-dir {params.obs_dir} \
+        --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
         --config {input.config} \
         --log-file {log}
+
+        python {params.link_script} \
+        --hdu-index-path {input.index} \
+        --bkg-dir {params.bkg_dir} \
         """
 
 # Use lstchain env here to ensure we can load it
@@ -980,53 +1019,6 @@ rule plot_background:
         dl3 / "plots/bkg_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-#+end_src
-*** Index
-After the background files are there, we can construct the dl3 index files.
-Strictly speaking this could be done before as well as long as you do not read the files
-before the background models are there, but this way around you can be sure dl3 is
-done and working once the index is there.
-
-The actual work consists of calling the lstchain script and then adding
-new rows to the table, that link to the background files.
-The script is very basic and assumes, that you can sort the background files and get the
-same order as when sorting the observations.
-That is true as long as the name of the background file contains the run_id
-and there are no shenanigans with the leading 0.
-
-#+begin_src snakemake
-rule dl3_hdu_index:
-    output:
-        dl3 / "hdu-index.fits.gz",
-    input:
-        runs=DL3_FILES,
-        dummy=dl3/"bkg-exists"
-    params:
-        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS),
-        bkg_script=scripts / "link_bkg.py",
-        bkg_dir=dl3,
-        outdir=dl3
-    conda:
-        env
-    log:
-        dl3 / "hdu_index.log",
-    resources:
-        time=15,
-    shell:
-        """
-        lstchain_create_dl3_index_files  \
-            --input-dl3-dir {params.outdir}  \
-            --output-index-path {params.outdir}  \
-            --file-pattern '*.dl3.fits.gz'  \
-            --overwrite \
-            --log-file {log}
-
-        python {params.bkg_script} \
-        --hdu-index-path {output} \
-        --bkg-dir {params.bkg_dir} \
-        --bkg-file {params.bkg}
-        """
 
 #+end_src
 ** Plot dl3 stuff
