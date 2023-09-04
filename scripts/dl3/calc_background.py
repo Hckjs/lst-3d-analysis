@@ -376,7 +376,7 @@ def main():
             (criteria["cos_zenith"] - criteria["cos_zenith"][0]).values,
         )
         mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
-        selected_ids = criteria["obs_id"][mask].data
+        selected_ids = criteria["obs_id"][mask].values
         # select fitting runs
         bkg_maker.run(ds, selected_ids)
         if config["hdu_type"] == "3D":
