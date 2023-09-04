@@ -949,13 +949,15 @@ rule calc_background:
         runs=DL3_FILES,
         config=bkg_config,
         script=scripts/"calc_background.py"
+    params:
+        indir=dl3
     conda:
         bkg_env
     log:
         dl3 / "calc_bkg.log",
     shell:
         """python {input.script} \
-        --input-runs {input.runs} \
+        --input-dir {params.indir} \
         --config {input.config} \
         --output {output} \
         --log-file {log}

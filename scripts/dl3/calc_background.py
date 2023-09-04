@@ -355,7 +355,7 @@ def main():
         exclusion_sources=[SkyCoord(**s) for s in exclusion["sources"]],
     )
 
-    ds = DataStore.from_dir(config["input_dir"])
+    ds = DataStore.from_dir(args.input_dir)
 
     # Select similar runs. This is only zenith right now
     # Ra/dec is assumed to be correclty incorporated earlier
