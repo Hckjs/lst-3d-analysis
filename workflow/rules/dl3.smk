@@ -83,7 +83,7 @@ rule calc_background:
         index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
         calc_script=scripts / "calc_background.py",
-        link_bkg_script=scripts / "link_bkg.py",
+        link_script=scripts / "link_bkg.py",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
