@@ -990,6 +990,8 @@ rule calc_background:
         bkg_dir=dl3,
     conda:
         bkg_env
+    resources:
+        partition="long",
     log:
         dl3 / "calc_bkg.log",
     shell:
