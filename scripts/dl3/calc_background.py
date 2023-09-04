@@ -339,6 +339,7 @@ def main():
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
     exclusion = config["exclusion"]
+    matching = config["run_matching"]
 
     # TODO Define that properly somewhere
     location = EarthLocation.of_site("Roque de los Muchachos")
@@ -374,7 +375,7 @@ def main():
         cos_zenith_diff = np.abs(
             (criteria["cos_zenith"] - criteria["cos_zenith"][0]).values,
         )
-        mask = cos_zenith_diff < config["max_cos_zenith_diff"]
+        mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
         selected_ids = criteria["obs_id"][mask].data
         # select fitting runs
         bkg_maker.run(ds, selected_ids)
