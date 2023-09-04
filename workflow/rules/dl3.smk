@@ -51,7 +51,8 @@ rule dl2_to_dl3:
 
 rule calc_background:
     output:
-        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS),  # cant use function in output
+        #        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS), # cant use function in output
+        dummy=dl3 / "bkg-exists",
     input:
         runs=DL3_FILES,
         config=bkg_config,
@@ -67,6 +68,7 @@ rule calc_background:
         """python {input.script} \
         --input-dir {params.indir} \
         --output-dir {params.outdir} \
+        --dummy-output {output.dummy} \
         --config {input.config} \
         --log-file {log}
         """
@@ -94,6 +96,7 @@ rule dl3_hdu_index:
     input:
         runs=DL3_FILES,
         bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS),
+        dummy=dl3 / "bkg-exists",
     params:
         bkg_script=scripts / "link_bkg.py",
         bkg_dir=dl3,

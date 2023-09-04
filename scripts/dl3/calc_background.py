@@ -326,6 +326,7 @@ def main():
     parser.add_argument("--config", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--output-prefix", default="bkg")
+    parser.add_argument("--dummy-output", required=True)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -387,6 +388,7 @@ def main():
             out / f"{config['prefix']}_{obs_id}.fits.gz",
             overwrite=args.overwrite,
         )
+    Path(args.dummy_output).touch()
 
 
 if __name__ == "__main__":
