@@ -51,7 +51,7 @@ rule dl2_to_dl3:
 
 rule calc_background:
     output:
-        bkg=expand(dl3 / "bkg_run_id.fits.gz", run_id=RUN_IDS),  # cant use function in output
+        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS),  # cant use function in output
     input:
         runs=DL3_FILES,
         config=bkg_config,
@@ -68,7 +68,6 @@ rule calc_background:
         --input-dir {params.indir} \
         --output-dir {params.outdir} \
         --config {input.config} \
-        --output {output} \
         --log-file {log}
         """
 
