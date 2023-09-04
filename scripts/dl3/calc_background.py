@@ -142,7 +142,7 @@ class ExclusionMapBackgroundMaker:
 
     def fill_counts(self, obs, exclusion_mask):
         # hist events in evergy energy bin
-        log.info(f"Filling counts map(s) for obs {obs.ob_id}")
+        log.info(f"Filling counts map(s) for obs {obs.obs_id}")
         for j in range(self.e_reco.nbin):
             energy_mask = self.e_reco.edges[j] <= obs.events.energy
             energy_mask &= obs.events.energy < self.e_reco.edges[j + 1]
@@ -193,7 +193,7 @@ class ExclusionMapBackgroundMaker:
         self.counts_map_obs += counts_map_obs
 
     def fill_time_maps(self, obs):
-        log.info(f"Filling time map(s) for obs {obs.ob_id}")
+        log.info(f"Filling time map(s) for obs {obs.obs_id}")
         # define exclusion mask for all sources in 4fgl catalog in the region
         fgl = CATALOG_REGISTRY.get_cls("4fgl")()
         geom = WcsGeom.create(
