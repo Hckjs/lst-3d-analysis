@@ -324,6 +324,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", required=True)
     parser.add_argument("--config", required=True)
+    parser.add_argument("--output-dir", required=True)
     parser.add_argument("--output-prefix", default="bkg")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--log-file")

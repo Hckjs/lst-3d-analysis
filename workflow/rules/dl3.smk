@@ -58,6 +58,7 @@ rule calc_background:
         script=scripts / "calc_background.py",
     params:
         indir=dl3,
+        outdir=dl3,
     conda:
         bkg_env
     log:
@@ -65,6 +66,7 @@ rule calc_background:
     shell:
         """python {input.script} \
         --input-dir {params.indir} \
+        --output-dir {params.outdir} \
         --config {input.config} \
         --output {output} \
         --log-file {log}
