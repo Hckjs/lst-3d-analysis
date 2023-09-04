@@ -19,13 +19,11 @@ rule dl3:
 rule dl2_to_dl3:
     output:
         run=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
-        irf=dl3 / "irfs_{run_id}.fits.gz",
     input:
         data=dl2 / "LST-1.Run{run_id}.dl2.h5",
         irfs=MC_NODES_IRFs,
         config=irf_config,
     params:
-        interp="linear",  # nope
         irf_pattern="irfs_*.fits.gz",
         out=dl3,
         in_irfs=irfs,
@@ -43,12 +41,10 @@ rule dl2_to_dl3:
             --output-dl3-path {params.out}  \
             --input-irf-path {params.in_irfs}  \
             --irf-file-pattern {params.irf_pattern} \
-            --final-irf-file {output.irf} \
             --config {input.config} \
             --gzip \
             --overwrite \
-            --log-file {log} \
-            --interp-method {params.interp}
+            --log-file {log}
         """
 
 
