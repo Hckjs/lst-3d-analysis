@@ -1,4 +1,5 @@
 hdu_type: "3D"
+prefix: "bkg"
 run_matching:
   max_cos_zenith_diff: 0.2
 
