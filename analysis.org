@@ -1001,7 +1001,8 @@ rule calc_background:
         --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
         --config {input.config} \
-        --log-file {log}
+        --log-file {log} \
+        --overwrite
 
         python {input.link_script} \
         --hdu-index-path {input.index} \
