@@ -992,6 +992,7 @@ rule calc_background:
         bkg_env
     resources:
         partition="long",
+        time=360,
     log:
         dl3 / "calc_bkg.log",
     shell:
