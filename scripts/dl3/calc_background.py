@@ -21,7 +21,6 @@ from rich import progress
 from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
-erfa_astrom.set(ErfaAstromInterpolator(300 * u.s))
 
 
 def cone_solid_angle(angle):
@@ -102,6 +101,10 @@ class ExclusionMapBackgroundMaker:
             unit="deg",
             name="fov_lat",
         )
+
+        log.info(f"Creating bkg models with e binning {self.e_reco}")
+        log.info(f"Creating bkg models with lon axis: {self.lon_axis}")
+        log.info(f"Creating bkg models with lat axis: {self.lat_axis}")
         self.counts_map_eff = np.zeros((e_reco.nbin, nbins, nbins))
         self.counts_map_obs = np.zeros((e_reco.nbin, nbins, nbins))
         self.time_map_obs = u.Quantity(np.zeros((nbins, nbins)), u.h)
@@ -143,18 +146,18 @@ class ExclusionMapBackgroundMaker:
     def fill_counts(self, obs, exclusion_mask):
         # hist events in evergy energy bin
         log.info(f"Filling counts map(s) for obs {obs.obs_id}")
+        # convert coordinates from Ra/Dec to Alt/Az
+        t = obs.events.time
+        frame = AltAz(obstime=t, location=self.location)
+        pointing_altaz = obs.events.pointing_radec.transform_to(frame)
+        position_events = obs.events.radec.transform_to(frame)
         for j in range(self.e_reco.nbin):
             energy_mask = self.e_reco.edges[j] <= obs.events.energy
             energy_mask &= obs.events.energy < self.e_reco.edges[j + 1]
             mask = exclusion_mask & energy_mask
-            # TODO Optimize mask usage
-            # You could avoid some transformations here
-            #
-            # convert coordinates from Ra/Dec to Alt/Az
-            t = obs.events.time
-            frame = AltAz(obstime=t, location=self.location)
-            pointing_altaz = obs.events.pointing_radec.transform_to(frame)
-            position_events = obs.events.radec.transform_to(frame)
+            log.info(
+                f"Transforming {np.count_nonzero(energy_mask)} events in bin {j}",
+            )
             # convert Alt/Az to Alt/Az FoV
             # effective counts
             lon, lat = sky_to_fov(
@@ -180,7 +183,6 @@ class ExclusionMapBackgroundMaker:
                 lat.value,
                 bins=(self.lon_axis.edges.value, self.lat_axis.edges.value),
             )
-            #
             if j == 0:
                 counts_map_eff = counts_eff
                 counts_map_obs = counts_obs
@@ -250,8 +252,8 @@ class ExclusionMapBackgroundMaker:
         self.time_map_eff += u.Quantity(observation_time_eff, u.h)
 
     def run(self, data_store, obs_ids=None):
+        log.info(f"Creating background map from obs ids: {obs_ids}")
         observations = data_store.get_observations(obs_ids, required_irf=[])
-        log.info("Creating background map")
         for obs in progress.track(observations):
             exclusion_mask = self.get_exclusion_mask(obs)
             self.fill_counts(obs, exclusion_mask)
@@ -334,6 +336,8 @@ def main():
     setup_logging(logfile=args.log_file, verbose=args.verbose)
     out = Path(args.output_dir)
 
+    erfa_astrom.set(ErfaAstromInterpolator(300 * u.s))
+
     with open(args.config) as f:
         config = yaml.safe_load(f)
     e_binning = config["binning"]["energy"]
@@ -349,15 +353,6 @@ def main():
         e_binning["n_bins"],
         name="energy",
     )
-    bkg_maker = ExclusionMapBackgroundMaker(
-        e_reco,
-        location,
-        nbins=fov_binning["n_bins"],
-        offset_max=u.Quantity(fov_binning["max"]),
-        exclusion_radius=u.Quantity(exclusion["radius"]),
-        exclusion_sources=[SkyCoord(**s) for s in exclusion["sources"]],
-    )
-
     ds = DataStore.from_dir(args.input_dir)
 
     # Select similar runs. This is only zenith right now
@@ -378,6 +373,14 @@ def main():
         mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
         selected_ids = criteria["obs_id"][mask].values
         # select fitting runs
+        bkg_maker = ExclusionMapBackgroundMaker(
+            e_reco,
+            location,
+            nbins=fov_binning["n_bins"],
+            offset_max=u.Quantity(fov_binning["max"]),
+            exclusion_radius=u.Quantity(exclusion["radius"]),
+            exclusion_sources=[SkyCoord(**s) for s in exclusion["sources"]],
+        )
         bkg_maker.run(ds, selected_ids)
         if config["hdu_type"] == "3D":
             bkg = bkg_maker.get_bg_3d()
