@@ -102,9 +102,9 @@ class ExclusionMapBackgroundMaker:
             name="fov_lat",
         )
 
-        log.info(f"Creating bkg models with e binning {self.e_reco}")
-        log.info(f"Creating bkg models with lon axis: {self.lon_axis}")
-        log.info(f"Creating bkg models with lat axis: {self.lat_axis}")
+        log.debug(f"Creating bkg models with e binning {self.e_reco}")
+        log.debug(f"Creating bkg models with lon axis: {self.lon_axis}")
+        log.debug(f"Creating bkg models with lat axis: {self.lat_axis}")
         self.counts_map_eff = np.zeros((e_reco.nbin, nbins, nbins))
         self.counts_map_obs = np.zeros((e_reco.nbin, nbins, nbins))
         self.time_map_obs = u.Quantity(np.zeros((nbins, nbins)), u.h)
@@ -155,7 +155,7 @@ class ExclusionMapBackgroundMaker:
             energy_mask = self.e_reco.edges[j] <= obs.events.energy
             energy_mask &= obs.events.energy < self.e_reco.edges[j + 1]
             mask = exclusion_mask & energy_mask
-            log.info(
+            log.debug(
                 f"Transforming {np.count_nonzero(energy_mask)} events in bin {j}",
             )
             # convert Alt/Az to Alt/Az FoV
