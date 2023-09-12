@@ -1,0 +1,19 @@
+hdu_type: "3D"
+prefix: "bkg"
+run_matching:
+  max_cos_zenith_diff: 0.05
+
+# TODO Align with other irfs?
+binning:
+  offset:
+    max: "1.6 deg"
+    n_bins: 8
+  energy:
+    min: "20 GeV"
+    max: "20 TeV"
+    n_bins: 15
+
+exclusion:
+  radius: "0.32 deg"
+  sources:
+    - { "frame": "icrs", "ra": "187.70593076 deg", "dec": "12.39112329 deg" }

@@ -1,6 +1,6 @@
 {
-  "production": "20230127_v0.9.12_base_prod_az_tel",
-  "declination": "dec_2276",
-  "lstchain_enviroment": "lstchain-v0.9.13",
+  "production": "20230901_v0.10.4_allsky_base_prod",
+  "declination": "dec_931",
+  "lstchain_enviroment": "lstchain-v0.10.4",
   "n_off_regions": 1
 }

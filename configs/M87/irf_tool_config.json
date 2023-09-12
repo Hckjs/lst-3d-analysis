@@ -2,10 +2,10 @@
   "DL3Cuts": {
     "max_gh_cut": 1.0,
     "min_gh_cut": 0.4,
-    "gh_efficiency": 0.6
+    "gh_efficiency": 0.8
   },
   "IRFFITSWriter": {
-    "energy_dependent_theta": true,
+    "energy_dependent_theta": false,
     "energy_dependent_gh": true,
     "point_like": false,
     "overwrite": true
@@ -13,5 +13,10 @@
   "DataReductionFITSWriter": {
     "source_ra": "187.70593076 deg",
     "source_dec": "12.39112329 deg"
+  },
+  "DataBinning": {
+    "fov_offset_min": 0.0,
+    "fov_offset_max": 1.5,
+    "fov_offset_n_edges": 15
   }
 }
