@@ -74,6 +74,34 @@ rule dl3_hdu_index:
         """
 
 
+rule calc_count_maps:
+    output:
+        dl3 / "bkg_cached_maps.pkl",
+    input:
+        runs=DL3_FILES,
+        index=dl3 / "hdu-index.fits.gz",
+        config=bkg_config,
+        script=scripts / "precompute_background_maps.py",
+    params:
+        obs_dir=dl3,
+        bkg_dir=dl3,
+    conda:
+        bkg_env
+    resources:
+        partition="long",
+        time=360,
+    log:
+        dl3 / "calc_count_maps.log",
+    shell:
+        """python {input.calc_script} \
+        --input-dir {params.obs_dir} \
+        --output {output} \
+        --config {input.config} \
+        --log-file {log} \
+        --overwrite
+        """
+
+
 rule calc_background:
     output:
         #        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS), # cant use function in output
@@ -84,6 +112,7 @@ rule calc_background:
         config=bkg_config,
         calc_script=scripts / "calc_background.py",
         link_script=scripts / "link_bkg.py",
+        cached_maps=dl3 / "bkg_cached_maps.pkl",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
@@ -99,6 +128,7 @@ rule calc_background:
         --input-dir {params.obs_dir} \
         --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
+        --cached-maps {input.cached_maps} \
         --config {input.config} \
         --log-file {log} \
         --overwrite
