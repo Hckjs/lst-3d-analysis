@@ -1,4 +1,5 @@
 import json
+import logging
 from argparse import ArgumentParser
 
 import numpy as np
@@ -7,19 +8,9 @@ from astropy.coordinates import SkyCoord
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis, WcsGeom, WcsNDMap
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-parser.add_argument("-c", "--config", required=True)
-parser.add_argument("--obs-id", required=True)
-parser.add_argument(
-    "--width",
-    help="Width of skymap",
-    default="3 deg",
-    type=u.Quantity,
-)
-parser.add_argument("--n-bins", default=100)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
+
+log = logging.getLogger(__name__)
 
 
 @u.quantity_input(width=u.deg)
@@ -73,4 +64,21 @@ def main(input_path, config, output_path, obs_id, width, n_bins):  # noqa: PLR09
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--obs-id", required=True)
+    parser.add_argument(
+        "--width",
+        help="Width of skymap",
+        default="3 deg",
+        type=u.Quantity,
+    )
+    parser.add_argument("--n-bins", default=100)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+
     main(**vars(args))

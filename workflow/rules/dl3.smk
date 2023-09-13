@@ -274,8 +274,6 @@ rule plot_skymap:
 
 
 rule stack_skymaps:
-    conda:
-        lstchain_env
     output:
         dl3 / "skymap_dl3/stacked.fits",
     input:
@@ -283,7 +281,9 @@ rule stack_skymaps:
             dl3 / "skymap_dl3/{run_id}.fits",
             run_id=RUN_IDS,
         ),
-        script="scripts/stack_skymap.py",
+        script=scripts / "stack_skymap.py",
+    conda:
+        gammapy_env
     log:
         dl3 / "skymaps/stack.log",
     shell:
