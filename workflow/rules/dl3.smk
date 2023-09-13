@@ -302,7 +302,7 @@ rule cuts_dl2_dl3:
         mem_mb="64G",
         time=10,
     conda:
-        lstchain_env
+        env
     log:
         dl3 / "counts/calc_{run_id}.log",
     shell:
@@ -320,7 +320,7 @@ rule stack_cuts_dl2_dl3:
         script=scripts / "stack_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
-        lstchain_env
+        env
     log:
         dl3 / "counts/stack.log",
     shell:
@@ -335,7 +335,7 @@ rule plot_cuts_dl2_dl3:
         script=scripts / "plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
-        lstchain_env
+        env
     log:
         dl3 / "counts/plot_{run_id}.log",
     shell:
