@@ -4,12 +4,6 @@ import numpy as np
 from astropy import units as u
 from astropy.table import Table
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-paths", required=True, nargs="+")
-parser.add_argument("-o", "--output-path", required=True)
-parser.add_argument("--norm", default="none")
-args = parser.parse_args()
-
 
 def main(input_paths, output_path, norm):
     cuts_after_trigger = []
@@ -61,4 +55,9 @@ def main(input_paths, output_path, norm):
 
 
 if __name__ == "__main__":
-    main(**vars(args))
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-paths", required=True, nargs="+")
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("--norm", default="none")
+    args = parser.parse_args()
+    main(args.input_paths, args.output_path, args.norm)

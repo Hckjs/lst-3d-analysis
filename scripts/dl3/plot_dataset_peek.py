@@ -10,12 +10,6 @@ if matplotlib.get_backend() == "pgf":
 else:
     from matplotlib.backends.backend_pdf import PdfPages
 
-parser = ArgumentParser()
-parser.add_argument("-o", "--output", required=True)
-parser.add_argument("-c", "--config", required=True)
-parser.add_argument("--dataset-path", required=True)
-args = parser.parse_args()
-
 
 def peek(data):
     data.peek()
@@ -59,4 +53,9 @@ def main(config, dataset_path, output):
 
 
 if __name__ == "__main__":
-    main(**vars(args))
+    parser = ArgumentParser()
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--dataset-path", required=True)
+    args = parser.parse_args()
+    main(args.config, args.dataset_path, args.output)

@@ -52,4 +52,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
 
-    main(**vars(args))
+    main(args.input_path, args.output_path)

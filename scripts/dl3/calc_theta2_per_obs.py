@@ -12,8 +12,6 @@ from gammapy.maps import MapAxis
 from gammapy.stats import WStatCountsStatistic
 from gammapy.utils import pbar
 
-from scriptutils.log import setup_logging
-
 log = logging.getLogger(__name__)
 pbar.SHOW_PROGRESS_BAR = True
 
@@ -86,14 +84,12 @@ def add_stats(table):
     return table
 
 
-def main(input_dir, output, obs_id, log_file, verbose, config):  # noqa: PLR0915 PLR0913
+def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
     """
     Basically this:
     https://docs.gammapy.org/1.0.1/_modules/gammapy/makers/utils.html#make_theta_squared_table
     for one observation and in bins of energy
     """
-    setup_logging(logfile=log_file, verbose=verbose)
-    log = logging.getLogger("theta2-per-obs")
     ds = DataStore.from_dir(input_dir)
     obs = ds.obs(int(obs_id), ["aeff"])
 
@@ -177,4 +173,4 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", required=True)
     args = parser.parse_args()
 
-    main(**vars(args))
+    main(args.input_dir, args.output, args.obs_id, args.config)

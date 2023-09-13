@@ -3,11 +3,6 @@ from argparse import ArgumentParser
 from astropy.table import Table
 from matplotlib import pyplot as plt
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-args = parser.parse_args()
-
 
 def main(input_path, output_path):
     cuts = Table.read(input_path, path="cuts")
@@ -50,4 +45,9 @@ def main(input_path, output_path):
 
 
 if __name__ == "__main__":
-    main(**vars(args))
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    args = parser.parse_args()
+
+    main(args.input_path, args.output_path)

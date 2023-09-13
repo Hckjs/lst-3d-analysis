@@ -81,4 +81,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
 
-    main(**vars(args))
+    main(
+        args.input_path,
+        args.config,
+        args.output_path,
+        args.obs_id,
+        args.width,
+        args.n_bins,
+    )
