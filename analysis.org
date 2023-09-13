@@ -1219,7 +1219,7 @@ rule cuts_dl2_dl3:
     input:
         dl2=dl2/ "dl2_LST-1.Run{run_id}.h5",
         irf=irfs / "irf_Run{run_id}.fits.gz",
-        config=irf_config_path,
+        config=irf_config,
         script=scripts/"calc_counts_after_cuts.py",
     resources:
         mem_mb="64G",
