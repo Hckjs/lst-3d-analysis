@@ -1217,8 +1217,8 @@ rule cuts_dl2_dl3:
     output:
         dl3 / "counts/after_gh_theta_cut_{run_id}.h5",
     input:
-        dl2=dl2/ "dl2_LST-1.Run{run_id}.h5",
-        irf=irfs / "irf_Run{run_id}.fits.gz",
+        dl2=dl2/ "LST-1.Run{run_id}.dl2.h5",
+        irf=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         config=irf_config,
         script=scripts/"calc_counts_after_cuts.py",
     resources:
