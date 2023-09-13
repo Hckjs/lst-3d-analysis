@@ -11,6 +11,7 @@ __pycache__/
 
 build
 data/
+runlist.html
 scriptutils/build
 scriptutils.egg-info
 
