@@ -1,3 +1,4 @@
+import logging
 import warnings
 from argparse import ArgumentParser
 
@@ -8,11 +9,14 @@ from astropy.table import Table
 from gammapy.maps import MapAxis
 from matplotlib import pyplot as plt
 
+from scriptutils.log import setup_logging
+
 if matplotlib.get_backend() == "pgf":
     from matplotlib.backends.backend_pgf import PdfPages
 else:
     from matplotlib.backends.backend_pdf import PdfPages
 
+log = logging.getLogger(__name__)
 # this warning happens for empty energy bins
 warnings.filterwarnings(
     "ignore",
@@ -20,13 +24,6 @@ warnings.filterwarnings(
     message="Attempting to set identical low and high ylims makes "
     "transformation singular; automatically expanding.",
 )
-
-
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output", required=True)
-parser.add_argument("--preliminary", action="store_true")
-args = parser.parse_args()
 
 
 def plot_theta_squared_table(table, *, preliminary=False, ylim=None):
@@ -121,4 +118,12 @@ def main(input_path, output, preliminary):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--preliminary", action="store_true")
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
     main(**vars(args))

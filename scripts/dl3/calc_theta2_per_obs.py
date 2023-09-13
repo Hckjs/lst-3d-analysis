@@ -11,8 +11,10 @@ from gammapy.data import DataStore
 from gammapy.maps import MapAxis
 from gammapy.stats import WStatCountsStatistic
 from gammapy.utils import pbar
-from log import setup_logging
 
+from scriptutils.log import setup_logging
+
+log = logging.getLogger(__name__)
 pbar.SHOW_PROGRESS_BAR = True
 
 

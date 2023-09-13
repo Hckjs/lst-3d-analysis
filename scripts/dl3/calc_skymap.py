@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import json
+import logging
 from argparse import ArgumentParser
 
 import numpy as np
@@ -13,18 +13,7 @@ from lstchain.high_level.hdu_table import add_icrs_position_params
 from lstchain.io import read_data_dl2_to_QTable
 from lstchain.reco.utils import get_effective_time
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-parser.add_argument("-c", "--config", required=True)
-parser.add_argument(
-    "--width",
-    help="Width of skymap",
-    default="4 deg",
-    type=u.Quantity,
-)
-parser.add_argument("--n-bins", default=100)
-args = parser.parse_args()
+log = logging.getLogger(__name__)
 
 
 @u.quantity_input(width=u.deg)
@@ -85,4 +74,19 @@ def main(input_path, output_path, config, width, n_bins):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument(
+        "--width",
+        help="Width of skymap",
+        default="4 deg",
+        type=u.Quantity,
+    )
+    parser.add_argument("--n-bins", default=100)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
     main(**vars(args))

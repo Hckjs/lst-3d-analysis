@@ -1,14 +1,13 @@
+import logging
 from argparse import ArgumentParser
 
 from astropy import units as u
 from gammapy.maps import WcsMap
 from matplotlib import pyplot as plt
 
-parser = ArgumentParser()
-parser.add_argument("-i", "--input-path", required=True)
-parser.add_argument("-o", "--output-path", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
+log = logging.getLogger(__name__)
 angle = u.deg
 
 
@@ -54,4 +53,12 @@ def main(input_path, output_path):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-i", "--input-path", required=True)
+    parser.add_argument("-o", "--output-path", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+
     main(**vars(args))

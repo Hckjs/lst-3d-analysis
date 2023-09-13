@@ -6,14 +6,8 @@ from astropy.io import fits
 from astropy.table import Table
 from calc_theta2_per_obs import add_stats
 from gammapy.utils import pbar
-from log import setup_logging
 
-parser = ArgumentParser()
-parser.add_argument("-o", "--output", required=True)
-parser.add_argument("-i", "--input-files", required=True, nargs="+")
-parser.add_argument("--log-file")
-parser.add_argument("-v", "--verbose", action="store_true")
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
 pbar.SHOW_PROGRESS_BAR = True
 
@@ -53,4 +47,11 @@ def main(input_files, output, log_file, verbose):  # noqa: PLR0915
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("-i", "--input-files", required=True, nargs="+")
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
     main(**vars(args))

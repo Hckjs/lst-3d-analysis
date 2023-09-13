@@ -6,10 +6,7 @@ from gammapy.data import EventList
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-parser = ArgumentParser()
-parser.add_argument("-c", "--config", required=True)
-parser.add_argument("-o", "--output", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
 
 
 def on_region_to_skyframe(on_region):
@@ -47,4 +44,11 @@ def main(config, output):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
     main(**vars(args))

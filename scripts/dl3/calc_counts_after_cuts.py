@@ -1,4 +1,5 @@
 import json
+import logging
 from argparse import ArgumentParser
 
 import numpy as np
@@ -8,12 +9,7 @@ from lstchain.high_level.hdu_table import add_icrs_position_params
 from lstchain.io import read_data_dl2_to_QTable
 from lstchain.reco.utils import get_effective_time
 
-parser = ArgumentParser()
-parser.add_argument("--input-dl2", required=True)
-parser.add_argument("--input-irf", required=True)
-parser.add_argument("-o", "--output", required=True)
-parser.add_argument("-c", "--config", required=True)
-args = parser.parse_args()
+log = logging.getLogger(__name__)
 
 
 def main(input_dl2, input_irf, config, output):
@@ -78,4 +74,13 @@ def main(input_dl2, input_irf, config, output):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("--input-dl2", required=True)
+    parser.add_argument("--input-irf", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+
     main(**vars(args))
