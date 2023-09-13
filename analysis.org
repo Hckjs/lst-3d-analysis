@@ -1136,7 +1136,7 @@ rule stack_theta2:
 
 rule plot_theta:
     output:
-        plots / "theta2/{run_id}.pdf",
+        plots / "theta2/theta2_{run_id}.pdf",
     input:
         data=dl3 / "theta2/{run_id}.fits.gz",
         script="scripts/plot_theta2.py",
@@ -1175,7 +1175,7 @@ rule calc_skymap:
 
 rule plot_skymap:
     output:
-        plots/ "skymap_dl3/{run_id}.pdf",
+        plots/ "skymap_dl3/skymap_{run_id}.pdf",
     input:
         data=dl3 / "skymap_dl3/{run_id}.fits",
         script=scripts/"plot_skymap_dl3.py",
@@ -1255,15 +1255,15 @@ rule stack_cuts_dl2_dl3:
 #+begin_src snakemake
 rule plot_cuts_dl2_dl3:
     output:
-        plots/ "counts_after_cuts.pdf",
+        plots/ "counts_after_cuts_{run_id}.pdf",
     input:
-        data=dl3/ "counts/after_gh_theta_cut.h5",
+        data=dl3/ "counts/after_gh_theta_cut_{run_id}.h5",
         script=scripts/"plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
         env
     log:
-        dl3 / "counts/plot_counts_after_cuts.log",
+        dl3 / "counts/plot_counts_after_cuts_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 #+end_src
