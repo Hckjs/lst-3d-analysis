@@ -3,6 +3,7 @@ bkg_env = ENVS["background"]
 
 dl2 = Path(OUTDIRS["dl2"])
 dl3 = Path(OUTDIRS["dl3"])
+plots = dl3 / "plots"
 irfs = Path(OUTDIRS["irfs"])
 
 scripts = Path(SCRIPTS["dl3"])
@@ -13,8 +14,9 @@ bkg_config = CONFIGS["bkg_model"]
 
 rule dl3:
     input:
-        dl3 / "hdu-index.fits.gz",
-        dl3 / "bkg-exists",
+        index=dl3 / "hdu-index.fits.gz",
+        bkg=dl3 / "bkg-exists",
+        plots=DL3_PLOTS,
 
 
 rule dl2_to_dl3:
