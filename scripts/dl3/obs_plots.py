@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 
 from astropy.coordinates import SkyCoord
@@ -7,6 +8,8 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from scriptutils.log import setup_logging
+
+log = logging.getLogger(__name__)
 
 
 def on_region_to_skyframe(on_region):
@@ -51,4 +54,4 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-    main(**vars(args))
+    main(args.config, args.output)
