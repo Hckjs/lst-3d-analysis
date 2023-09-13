@@ -298,6 +298,8 @@ rule cuts_dl2_dl3:
         irf=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         config=irf_config,
         script=scripts / "calc_counts_after_cuts.py",
+    wildcard_constraints:
+        run_id="\d+",  # dont match on "stacked".
     resources:
         mem_mb="64G",
         time=10,
