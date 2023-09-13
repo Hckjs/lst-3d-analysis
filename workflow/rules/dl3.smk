@@ -1,5 +1,6 @@
 env = ENVS["lstchain"]
 bkg_env = ENVS["background"]
+gammapy_env = ENVS["gammapy"]
 
 dl2 = Path(OUTDIRS["dl2"])
 dl3 = Path(OUTDIRS["dl3"])
@@ -10,6 +11,7 @@ scripts = Path(SCRIPTS["dl3"])
 
 irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
+data_selection_config = CONFIGS["data_selection"]
 
 
 rule dl3:
@@ -162,6 +164,7 @@ rule observation_plots:
         dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "obs_plots.py",
+        rc=MATPLOTLIBRC,
     output:
         plots / "{analysis}/obs_plots.pdf",
     resources:
@@ -172,6 +175,7 @@ rule observation_plots:
         plots / "{analysis}/obs_plots.log",
     shell:
         """
+        MATPLOTLIBRC={input.rc} \
         python {input.script} \
             -c {input.config} \
             -o {output} \
@@ -185,7 +189,7 @@ rule calc_theta2_per_obs:
     input:
         data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_theta2_per_obs.py",
-        config=data_selection_config_path,  # this seems unnecessary
+        config=data_selection_config,  # this seems unnecessary
         index=dl3 / "hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
@@ -218,11 +222,11 @@ rule stack_theta2:
 
 rule plot_theta:
     output:
-        plots / "theta2/{runid}.pdf",
+        plots / "theta2/{run_id}.pdf",
     input:
-        data=dl3 / "theta2/{runid}.fits.gz",
+        data=dl3 / "theta2/{run_id}.fits.gz",
         script="scripts/plot_theta2.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     log:
@@ -314,7 +318,7 @@ rule stack_cuts_dl2_dl3:
             run_id=RUN_IDS,
         ),
         script=scripts / "stack_counts_after_cuts.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        rc=MATPLOTLIBRC,
     conda:
         lstchain_env
     log:
@@ -329,7 +333,7 @@ rule plot_cuts_dl2_dl3:
     input:
         data=dl3 / "counts/after_gh_theta_cut.h5",
         script=scripts / "plot_counts_after_cuts.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        rc=MATPLOTLIBRC,
     conda:
         lstchain_env
     log:
