@@ -93,7 +93,7 @@ rule calc_count_maps:
     log:
         dl3 / "calc_count_maps.log",
     shell:
-        """python {input.calc_script} \
+        """python {input.script} \
         --input-dir {params.obs_dir} \
         --output {output} \
         --config {input.config} \
