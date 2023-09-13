@@ -241,7 +241,7 @@ rule calc_skymap:
     input:
         data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_skymap_gammas.py",
-        config=irf_config_path,
+        config=irf_config,
         index=dl3 / "hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
