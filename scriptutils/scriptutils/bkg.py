@@ -4,12 +4,13 @@ import pandas as pd
 from astropy.coordinates import AltAz, Angle, EarthLocation, SkyCoord
 from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
 from astropy.time import Time
+from gammapy.maps import MapAxis, WcsGeom
 from gammapy.catalog import CATALOG_REGISTRY
 from gammapy.irf import Background2D, Background3D
 from gammapy.utils.coordinates import fov_to_sky, sky_to_fov
 import logging
 
-logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 def cone_solid_angle(angle):
     """

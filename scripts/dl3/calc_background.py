@@ -26,7 +26,7 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", required=True)
-    parser.add_argument("--cached-count-maps", required=True)
+    parser.add_argument("--cached-maps", required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--output-prefix", default="bkg")
@@ -56,7 +56,7 @@ def main():
         name="energy",
     )
     ds = DataStore.from_dir(args.input_dir)
-    with open(args.cached_counts_maps, "rb") as f:
+    with open(args.cached_maps, "rb") as f:
         cached_maps = pickle.load(f)
 
     # Select similar runs. This is only zenith right now

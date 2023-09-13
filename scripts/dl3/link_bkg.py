@@ -10,11 +10,9 @@ from scriptutils.log import setup_logging
 log = logging.getLogger(__name__)
 
 
-# TODO Logging (but its in the lstchain env, so just basic logs)
 def main(hdu_index_path, bkg_dir, bkg_pattern):
     t = Table.read(hdu_index_path)
     ids = sorted(np.unique(t["OBS_ID"]))
-    log.info(len(ids), "ids in file:", ids)
 
     bkg_files = list(Path(bkg_dir).glob(bkg_pattern))
 
@@ -36,6 +34,8 @@ def main(hdu_index_path, bkg_dir, bkg_pattern):
             but {len(bkg_files)} bkg files""",
         )
     for i, bkg in zip(ids, bkg_files):
+        log.info(type(bkg))
+        bkg = str(bkg)
         log.info(f"Linking {bkg} to obs id {i}")
         t.add_row([i, "bkg", "bkg_3d", bkg_dir, bkg, "BACKGROUND", -1])
     log.info(t)
