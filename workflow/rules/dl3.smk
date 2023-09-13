@@ -337,6 +337,6 @@ rule plot_cuts_dl2_dl3:
     conda:
         env
     log:
-        dl3 / "counts/plot_{run_id}.log",
+        dl3 / "counts/plot_counts_after_cuts.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
