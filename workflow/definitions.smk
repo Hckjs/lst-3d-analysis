@@ -131,7 +131,7 @@ def DL3_PLOTS(wildcards):
     plot_types = ["theta2", "skymap", "counts_after_cuts"]
     # per run is not super accurate since it includes stacked...
     per_run = [
-        out / analysis / f"{p}_{run}.pdf"
+        out / f"{p}_{run}.pdf"
         for p in plot_types
         for analysis in analyses
         for run in ids

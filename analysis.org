@@ -181,7 +181,7 @@ def DL3_PLOTS(wildcards):
     out = Path(OUTDIRS["dl3"]) / "plots"
     plot_types = ["theta2", "skymap", "counts_after_cuts"]
     # per run is not super accurate since it includes stacked...
-    per_run = [out / analysis / f"{p}_{run}.pdf" for p in plot_types for analysis in analyses for run in ids]
+    per_run = [out / f"{p}_{run}.pdf" for p in plot_types for analysis in analyses for run in ids]
     total = [out / analysis / "obs_plots.pdf" for analysis in analyses]
     return total + per_run
 
@@ -1068,9 +1068,6 @@ rule plot_background:
 
 #+end_src
 ** Plot dl3 stuff
-:PROPERTIES:
-:header-args:    :tangle no
-:END:
 *** Obs plots
 #+begin_src snakemake
 rule observation_plots:
@@ -1113,7 +1110,7 @@ rule calc_theta2_per_obs:
     log:
         dl3 / "theta2/calc_{run_id}.log",
     shell:
-        "python {input.script} -i {build_dir}/dl3 -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
+        "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
 
 
 rule stack_theta2:
@@ -1135,7 +1132,7 @@ rule stack_theta2:
 
 rule plot_theta:
     output:
-        plots/ / "theta2/{runid}.pdf",
+        plots / "theta2/{runid}.pdf",
     input:
         data=dl3 / "theta2/{runid}.fits.gz",
         script="scripts/plot_theta2.py",
@@ -1210,9 +1207,6 @@ rule stack_skymaps:
 #+end_src
 
 ** Cuts dl3 (kinda irf)
-:PROPERTIES:
-:header-args:    :tangle no
-:END:
 This wont work as it needs the "final" irf file!
 #+begin_src snakemake
 rule cuts_dl2_dl3:
