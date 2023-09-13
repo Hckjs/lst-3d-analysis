@@ -185,7 +185,7 @@ rule observation_plots:
 
 rule calc_theta2_per_obs:
     output:
-        plots / "theta2/{run_id}.fits.gz",
+        dl3 / "theta2/{run_id}.fits.gz",
     input:
         data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_theta2_per_obs.py",
@@ -225,12 +225,12 @@ rule plot_theta:
         plots / "theta2/theta2_{run_id}.pdf",
     input:
         data=dl3 / "theta2/{run_id}.fits.gz",
-        script="scripts/plot_theta2.py",
+        script=scripts / "plot_theta2.py",
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     log:
-        dl3 / "theta2/plot_{run_id}.log",
+        plots / "theta2/plot_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
@@ -258,7 +258,7 @@ rule calc_skymap:
 
 rule plot_skymap:
     output:
-        plots / "skymap_dl3/skymap_{run_id}.pdf",
+        plots / "skymaps/skymap_{run_id}.pdf",
     input:
         data=dl3 / "skymap_dl3/{run_id}.fits",
         script=scripts / "plot_skymap_dl3.py",
@@ -268,7 +268,7 @@ rule plot_skymap:
     resources:
         time=5,
     log:
-        dl3 / "skymaps/plot_{run_id}.log",
+        plots / "skymaps/plot_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
@@ -331,7 +331,7 @@ rule stack_cuts_dl2_dl3:
 
 rule plot_cuts_dl2_dl3:
     output:
-        plots / "counts_after_cuts_{run_id}.pdf",
+        plots / "counts/counts_{run_id}.pdf",
     input:
         data=dl3 / "counts/after_gh_theta_cut_{run_id}.h5",
         script=scripts / "plot_counts_after_cuts.py",
@@ -339,6 +339,6 @@ rule plot_cuts_dl2_dl3:
     conda:
         env
     log:
-        dl3 / "counts/plot_counts_after_cuts_{run_id}.log",
+        plots / "counts/plot_counts_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
