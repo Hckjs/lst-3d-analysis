@@ -196,10 +196,7 @@ rule stack_theta2:
     output:
         dl3 / "theta2/stacked.fits.gz",
     input:
-        runs=expand(
-            dl3 / "theta2/{run_id}.fits.gz",
-            run_id=RUN_IDS,
-        ),
+        runs=dl3_all_theta_tables,
         script=scripts / "stack_theta2.py",
     conda:
         gammapy_env
