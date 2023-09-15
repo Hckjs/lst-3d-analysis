@@ -1239,7 +1239,7 @@ rule stack_cuts_dl2_dl3:
 #+begin_src snakemake
 rule plot_cuts_dl2_dl3:
     output:
-        plots/ "counts_after_cuts/counts_{run_id}.pdf",
+        plots/ "counts_after_cuts/counts_after_cuts_{run_id}.pdf",
     input:
         data=dl3/ "counts_after_cuts/{run_id}.h5",
         script=scripts/"plot_counts_after_cuts.py",
