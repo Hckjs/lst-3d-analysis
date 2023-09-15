@@ -111,9 +111,6 @@ def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
         np.append(energy_axis.edges_min[0], energy_axis.edges_max),
         overflow,
     )
-    # This will break for multiple offsets in the IRF
-    # theta_cuts = np.append(None, np.append(obs.rad_max.data.flatten(), None))
-    theta = 0.2 * u.deg
 
     # Get on and off position
     with open(config) as f:
@@ -146,7 +143,6 @@ def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
         # Useful for plotting
         table.meta["ELOW"] = format_energy(elow)
         table.meta["EHI"] = format_energy(ehigh)
-        table.meta["CUT"] = theta**2
         # This is needed for stacking later
         table.meta["TOBS"] = obs.observation_live_time_duration.to_value(u.s)
 
