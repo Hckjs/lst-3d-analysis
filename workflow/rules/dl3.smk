@@ -114,15 +114,9 @@ rule calc_count_maps:
         """
 
 
-def dl3_all_bkgs(wildcards):
-    ids = RUN_IDS(wildcards)
-    return [dl3 / f"bkg_{run}.fits.gz" for run in ids]
-
-
 rule calc_background:
     output:
         dummy=dl3 / "bkg-exists",
-        files=dl3_all_bkgs,
     input:
         runs=DL3_FILES,
         index=dl3 / "hdu-index.fits.gz",
@@ -213,7 +207,7 @@ rule plot_theta:
 # Use lstchain env here to ensure we can load it
 rule plot_background:
     output:
-        dl3 / "plots/bkg/bkg_{run_id}.pdf",
+        dl3 / "plots/bkg/bkg-exists",
     input:
         data=dl3 / "bkg_{run_id}.fits.gz",
         rc=MATPLOTLIBRC,
