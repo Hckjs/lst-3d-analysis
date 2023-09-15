@@ -136,7 +136,7 @@ def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
 
     hdulist = [fits.PrimaryHDU()]
     theta_tables = []
-    for elow, ehigh, theta in zip(energy_lower, energy_upper):
+    for elow, ehigh in zip(energy_lower, energy_upper):
         log.info(
             "Calculating counts in range %s - %s",
             format_energy(elow),
