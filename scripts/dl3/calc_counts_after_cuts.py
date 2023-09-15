@@ -45,15 +45,15 @@ def main(input_dl2, input_irf, config, output):
     gh_mask = events["gh_score"] >= events["gh_cut"]
     events["gh_mask"] = gh_mask
 
-    rad_max_cuts = QTable.read(input_irf, hdu="RAD_MAX")
+    # rad_max_cuts = QTable.read(input_irf, hdu="RAD_MAX")
 
-    events["theta_bin"] = np.digitize(
-        events["reco_energy"],
-        rad_max_cuts["ENERG_HI"][0],
-    )
-    events["theta_cut"] = rad_max_cuts["RAD_MAX"][0, 0][events["theta_bin"]]
-    theta_mask = events["theta"] <= events["theta_cut"]
-    events["theta_mask"] = theta_mask
+    # events["theta_bin"] = np.digitize(
+    #    events["reco_energy"],
+    #    rad_max_cuts["ENERG_HI"][0],
+    # )
+    # events["theta_cut"] = rad_max_cuts["RAD_MAX"][0, 0][events["theta_bin"]]
+    # theta_mask = events["theta"] <= events["theta_cut"]
+    # events["theta_mask"] = theta_mask
 
     table = QTable(
         {
@@ -64,12 +64,12 @@ def main(input_dl2, input_irf, config, output):
                 len(events[(events["gh_bin"] == i) & gh_mask])
                 for i in range(len(gh_cuts))
             ],
-            "after_gh_theta": [
-                len(events[(events["gh_bin"] == i) & gh_mask & theta_mask])
-                for i in range(len(gh_cuts))
-            ],
-            "rad_max_cut": rad_max_cuts["RAD_MAX"][0, 0],
-            **gh_cuts,
+            #        "after_gh_theta": [
+            #            len(events[(events["gh_bin"] == i) & gh_mask & theta_mask])
+            #            for i in range(len(gh_cuts))
+            #        ],
+            #        "rad_max_cut": rad_max_cuts["RAD_MAX"][0, 0],
+            #        **gh_cuts,
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )

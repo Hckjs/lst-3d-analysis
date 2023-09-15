@@ -36,16 +36,11 @@ def main(input_paths, output_path, norm):
         np.array(cuts_after_gh) / norm,
         axis=0,
     )
-    cuts_after_gh_theta = np.sum(
-        np.array(cuts_after_gh_theta) / norm,
-        axis=0,
-    )
 
     table = Table(
         {
             "after_trigger": cuts_after_trigger,
             "after_gh": cuts_after_gh,
-            "after_gh_theta": cuts_after_gh_theta,
             "center": cuts["center"],
             "high": cuts["high"],
             "low": cuts["low"],

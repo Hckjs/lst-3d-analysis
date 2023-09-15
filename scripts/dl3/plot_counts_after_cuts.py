@@ -26,13 +26,6 @@ def main(input_path, output_path):
         ls="",
         label="GH Cut",
     )
-    ax.errorbar(
-        x,
-        cuts["after_gh_theta"],
-        xerr=xerr,
-        ls="",
-        label="Theta Cut",
-    )
     ax.set_xscale("log")
     ax.set_yscale("log")
 
