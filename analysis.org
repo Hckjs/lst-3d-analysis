@@ -884,7 +884,7 @@ plot_types = ["theta2"]#, "skymap", "counts_after_cuts"]
 
 def DL3_PLOTS(wildcards):
     ids = RUN_IDS(wildcards) + ["stacked"]
-    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in ids]
+    return [plots / f"{p}/{p}_{run}.pdf" for p in plot_types for run in ids]
 
 rule dl3:
     input:
