@@ -223,7 +223,7 @@ rule plot_background:
 
 rule calc_skymap:
     output:
-        dl3 / "skymap/{run_id}.fits",
+        dl3 / "skymap/{run_id}.fits.gz",
     input:
         data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_skymap_gammas.py",
@@ -249,7 +249,7 @@ def dl3_all_skymaps(wildcards):
 
 rule stack_skymaps:
     output:
-        dl3 / "skymap/stacked.fits",
+        dl3 / "skymap/stacked.fits.gz",
     input:
         data=dl3_all_skymaps,
         script=scripts / "stack_skymap.py",
