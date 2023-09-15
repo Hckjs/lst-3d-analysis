@@ -244,7 +244,7 @@ rule calc_skymap:
 
 def dl3_all_skymaps(wildcards):
     ids = RUN_IDS(wildcards)
-    return [dl3 / f"skymaps/{run}.fits.gz" for run in ids]
+    return [dl3 / f"skymap/{run}.fits.gz" for run in ids]
 
 
 rule stack_skymaps:
@@ -265,7 +265,7 @@ rule plot_skymap:
     output:
         plots / "skymap/skymap_{run_id}.pdf",
     input:
-        data=dl3 / "skymaps/{run_id}.fits",
+        data=dl3 / "skymap/{run_id}.fits",
         script=scripts / "plot_skymap_dl3.py",
         rc=MATPLOTLIBRC,
     conda:
