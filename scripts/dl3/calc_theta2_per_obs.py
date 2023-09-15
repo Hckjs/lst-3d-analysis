@@ -56,7 +56,7 @@ def get_axes(obs):
         interp="lin",
         unit="deg2",
     )
-    energy_axis = MapAxis.from_bounds(
+    energy_axis = MapAxis.from_energy_bounds(
         0.005,
         50,
         nbin=25,
