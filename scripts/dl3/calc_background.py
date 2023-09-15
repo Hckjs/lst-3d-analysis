@@ -2,20 +2,20 @@
 # https://github.com/cta-observatory/pybkgmodel/tree/add_exlcusion_region_method
 import argparse
 import logging
+import pickle
 from pathlib import Path
-import yaml
-from rich import progress
+
 import astropy.units as u
 import numpy as np
 import pandas as pd
-import pickle
-from astropy.coordinates import AltAz, Angle, EarthLocation, SkyCoord
+import yaml
+from astropy.coordinates import EarthLocation, SkyCoord
 from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
 from gammapy.data import DataStore
-from gammapy.maps import MapAxis, WcsGeom
-from scriptutils.log import setup_logging
+from gammapy.maps import MapAxis
+
 from scriptutils.bkg import ExclusionMapBackgroundMaker
-import pickle
+from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ def main():
         else:
             raise NotImplementedError()
         bkg.write(
-            out / f"{config['prefix']}_{obs_id}.fits.gz",
+            out / f"{config['prefix']}_{obs_id:05d}.fits.gz",
             overwrite=args.overwrite,
         )
     Path(args.dummy_output).touch()

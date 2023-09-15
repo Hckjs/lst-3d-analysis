@@ -33,11 +33,11 @@ def main(hdu_index_path, bkg_dir, bkg_pattern):
             We have {len(ids)} obs,
             but {len(bkg_files)} bkg files""",
         )
+    # remove old links in case of reexecution of bkg rules
+    t.remove_rows(np.nonzero(t["HDU_TYPE"] == "bkg"))
     for i, bkg in zip(ids, bkg_files):
-        log.info(type(bkg))
-        bkg = str(bkg)
         log.info(f"Linking {bkg} to obs id {i}")
-        t.add_row([i, "bkg", "bkg_3d", bkg_dir, bkg, "BACKGROUND", -1])
+        t.add_row([i, "bkg", "bkg_3d", bkg_dir, str(bkg), "BACKGROUND", -1])
     log.info(t)
     t.write(hdu_index_path, overwrite=True)
 
