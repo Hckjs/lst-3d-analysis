@@ -280,7 +280,7 @@ rule plot_skymap:
 
 rule cuts_dl2_dl3:
     output:
-        dl3 / "counts_after_cuts/after_cuts_{run_id}.h5",
+        dl3 / "counts_after_cuts/{run_id}.h5",
     input:
         dl2=dl2 / "LST-1.Run{run_id}.dl2.h5",
         irf=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
@@ -301,12 +301,12 @@ rule cuts_dl2_dl3:
 
 def dl3_all_counts(wildcards):
     ids = RUN_IDS(wildcards)
-    return [dl3 / f"counts/{run}.fits.gz" for run in ids]
+    return [dl3 / f"counts_after_cuts/{run}.h5" for run in ids]
 
 
 rule stack_cuts_dl2_dl3:
     output:
-        dl3 / "counts_after_cuts/after_cuts_stacked.h5",
+        dl3 / "counts_after_cuts/stacked.h5",
     input:
         data=dl3_all_counts,
         script=scripts / "stack_counts_after_cuts.py",
@@ -323,7 +323,7 @@ rule plot_cuts_dl2_dl3:
     output:
         plots / "counts_after_cuts/counts_{run_id}.pdf",
     input:
-        data=dl3 / "counts_after_cuts/after_cuts_{run_id}.h5",
+        data=dl3 / "counts_after_cuts/{run_id}.h5",
         script=scripts / "plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
