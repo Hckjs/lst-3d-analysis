@@ -328,7 +328,7 @@ rule plot_cuts_dl2_dl3:
         script=scripts / "plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
-        gammapy_env
+        env
     log:
         plots / "counts_after_cuts/plot_counts_{run_id}.log",
     shell:
