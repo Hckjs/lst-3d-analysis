@@ -204,20 +204,21 @@ rule plot_theta:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
-# Use lstchain env here to ensure we can load it
 rule plot_background:
     output:
-        dl3 / "plots/bkg/bkg-exists",
+        plots / "bkg/bkg_{run_id}.pdf",
     input:
-        data=dl3 / "bkg_{run_id}.fits.gz",
-        rc=MATPLOTLIBRC,
+        data=dl3 / "plots/bkg/bkg-exists",
         script=scripts / "plot_bkg.py",
+        rc=MATPLOTLIBRC,
+    params:
+        data=dl3 / "bkg_{run_id}.fits.gz",
     conda:
         gammapy_env
     log:
         dl3 / "plots/bkg/bkg_{run_id}.log",
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {params.data} -o {output}"
 
 
 rule calc_skymap:
