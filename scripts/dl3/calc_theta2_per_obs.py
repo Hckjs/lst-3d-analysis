@@ -60,7 +60,6 @@ def get_axes(obs):
         0.005,
         50,
         nbin=25,
-        interp="lin",
         unit="TeV",
     )
     # energy_axis = obs.rad_max.axes["energy"]
