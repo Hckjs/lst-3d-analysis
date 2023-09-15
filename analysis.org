@@ -883,8 +883,9 @@ plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
 # bkg plots as well!
 
 def DL3_PLOTS(wildcards):
-    ids = RUN_IDS(wildcards) + ["stacked"]
-    return [plots / f"{p}/{p}_{run}.pdf" for p in plot_types for run in ids]
+    ids = RUN_IDS(wildcards)
+    per_run = [plots / f"{p}/{p}_{run}.pdf" for p in plot_types for run in ids]
+    return per_run + [plots/f"{p}/{p}_stacked.pdf" for p in plot_tzpes[:-1]]
 
 rule dl3:
     input:
@@ -1116,7 +1117,7 @@ rule plot_background:
     output:
         plots / "bkg/bkg_{run_id}.pdf"
     input:
-        data=dl3 / "plots/bkg/bkg-exists",
+        data=dl3 / "bkg-exists",
         script=scripts / "plot_bkg.py",
         rc=MATPLOTLIBRC,
     params:
