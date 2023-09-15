@@ -222,7 +222,7 @@ rule plot_background:
 
 rule calc_skymap:
     output:
-        dl3 / "skymaps/{run_id}.fits",
+        dl3 / "skymap/{run_id}.fits",
     input:
         data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_skymap_gammas.py",
@@ -236,7 +236,7 @@ rule calc_skymap:
     conda:
         gammapy_env
     log:
-        dl3 / "skymaps/calc_{run_id}.log",
+        dl3 / "skymap/calc_{run_id}.log",
     shell:
         "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
 
@@ -248,21 +248,21 @@ def dl3_all_skymaps(wildcards):
 
 rule stack_skymaps:
     output:
-        dl3 / "skymaps/stacked.fits",
+        dl3 / "skymap/stacked.fits",
     input:
         data=dl3_all_skymaps,
         script=scripts / "stack_skymap.py",
     conda:
         gammapy_env
     log:
-        dl3 / "skymaps/stack.log",
+        dl3 / "skymap/stack.log",
     shell:
         "python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule plot_skymap:
     output:
-        plots / "skymaps/skymap_{run_id}.pdf",
+        plots / "skymap/skymap_{run_id}.pdf",
     input:
         data=dl3 / "skymaps/{run_id}.fits",
         script=scripts / "plot_skymap_dl3.py",
@@ -272,14 +272,14 @@ rule plot_skymap:
     resources:
         time=5,
     log:
-        plots / "skymaps/plot_{run_id}.log",
+        plots / "skymap/plot_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule cuts_dl2_dl3:
     output:
-        dl3 / "counts/after_cuts_{run_id}.h5",
+        dl3 / "counts_after_cuts/after_cuts_{run_id}.h5",
     input:
         dl2=dl2 / "LST-1.Run{run_id}.dl2.h5",
         irf=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
@@ -293,7 +293,7 @@ rule cuts_dl2_dl3:
     conda:
         env
     log:
-        dl3 / "counts/calc_{run_id}.log",
+        dl3 / "counts_after_cuts/calc_{run_id}.log",
     shell:
         "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output} --log-file {log}"
 
@@ -305,7 +305,7 @@ def dl3_all_counts(wildcards):
 
 rule stack_cuts_dl2_dl3:
     output:
-        dl3 / "counts/after_cuts_stacked.h5",
+        dl3 / "counts_after_cuts/after_cuts_stacked.h5",
     input:
         data=dl3_all_counts,
         script=scripts / "stack_counts_after_cuts.py",
@@ -313,21 +313,21 @@ rule stack_cuts_dl2_dl3:
     conda:
         env
     log:
-        dl3 / "counts/stack.log",
+        dl3 / "counts_after_cuts/stack.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule plot_cuts_dl2_dl3:
     output:
-        plots / "counts/counts_{run_id}.pdf",
+        plots / "counts_after_cuts/counts_{run_id}.pdf",
     input:
-        data=dl3 / "counts/after_cuts_{run_id}.h5",
+        data=dl3 / "counts_after_cuts/after_cuts_{run_id}.h5",
         script=scripts / "plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
         env
     log:
-        plots / "counts/plot_counts_{run_id}.log",
+        plots / "counts_after_cuts/plot_counts_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
