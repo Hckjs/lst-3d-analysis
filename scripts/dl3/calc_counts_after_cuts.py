@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.table import QTable
+from astropy.time import Time
 from lstchain.high_level.hdu_table import add_icrs_position_params
 from lstchain.io import read_data_dl2_to_QTable
 from lstchain.reco.utils import get_effective_time
@@ -27,7 +28,9 @@ def main(input_dl2, input_irf, config, output):
         dec=config["DataReductionFITSWriter"]["source_dec"],
     )
     # adds "RA", "Dec", "theta" to events
-    events = add_icrs_position_params(events, source)
+    log.info(events.keys())
+    time_utc = Time(events["dragon_time"], format="unix", scale="utc")
+    events = add_icrs_position_params(events, source, time_utc)
 
     columns = ["gh_score", "reco_energy", "RA", "Dec", "theta"]
     events = events[columns]
