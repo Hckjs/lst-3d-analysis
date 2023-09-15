@@ -1018,10 +1018,14 @@ rule calc_count_maps:
         """
 
 
+def dl3_all_bkgs(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [dl3 / f"bkg_{run}.fits.gz" for run in ids]
+
 rule calc_background:
     output:
-#        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS), # cant use function in output
-        dummy=dl3/"bkg-exists"
+        dummy=dl3/"bkg-exists",
+        files=dl3_all_bkgs,
     input:
         runs=DL3_FILES,
         index=dl3 / "hdu-index.fits.gz",
@@ -1129,7 +1133,6 @@ rule plot_background:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 #+end_src
-
 *** Skymaps
 
 #+begin_src snakemake
@@ -1267,22 +1270,23 @@ dl3 = Path(OUTDIRS["dl3"])
 dl4 = Path(OUTDIRS["dl4"])
 scripts = Path(SCRIPTS["dl4"])
 
+plot_types = ["obs_plots", "dataset_peek"]#, "dl4_diagnostics"]
 rule dl4:
     input:
-        [dl4 / "{analysis}/datasets.fits.gz" for analysis in analyses]
+        [dl4 / "{analysis}/{plot}.pdf" for analysis in analyses for plot in plot_types]
 
 #+end_src
 
 ** Obs plots
 #+begin_src snakemake
 rule observation_plots:
+    output:
+        plots / "{analysis}/obs_plots.pdf",
     input:
         dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts/"obs_plots.py",
         rc=MATPLOTLIBRC,
-    output:
-        plots / "{analysis}/obs_plots.pdf",
     resources:
         mem_mb=16000,
     conda:
@@ -1301,21 +1305,17 @@ rule observation_plots:
 ** Create MapDataset
 
 #+begin_src snakemake
-
-# Create DL4 datasets, plot sensitivity, significance, ...
 rule dataset_3d:
+    output:
+        build_dir / "dl4/{analysis}/datasets.fits.gz",
     input:
         data=build_dir / "dl3/hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script="scripts/write_datasets_3d.py",
-    output:
-        build_dir / "dl4/{analysis}/datasets.fits.gz",
     conda:
         env
     shell:
         "python {input.script} -c {input.config} -o {output}"
-
-
 #+end_src
 
 ** Plot DL4 statistics

@@ -4,20 +4,22 @@ dl3 = Path(OUTDIRS["dl3"])
 dl4 = Path(OUTDIRS["dl4"])
 scripts = Path(SCRIPTS["dl4"])
 
+plot_types = ["obs_plots", "dataset_peek"]  # , "dl4_diagnostics"]
+
 
 rule dl4:
     input:
-        [dl4 / "{analysis}/datasets.fits.gz" for analysis in analyses],
+        [dl4 / "{analysis}/{plot}.pdf" for analysis in analyses for plot in plot_types],
 
 
 rule observation_plots:
+    output:
+        plots / "{analysis}/obs_plots.pdf",
     input:
         dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "obs_plots.py",
         rc=MATPLOTLIBRC,
-    output:
-        plots / "{analysis}/obs_plots.pdf",
     resources:
         mem_mb=16000,
     conda:
@@ -34,14 +36,13 @@ rule observation_plots:
         """
 
 
-# Create DL4 datasets, plot sensitivity, significance, ...
 rule dataset_3d:
+    output:
+        build_dir / "dl4/{analysis}/datasets.fits.gz",
     input:
         data=build_dir / "dl3/hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script="scripts/write_datasets_3d.py",
-    output:
-        build_dir / "dl4/{analysis}/datasets.fits.gz",
     conda:
         env
     shell:

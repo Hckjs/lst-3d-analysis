@@ -114,10 +114,15 @@ rule calc_count_maps:
         """
 
 
+def dl3_all_bkgs(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [dl3 / f"bkg_{run}.fits.gz" for run in ids]
+
+
 rule calc_background:
     output:
-        #        bkg=expand(dl3 / "bkg_{run_id}.fits.gz", run_id=RUN_IDS), # cant use function in output
         dummy=dl3 / "bkg-exists",
+        files=dl3_all_bkgs,
     input:
         runs=DL3_FILES,
         index=dl3 / "hdu-index.fits.gz",
