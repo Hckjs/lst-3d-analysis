@@ -13,12 +13,23 @@ irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 data_selection_config = CONFIGS["data_selection"]
 
+plot_types = ["theta2"]  # , "skymap", "counts_after_cuts"]
+# bkg plots as well!
+
+
+def DL3_RUNWISE_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in RUN_IDS]
+
 
 rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3 / "bkg-exists",
         plots=DL3_PLOTS,
+        obs_plots=plots / "obs_plots.pdf",
+        runwise_plots=DL3_RUNWISE_PLOTS,
+        stacked_plots=[plots / f"{p}_stacked.pdf" for p in plot_types],
 
 
 rule dl2_to_dl3:
@@ -201,6 +212,11 @@ rule calc_theta2_per_obs:
         dl3 / "theta2/calc_{run_id}.log",
     shell:
         "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
+
+
+def dl3_all_theta_tables(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [dl3 / f"theta2/{run}.fits.gz" for run in RUN_IDS]
 
 
 rule stack_theta2:

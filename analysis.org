@@ -176,15 +176,6 @@ def DL3_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
 
 
-def DL3_PLOTS(wildcards):
-    ids = RUN_IDS(wildcards) + ["stacked"]
-    out = Path(OUTDIRS["dl3"]) / "plots"
-    plot_types = ["theta2", "skymap", "counts_after_cuts"]
-    # per run is not super accurate since it includes stacked...
-    per_run = [out / f"{p}_{run}.pdf" for p in plot_types for analysis in analyses for run in ids]
-    total = [out / analysis / "obs_plots.pdf" for analysis in analyses]
-    return total + per_run
-
 
 def IRF_FILES(wildcards):
     ids = RUN_IDS(wildcards)
@@ -869,6 +860,9 @@ Nothing crazy here.
 Note, that the `irfs` path usually relates to the grid IRFs and the
 "final" IRFs, that are linked in the dl3 files, lie in the dl3 path.
 
+Need to define the runwise plots extra here, because exapdn does not seem to work with
+the RUN_IDS function (remember its not just a variable due to the checkpoint thing)
+
 #+begin_src snakemake
 env = ENVS["lstchain"]
 bkg_env = ENVS["background"]
@@ -885,11 +879,21 @@ irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 data_selection_config = CONFIGS["data_selection"]
 
+plot_types = ["theta2"]#, "skymap", "counts_after_cuts"]
+# bkg plots as well!
+
+def DL3_RUNWISE_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in RUN_IDS]
+
 rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3/"bkg-exists",
-        plots=DL3_PLOTS
+        plots=DL3_PLOTS,
+        obs_plots=plots  / "obs_plots.pdf",
+        runwise_plots=DL3_RUNWISE_PLOTS,
+        stacked_plots=[plots / f"{p}_stacked.pdf" for p in plot_types]
 
 #+end_src
 
@@ -1116,6 +1120,9 @@ rule calc_theta2_per_obs:
     shell:
         "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
 
+def dl3_all_theta_tables(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [dl3 / f"theta2/{run}.fits.gz" for run in RUN_IDS]
 
 rule stack_theta2:
     output:
@@ -1210,8 +1217,7 @@ rule stack_skymaps:
 
 #+end_src
 
-** Cuts dl3 (kinda irf)
-This wont work as it needs the "final" irf file!
+*** Cuts dl3 (kinda irf)
 #+begin_src snakemake
 rule cuts_dl2_dl3:
     output:

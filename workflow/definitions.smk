@@ -125,21 +125,6 @@ def DL3_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
 
 
-def DL3_PLOTS(wildcards):
-    ids = RUN_IDS(wildcards) + ["stacked"]
-    out = Path(OUTDIRS["dl3"]) / "plots"
-    plot_types = ["theta2", "skymap", "counts_after_cuts"]
-    # per run is not super accurate since it includes stacked...
-    per_run = [
-        out / f"{p}/{p}_{run}.pdf"
-        for p in plot_types
-        for analysis in analyses
-        for run in ids
-    ]
-    total = [out / analysis / "obs_plots.pdf" for analysis in analyses]
-    return total + per_run
-
-
 def IRF_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"])
