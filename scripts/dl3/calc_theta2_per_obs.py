@@ -146,7 +146,7 @@ def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
         # Useful for plotting
         table.meta["ELOW"] = format_energy(elow)
         table.meta["EHI"] = format_energy(ehigh)
-        table.meta["CUT"] = theta**2 if theta else ""
+        table.meta["CUT"] = theta**2
         # This is needed for stacking later
         table.meta["TOBS"] = obs.observation_live_time_duration.to_value(u.s)
 
