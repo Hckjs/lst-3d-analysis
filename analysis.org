@@ -882,18 +882,15 @@ data_selection_config = CONFIGS["data_selection"]
 plot_types = ["theta2"]#, "skymap", "counts_after_cuts"]
 # bkg plots as well!
 
-def DL3_RUNWISE_PLOTS(wildcards):
-    ids = RUN_IDS(wildcards)
-    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in RUN_IDS]
+def DL3_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards) + ["stacked"]
+    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in ids]
 
 rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3/"bkg-exists",
-        plots=DL3_PLOTS,
-        obs_plots=plots  / "obs_plots.pdf",
-        runwise_plots=DL3_RUNWISE_PLOTS,
-        stacked_plots=[plots / f"{p}_stacked.pdf" for p in plot_types]
+        runwise_plots=DL3_PLOTS,
 
 #+end_src
 
@@ -1074,31 +1071,6 @@ rule plot_background:
 
 #+end_src
 ** Plot dl3 stuff
-*** Obs plots
-#+begin_src snakemake
-rule observation_plots:
-    input:
-        dl3 / "hdu-index.fits.gz",
-        config=config_dir / "{analysis}/analysis.yaml",
-        script=scripts/"obs_plots.py",
-        rc=MATPLOTLIBRC,
-    output:
-        plots / "{analysis}/obs_plots.pdf",
-    resources:
-        mem_mb=16000,
-    conda:
-        gammapy_env
-    log:
-        plots / "{analysis}/obs_plots.log"
-    shell:
-        """
-        MATPLOTLIBRC={input.rc} \
-        python {input.script} \
-            -c {input.config} \
-            -o {output} \
-            --log-file {log}
-        """
-#+end_src
 *** Theta 2
 #+begin_src snakemake
 rule calc_theta2_per_obs:
@@ -1296,6 +1268,31 @@ rule dl4:
 
 #+end_src
 
+** Obs plots
+#+begin_src snakemake
+rule observation_plots:
+    input:
+        dl3 / "hdu-index.fits.gz",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script=scripts/"obs_plots.py",
+        rc=MATPLOTLIBRC,
+    output:
+        plots / "{analysis}/obs_plots.pdf",
+    resources:
+        mem_mb=16000,
+    conda:
+        gammapy_env
+    log:
+        plots / "{analysis}/obs_plots.log"
+    shell:
+        """
+        MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+            -c {input.config} \
+            -o {output} \
+            --log-file {log}
+        """
+#+end_src
 ** Create MapDataset
 
 #+begin_src snakemake

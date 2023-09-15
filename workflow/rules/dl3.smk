@@ -17,19 +17,16 @@ plot_types = ["theta2"]  # , "skymap", "counts_after_cuts"]
 # bkg plots as well!
 
 
-def DL3_RUNWISE_PLOTS(wildcards):
-    ids = RUN_IDS(wildcards)
-    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in RUN_IDS]
+def DL3_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards) + ["stacked"]
+    return [plots / f"{p}_{run}.pdf" for p in plot_types for run in ids]
 
 
 rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3 / "bkg-exists",
-        plots=DL3_PLOTS,
-        obs_plots=plots / "obs_plots.pdf",
-        runwise_plots=DL3_RUNWISE_PLOTS,
-        stacked_plots=[plots / f"{p}_stacked.pdf" for p in plot_types],
+        runwise_plots=DL3_PLOTS,
 
 
 rule dl2_to_dl3:
@@ -168,30 +165,6 @@ rule plot_background:
         dl3 / "plots/bkg_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-
-rule observation_plots:
-    input:
-        dl3 / "hdu-index.fits.gz",
-        config=config_dir / "{analysis}/analysis.yaml",
-        script=scripts / "obs_plots.py",
-        rc=MATPLOTLIBRC,
-    output:
-        plots / "{analysis}/obs_plots.pdf",
-    resources:
-        mem_mb=16000,
-    conda:
-        gammapy_env
-    log:
-        plots / "{analysis}/obs_plots.log",
-    shell:
-        """
-        MATPLOTLIBRC={input.rc} \
-        python {input.script} \
-            -c {input.config} \
-            -o {output} \
-            --log-file {log}
-        """
 
 
 rule calc_theta2_per_obs:

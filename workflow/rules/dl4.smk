@@ -10,6 +10,30 @@ rule dl4:
         [dl4 / "{analysis}/datasets.fits.gz" for analysis in analyses],
 
 
+rule observation_plots:
+    input:
+        dl3 / "hdu-index.fits.gz",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script=scripts / "obs_plots.py",
+        rc=MATPLOTLIBRC,
+    output:
+        plots / "{analysis}/obs_plots.pdf",
+    resources:
+        mem_mb=16000,
+    conda:
+        gammapy_env
+    log:
+        plots / "{analysis}/obs_plots.log",
+    shell:
+        """
+        MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+            -c {input.config} \
+            -o {output} \
+            --log-file {log}
+        """
+
+
 # Create DL4 datasets, plot sensitivity, significance, ...
 rule dataset_3d:
     input:
