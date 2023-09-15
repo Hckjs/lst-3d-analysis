@@ -265,7 +265,7 @@ rule plot_skymap:
     output:
         plots / "skymap/skymap_{run_id}.pdf",
     input:
-        data=dl3 / "skymap/{run_id}.fits",
+        data=dl3 / "skymap/{run_id}.fits.gz",
         script=scripts / "plot_skymap_dl3.py",
         rc=MATPLOTLIBRC,
     conda:
