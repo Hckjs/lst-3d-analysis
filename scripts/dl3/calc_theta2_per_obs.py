@@ -56,7 +56,14 @@ def get_axes(obs):
         interp="lin",
         unit="deg2",
     )
-    energy_axis = obs.rad_max.axes["energy"]
+    energy_axis = MapAxis.from_bounds(
+        0.005,
+        50,
+        nbin=25,
+        interp="lin",
+        unit="TeV",
+    )
+    # energy_axis = obs.rad_max.axes["energy"]
     return theta_squared_axis, energy_axis
 
 
@@ -105,7 +112,8 @@ def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
         overflow,
     )
     # This will break for multiple offsets in the IRF
-    theta_cuts = np.append(None, np.append(obs.rad_max.data.flatten(), None))
+    # theta_cuts = np.append(None, np.append(obs.rad_max.data.flatten(), None))
+    theta = 0.2 * u.deg
 
     # Get on and off position
     with open(config) as f:
@@ -128,7 +136,7 @@ def main(input_dir, output, obs_id, config):  # noqa: PLR0915 PLR0913
 
     hdulist = [fits.PrimaryHDU()]
     theta_tables = []
-    for elow, ehigh, theta in zip(energy_lower, energy_upper, theta_cuts):
+    for elow, ehigh, theta in zip(energy_lower, energy_upper):
         log.info(
             "Calculating counts in range %s - %s",
             format_energy(elow),
