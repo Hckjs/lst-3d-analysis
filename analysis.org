@@ -1094,7 +1094,7 @@ rule calc_theta2_per_obs:
 
 def dl3_all_theta_tables(wildcards):
     ids = RUN_IDS(wildcards)
-    return [dl3 / f"theta2/{run}.fits.gz" for run in RUN_IDS]
+    return [dl3 / f"theta2/{run}.fits.gz" for run in ids]
 
 rule stack_theta2:
     output:
