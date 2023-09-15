@@ -13,7 +13,7 @@ irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 data_selection_config = CONFIGS["data_selection"]
 
-plot_types = ["theta2"]  # , "skymap", "counts_after_cuts"]
+plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
 # bkg plots as well!
 
 
@@ -208,15 +208,15 @@ rule plot_theta:
 # Use lstchain env here to ensure we can load it
 rule plot_background:
     output:
-        dl3 / "plots/bkg_{run_id}.pdf",
+        dl3 / "plots/bkg/bkg_{run_id}.pdf",
     input:
         data=dl3 / "bkg_{run_id}.fits.gz",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        rc=MATPLOTLIBRC,
         script=scripts / "plot_bkg.py",
     conda:
         gammapy_env
     log:
-        dl3 / "plots/bkg_{run_id}.log",
+        dl3 / "plots/bkg/bkg_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
