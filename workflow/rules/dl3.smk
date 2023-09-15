@@ -151,22 +151,6 @@ rule calc_background:
         """
 
 
-# Use lstchain env here to ensure we can load it
-rule plot_background:
-    output:
-        dl3 / "plots/bkg_{run_id}.pdf",
-    input:
-        data=dl3 / "bkg_{run_id}.fits.gz",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
-        script=scripts / "plot_bkg.py",
-    conda:
-        env
-    log:
-        dl3 / "plots/bkg_{run_id}.log",
-    shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
-
-
 rule calc_theta2_per_obs:
     output:
         dl3 / "theta2/{run_id}.fits.gz",
@@ -221,6 +205,22 @@ rule plot_theta:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
+# Use lstchain env here to ensure we can load it
+rule plot_background:
+    output:
+        dl3 / "plots/bkg_{run_id}.pdf",
+    input:
+        data=dl3 / "bkg_{run_id}.fits.gz",
+        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        script=scripts / "plot_bkg.py",
+    conda:
+        gammapy_env
+    log:
+        dl3 / "plots/bkg_{run_id}.log",
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+
+
 rule calc_skymap:
     output:
         dl3 / "skymaps/{run_id}.fits",
@@ -242,13 +242,32 @@ rule calc_skymap:
         "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
 
 
+def dl3_all_skymaps(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [dl3 / f"skymaps/{run}.fits.gz" for run in ids]
+
+
+rule stack_skymaps:
+    output:
+        dl3 / "skymaps/stacked.fits",
+    input:
+        data=dl3_all_skymaps,
+        script=scripts / "stack_skymap.py",
+    conda:
+        gammapy_env
+    log:
+        dl3 / "skymaps/stack.log",
+    shell:
+        "python {input.script} -i {input.data} -o {output} --log-file {log}"
+
+
 rule plot_skymap:
     output:
         plots / "skymaps/skymap_{run_id}.pdf",
     input:
-        data=dl3 / "skymap_dl3/{run_id}.fits",
+        data=dl3 / "skymaps/{run_id}.fits",
         script=scripts / "plot_skymap_dl3.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     resources:
@@ -259,26 +278,9 @@ rule plot_skymap:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
-rule stack_skymaps:
-    output:
-        dl3 / "skymap_dl3/stacked.fits",
-    input:
-        data=expand(
-            dl3 / "skymap_dl3/{run_id}.fits",
-            run_id=RUN_IDS,
-        ),
-        script=scripts / "stack_skymap.py",
-    conda:
-        gammapy_env
-    log:
-        dl3 / "skymaps/stack.log",
-    shell:
-        "python {input.script} -i {input.data} -o {output} --log-file {log}"
-
-
 rule cuts_dl2_dl3:
     output:
-        dl3 / "counts/after_gh_theta_cut_{run_id}.h5",
+        dl3 / "counts/after_cuts_{run_id}.h5",
     input:
         dl2=dl2 / "LST-1.Run{run_id}.dl2.h5",
         irf=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
@@ -297,14 +299,16 @@ rule cuts_dl2_dl3:
         "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output} --log-file {log}"
 
 
+def dl3_all_counts(wildcards):
+    ids = RUN_IDS(wildcards)
+    return [dl3 / f"counts/{run}.fits.gz" for run in ids]
+
+
 rule stack_cuts_dl2_dl3:
     output:
-        dl3 / "counts/after_gh_theta_cut_stacked.h5",
+        dl3 / "counts/after_cuts_stacked.h5",
     input:
-        data=expand(
-            dl3 / "counts/after_gh_theta_cut_{run_id}.h5",
-            run_id=RUN_IDS,
-        ),
+        data=dl3_all_counts,
         script=scripts / "stack_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
@@ -319,7 +323,7 @@ rule plot_cuts_dl2_dl3:
     output:
         plots / "counts/counts_{run_id}.pdf",
     input:
-        data=dl3 / "counts/after_gh_theta_cut_{run_id}.h5",
+        data=dl3 / "counts/after_cuts_{run_id}.h5",
         script=scripts / "plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
