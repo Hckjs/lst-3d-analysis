@@ -113,6 +113,14 @@ def MC_NODES_IRFs(wildcards):
     return [out / f"{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce]
 
 
+models_to_train = [
+    Path(OUTDIRS["models"]) / "reg_energy.sav",
+    Path(OUTDIRS["models"]) / "cls_gh.sav",
+    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
+    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
+]
+
+
 def DL2_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl2"])
@@ -131,9 +139,7 @@ def IRF_FILES(wildcards):
     return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
 
 
-models_to_train = [
-    Path(OUTDIRS["models"]) / "reg_energy.sav",
-    Path(OUTDIRS["models"]) / "cls_gh.sav",
-    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
-    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
-]
+def BKG_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]

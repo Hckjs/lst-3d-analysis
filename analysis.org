@@ -163,6 +163,12 @@ def MC_NODES_IRFs(wildcards):
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
     return [out/f"{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce]
 
+models_to_train = [
+    Path(OUTDIRS["models"]) / "reg_energy.sav",
+    Path(OUTDIRS["models"]) / "cls_gh.sav",
+    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
+    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
+]
 
 def DL2_FILES(wildcards):
     ids = RUN_IDS(wildcards)
@@ -175,6 +181,773 @@ def DL3_FILES(wildcards):
     out = Path(OUTDIRS["dl3"])
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
 
+
+def IRF_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
+
+
+def BKG_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]
+
+
+#+end_src
+
+* DL1
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl1.smk :mkdirp yes
+:END:
+
+This stage is arguably the most comlicated one.
+On the one hand, I do not even produce the dl1 files, instead using the LSTOSA files,
+but on the other hand this is where the magic happens as we go from
+"files somewhere on the cluster" to "nicely organized in the build directory".
+At a previous point in time, this was referred to as linking and selecting rather than dl1,
+but I wanted to have a structure where every stage was more or less one datalevel,
+because I disliked the "preselection, selection, selecting mcs" naming,
+that followed from the previous structure.
+
+*Note:* If there is a need to calculate DL1 as well, this is pretty straightforward here:
+Just link the DL0 instead and have a rule, that creates dl1 from that similar to
+[[nameref:dl1_to_dl2_rule][the dl1 to dl2 rule]].
+That would then also need to be done for the simulations as well and you probably want to use your own
+`lstchain`-config instead of linking the one used for the models like its done right now.
+
+
+** Define stuff
+Important here (besides having the paths defined):
+There are some rules, that are really not computationally heavy.
+It would be a shame to have the slurm overhead for every step here, so
+they are `localrules`.
+The linking step creates a dummy file `runs-linked.txt`, that acts as a checkpoint for
+the later steps.
+
+#+name: dl1_vars
+#+begin_src snakemake
+
+env = ENVS["data_selection"]
+config = CONFIGS["data_selection"]
+scripts = Path(SCRIPTS["data_selection"])
+out = Path(OUTDIRS["data_selection"])
+dl1_link_location = Path(OUTDIRS["dl1"])
+plots = out / "plots"
+
+
+run_selection_plots = [
+    plots / f"{name}.pdf"
+    for name in ["moon-illumination", "cosmics", "cosmics-above", "run-pointings"]
+]
+
+
+rule dl1:
+    input:
+        out / "runs-linked.txt",
+        run_selection_plots,
+
+
+localrules:
+    runlist,
+    select_datasets,
+    merge_datachecks,
+    run_ids,
+    data_check,
+
+#+end_src
+
+
+There is one manual step required before this point:
+The runlist has to be downloaded from the lst1 website, which is password-protected.
+As I want to have this public, I cannot put the credentials here.
+It is just a simple `curl` command, so not a big deal.
+
+*Note:* The analysis will not know of new runs until you redownload the runlist.
+That should not matter most of the times, but keep it in mind!
+
+#+begin_src snakemake
+
+rule runlist:
+    output:
+        out / "runlist.html",
+    shell:
+        """
+        echo 'Provide the file {output}. The command is:'
+        echo 'curl --user <username>:<password> https://lst1.iac.es/datacheck/lstosa/LST_source_catalog.html -o {output}'
+        echo 'You might need to create the output directory first.'
+        """
+#+end_src
+
+** Select relevant runs based on runlist
+
+First of all, we need to select runs observing our source(s) of interest.
+This is done purely based on the `runlist.html` without any notion of data quality.
+There is a column `Source Name` in there, which should match the source.
+A natural expansion here would be to select multiple source names at once if thats useful
+for the further analysis steps (-> Background model?)
+
+#+begin_src snakemake
+
+rule select_datasets:
+    output:
+        out / "runlist.csv",
+    input:
+        data=out / "runlist.html",
+        config=config,
+        script=scripts / "select-data.py",
+    conda:
+        env
+    log:
+        out=out / "select_datasets.log",
+        err=out / "select_datasets.err",
+    shell:
+        "python {input.script} {input.data} {output} -c {input.config}"
+
+#+end_src
+
+** Data quality checks
+
+The next step is discarding runs, that, for one reason or another, do not
+qualify for further analysis.
+Luckily, [[https://github.com/cta-observatory/lstosa][LSTOSA]] produces datacheck-files, that we can use here.
+A datacheck-file contains runwise statistics of some quantities commonly used to gauge
+data quality, for example the rate of cosmic events, which directly translates to
+some form of efficiency as the rate of hadrons arriving at earth is considered to be constant.
+
+For ease of use, we merge the runwise datachecks first and make the selection on that
+merged object.
+
+#+begin_src snakemake
+
+rule merge_datachecks:
+    output:
+        output=out / "dl1-datachecks-merged.h5",
+    input:
+        data=out / "runlist.csv",
+        script=scripts / "merge-datachecks.py",
+    conda:
+        env
+    log:
+        out / "merge_datacheck.log",
+    shell:
+        "python {input.script} {input.data} {output.output} --log-file {log}"
+
+#+end_src
+
+That selection is based on one of the config files, where e.g. thresholds for the cosmics rate are set.
+As a result, the rule produces:
+- A list of selected runs
+- Cuts and masked datacheck for plots
+
+#+name: data_check
+#+begin_src snakemake
+
+rule data_check:
+    output:
+        runlist=out / "runlist-checked.csv",
+        datachecks=out / "dl1-datachecks-masked.h5",
+        config=out / "dl1-selection-cuts-config.json",
+    input:
+        runlist=out / "runlist.csv",
+        datachecks=out / "dl1-datachecks-merged.h5",
+        config=config,
+        script=scripts / "data-check.py",
+    conda:
+        env
+    log:
+        out / "datacheck.log",
+    shell:
+        "python \
+            {input.script} \
+            {input.runlist} \
+            {input.datachecks} \
+            --config {input.config} \
+            --output-runlist {output.runlist} \
+            --output-datachecks {output.datachecks} \
+            --output-config {output.config} \
+            --log-file {log}"
+
+#+end_src
+
+** Define runs to be used for the analysis
+
+With the list of runs from [[nameref:data_check]], we can go ahead and
+link the runs from the global data-directory to our build-directory.
+This simplifies rules massively.
+Before doing that, we first convert the runlist.
+That is pretty arbitrary and could also be done in a single step.
+I do not know exactly why we did it this way, but it works, right?
+
+
+#+begin_src snakemake
+
+checkpoint run_ids:
+    output:
+        runlist=out / "runs.json",
+    input:
+        data=out / "runlist-checked.csv",
+        config=config,
+        script=scripts / "create-night-run-list.py",
+    conda:
+        env
+    log:
+        out / "check_runlist.log",
+    shell:
+        "python \
+        {input.script} \
+        {input.data} \
+        {output} \
+        -c {input.config} \
+        --log-file {log}"
+
+#+end_src
+
+Now we arrive at the first checkpoint!
+It is important to have this as a checkpoint, because a priori
+you do not know which runs you select for the analysis.
+It is known a few steps before this to be exact, but since this is the last
+(run-)linking related rule, I decided to make this the checkpoint.
+From now on out, all run ids are known just by looking into the `<build_dir>/dl1`
+folder.
+
+#+name: link_runs_checkpoint
+#+begin_src snakemake
+
+checkpoint link_runs:
+    output:
+        out / "runs-linked.txt",
+    input:
+        runs=out / "runs.json",
+        datacheck=out / "dl1-datachecks-masked.h5",
+        script=scripts / "link-runs.py",
+    params:
+        dl1=dl1_link_location,
+    conda:
+        env
+    log:
+        out / "link_runs.log"
+    shell:
+        "python \
+        {input.script} \
+        --runs {input.runs} \
+        --dl1-link-dir {params.dl1} \
+        --log-file {log} \
+        --output-path {output}"
+
+#+end_src
+
+** Plots
+
+Plotting the data-selection part is very easy.
+Since multiple plots can be constructed from the output of the [[nameref:data_check][datacheck-rule]],
+there is just one [[nameref:plot_data_selection][rule]] to handle these and the script-name is constructed from the wildcard
+/name/, which is the name of the output plot.
+It could also be multiple rules as not all of them need all of the input files,
+but this is how we constructed it a while back for the 1D-analysis.
+
+#+name: plot_data_selection
+#+begin_src snakemake
+
+rule plot_data_selection:
+    output:
+        plots / "{name}.pdf",
+    input:
+        data=out / "dl1-datachecks-masked.h5",
+        config=out / "dl1-selection-cuts-config.json",
+        script=scripts / "plot-{name}.py",
+    conda:
+        env
+    log:
+        plots / "{name}.log",
+    shell:
+        "python \
+        {input.script} \
+        {input.data} \
+        -c {input.config} \
+        -o {output} \
+        --log-file {log} "
+
+#+end_src
+
+For the run pointings, a new file containing just these is constructed.
+This is actually not a big step and could be done in the plot script aswell,
+but I like having the csv file with the pointing directions easily accesible.
+
+TODO This is not working!
+
+#+begin_src snakemake
+
+rule gather_run_pointings:
+    output:
+        out / "run-pointings.csv",
+    input:
+        runs=out / "runs.json",
+        datacheck=out / "dl1-datachecks-masked.h5",
+        script=scripts / "gather-run-pointings.py",
+    conda:
+        env
+    log:
+        out / "run_pointings.log",
+    shell:
+        "python {input.script} \
+        --runs {input.runs} \
+        --runsummary {input.datacheck} \
+        --output {output} \
+        --log-file {log} "
+
+
+rule plot_run_pointings:
+    output:
+        plots / "run-pointings.pdf",
+    input:
+        pointings=out / "run-pointings.csv",
+        script=scripts / "plot-run-pointings.py",
+    conda:
+        env
+    log:
+        plots / "run_pointings.log",
+    shell:
+        "python {input.script} \
+        --input {input.pointings} \
+        --output {output} \
+        --log-file {log} "
+#+end_src
+
+* MC
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/mc.smk :mkdirp yes
+:END:
+** Variables
+
+#+begin_src snakemake
+env = ENVS["lstchain"]
+link_env = ENVS["data_selection"]
+plot_env = ENVS["gammapy"]
+scripts = Path(SCRIPTS["mc"])
+mc = Path(OUTDIRS["mc"])
+models = mc / "models"
+
+# Need some extra dirs
+mc_nodes = Path(OUTDIRS["mc_nodes"])
+dl1 = Path(OUTDIRS["dl1"])
+models = Path(OUTDIRS["models"])
+config = lstchain_config
+
+plots = mc / "plots"
+
+# TODO Configurable
+train_size = 0.4
+
+
+
+rule mc:
+    input:
+        link=mc / "mc-linked.txt",
+        models=models_to_train,
+
+
+localrules:
+    link_mc,
+
+#+end_src
+
+** Link nodes
+#+begin_src snakemake
+
+checkpoint link_mc:
+    output:
+        dummy=mc / "mc-linked.txt",
+        config=config,
+    input:
+        script=scripts / "link-mc.py",
+    params:
+        production=PRODUCTION,
+        declination=DECLINATION,
+        mc_nodes=mc_nodes,
+    conda:
+        link_env
+    log:
+        mc / "link_mc.log"
+    shell:
+        "python \
+        {input.script} \
+        --prod {params.production} \
+        --dec {params.declination} \
+        --mc-nodes-link-dir {params.mc_nodes} \
+        --model-config-link-path {output.config} \
+        --log-file {log} \
+        --verbose \
+        --output-path {output.dummy}"
+
+#+end_src
+
+** Create train and test files per node
+
+First of all, the individual runs of a single allsky node need to be merged.
+After this step there will 2 (train+test) diffuse gamma files per node.
+
+#+begin_src snakemake
+
+rule merge_gamma_mc_per_node:
+    output:
+        train=mc / "GammaDiffuse/dl1/{node}_train.dl1.h5",
+        test=mc / "GammaDiffuse/dl1/{node}_test.dl1.h5",
+    input:
+        dummy=mc / "mc-linked.txt",
+        script=scripts/"merge_mc_nodes.py",
+    params:
+        train_size=train_size,
+        directory=lambda wildcards: mc_nodes / f"GammaDiffuse/{wildcards.node}",
+    conda:
+        env
+    log:
+        mc / "GammaDiffuse/dl1/merge_gamma_mc_{node}.log",
+    shell:
+        "python {input.script} \
+        --input-dir {params.directory} \
+        --train-size {params.train_size} \
+        --output-train {output.train} \
+        --output-test {output.test} \
+        --pattern 'dl1_*.h5' \
+        --log-file {log}"
+
+rule merge_proton_mc_per_node:
+    output:
+        train=mc / "Protons/dl1/{node}_train.dl1.h5",
+    input:
+        dummy=mc / "mc-linked.txt",
+        script=scripts/"merge_mc_nodes.py",
+    params:
+        train_size=1.0,
+        directory=lambda wildcards: mc_nodes / f"Protons/{wildcards.node}",
+    conda:
+        env
+    log:
+        mc / "Protons/dl1/merge_proton_mc_{node}.log",
+    shell:
+        "python {input.script} \
+        --input-dir {params.directory} \
+        --train-size {params.train_size} \
+        --output-train {output.train} \
+        --log-file {log}"
+
+#+end_src
+
+** Train models
+
+There is only one set of models for the whole trajectory and not one for each node in order
+to make better use of the training statistic.
+
+#+begin_src snakemake
+
+rule merge_train_or_test_of_all_nodes:
+    output:
+        mc / "{particle}/{particle}_{train_or_test}.dl1.h5",
+    input:
+        nodes=MC_NODES_DL1,
+        script=scripts/"merge_mc_nodes.py",
+    params:
+        directory=lambda wildcards: mc / f"{wildcards.particle}/dl1",
+        pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
+        out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
+    conda:
+        env
+    log:
+        mc / "{particle}/merge_all_{particle}_{train_or_test}.log",
+    shell:
+        """
+        python {input.script} \
+        --input-dir {params.directory} \
+        --pattern {params.pattern} \
+        --{params.out_type} {output} \
+        --log-file {log}
+        """
+
+#+end_src
+
+For the training it is just the lstchain script.
+That requires a lot of resources, because they load all of the data into RAM at once...
+
+
+#+begin_src snakemake
+
+# TODO Any chance to get logging in here?
+rule train_models:
+    output:
+        models_to_train,
+    input:
+        gamma=mc / "GammaDiffuse/GammaDiffuse_train.dl1.h5",
+        proton=mc / "Protons/Protons_train.dl1.h5",
+        config=config,
+    resources:
+        mem_mb=64000,
+        cpus=8,
+        partition="long",
+        time=1200,
+    conda:
+        env
+    log:
+        models / "train_models.log",
+    shell:
+        """
+        lstchain_mc_trainpipe \
+        --fg {input.gamma} \
+        --fp {input.proton} \
+        --config {input.config} \
+        --output-dir {models}
+        """
+
+#+end_src
+
+* DL2
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl2.smk :mkdirp yes
+:END:
+This stage contains:
+- dl1 to dl2 for data
+- dl1 to dl2 for test mc
+- calculate IRFs (at MC nodes!)
+- Plot IRFs
+
+It is not very complicated, because the annoying work of linking and organizing files
+has been done before.
+
+** Definition
+
+The target is actually super simple here:
+All IRFs and all dl2 files.
+
+These are defined in [[variables]] and include the linking checkpoints.
+
+#+begin_src snakemake
+env = ENVS["lstchain"]
+plot_env = ENVS["gammapy"]
+irfs = Path(OUTDIRS["irfs"])
+irf_config = CONFIGS["irf_tool"]
+irf_scripts = Path(SCRIPTS["irfs"])
+dl2 = Path(OUTDIRS["dl2"])
+dl2_scripts = Path(SCRIPTS["dl2"])
+models = Path(OUTDIRS["models"])
+config = lstchain_config
+
+rule dl2:
+    input:
+        irfs=MC_NODES_IRFs,
+        runs=DL2_FILES,
+#+end_src
+
+** Create DL2
+
+Here we just use the lstchain script with the newly created models.
+The `{somepath}` wildcard makes it so that this rule works for both the
+observed runs and the MC. Organizing files starts to pay off!
+
+#+name: dl1_to_dl2_rule
+#+begin_src snakemake
+rule dl1_to_dl2:
+    output:
+        Path("{somepath}/dl2") / "{base}.dl2.h5",
+    input:
+        data = Path("{somepath}/dl1") / "{base}.dl1.h5",
+        config=config,
+        models=models_to_train,
+    conda:
+        env
+    resources:
+        mem_mb=64000,
+        cpus=4,
+    log:
+        "{somepath}/dl2/dl1_to_dl2_{base}.log"
+    shell:
+        """
+        lstchain_dl1_to_dl2  \
+            --input-file {input.data}  \
+            --output-dir $(dirname {output}) \
+            --path-models {models}  \
+            --config {input.config}
+        """
+#+end_src
+
+** IRFs
+Calculating IRFs is an easy `lstchain` task.
+Note that these mc nodes are now not connected to the data at all (opposed to how it was
+done in the old 1D-analysis).
+This gives us more flexibility with regard to how that matching should be done and
+is more in line with the `lstchain 0.10` way of doing things, where the dl3 step
+gets all IRFs every time. That is needed to interpolate the IRFs, but works the same
+way when selecting the nearest one.
+In older `lstchain`-versions you would have to match by hand and give the script
+a single set of IRFs for a single observed run.
+
+Another noteworthy thing here is, that we include the energy dispersion fix
+for pyirf. This was discussed in the lst-analysis call from 2023-08-28 and
+on the ICRC before that. Basically `pirf` produced wrongly normalized energy dispersion
+files, which actually seems to have an impact on higher level analyses.
+The script comes directly from the pyirf release (https://github.com/cta-observatory/pyirf/releases/tag/v0.10.0).
+
+#+begin_src snakemake
+rule irf:
+    output:
+        irfs / "irfs_{node}.fits.gz",
+    input:
+        gammas=mc / "GammaDiffuse/dl2/{node}_test.dl2.h5",
+        config=irf_config,
+        edisp_script=irf_scripts / "fix_edisp.py",
+    conda:
+        env
+    resources:
+        mem_mb=8000,
+        time=10,
+    log:
+        irfs / "irfs_{node}.log"
+    shell:
+        """
+        lstchain_create_irf_files \
+            -o {output} \
+            -g {input.gammas} \
+            --config {input.config}
+
+        python {input.edisp_script} {output}
+        """
+#+end_src
+
+Plotting is a single rule although every IRF is saved individually.
+This works by naming the plot scripts in a predictable way of
+`plot_{irf}.py` and have them all behave the same way w.r.t. cli arguments.
+The wildcard constraint makes it possible to have two wildcards in the output filename.
+Otherwise `irf` could match on e.g. `aeff_node_xzy_...` and `base` would only match
+on the last part. Maybe one could also change the behaviour of the regex matching there,
+but I think this solution is pretty nice.
+
+#+begin_src snakemake
+rule plot_irf:
+    output:
+        "{somepath}/plots/{irf}_{base}.pdf",
+    input:
+        data="{somepath}/irfs_{base}.fits.gz",
+        script=irf_scripts / "plot_irf_{irf}.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        plot_env
+    resources:
+        mem_mb=1000,
+        time=20,
+    wildcard_constraints:
+        irf="|".join(irfs_to_produce)
+    log:
+        "{somepath}/plots/{irf}_{base}.log"
+    shell:
+        "MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+        -i {input.data} \
+        -o {output} \
+        --log-file {log}"
+
+#+end_src
+
+* DL3
+:PROPERTIES:
+ :header-args:  :tangle ./workflow/rules/dl3.smk :mkdirp yes
+:END:
+This stage is rather complex.
+On the one hand, creating dl3 files from dl2 and IRFs is not difficult at all with the
+existing `lstchain` infrastructure.
+There are a lot of plots created here and skymaps are calculated,
+but that is not complicated, just a lot of rules.
+On the other hand, we need a background for the dl4 datasets.
+That is not a default `lstchain` task and needs to be done by hand.
+There is a `pybkgmodel` based script, that produces a background for every observation
+and then a small helper script to add the background "IRF" to the hdu-index.
+
+** Definitions
+Nothing crazy here.
+Note, that the `irfs` path usually relates to the grid IRFs and the
+"final" IRFs, that are linked in the dl3 files, lie in the dl3 path.
+
+Need to define the runwise plots extra here, because exapdn does not seem to work with
+the RUN_IDS function (remember its not just a variable due to the checkpoint thing)
+
+#+begin_src snakemake
+env = ENVS["lstchain"]
+bkg_env = ENVS["background"]
+gammapy_env = ENVS["gammapy"]
+
+dl2 = Path(OUTDIRS["dl2"])
+dl3 = Path(OUTDIRS["dl3"])
+plots = dl3 / "plots"
+irfs = Path(OUTDIRS["irfs"])
+
+scripts = Path(SCRIPTS["dl3"])
+
+irf_config = CONFIGS["irf_tool"]
+bkg_config = CONFIGS["bkg_model"]
+data_selection_config = CONFIGS["data_selection"]
+
+plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
+# bkg plots as well!
+
+def DL3_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards)
+    per_run = [plots / f"{p}/{p}_{run}.pdf" for p in plot_types for run in ids]
+    return per_run + [plots/f"{p}/{p}_stacked.pdf" for p in plot_types[:-1]]
+
+rule dl3:
+    input:
+        index=dl3 / "hdu-index.fits.gz",
+        bkg=dl3/"bkg-exists",
+        runwise_plots=DL3_PLOTS,
+
+#+end_src
+
+** Create DL3 Data
+*** Individual runs
+Thats just lstchain here.
+Using the (new at the time) interface of 0.10.x, this is incompatible with
+previous versions. I could make an attempt to support that as well, but I do not
+see why I would use previous versions again, so might as well force it.
+
+#+begin_src snakemake
+
+rule dl2_to_dl3:
+    output:
+        run=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+    input:
+        data=dl2 / "LST-1.Run{run_id}.dl2.h5",
+        irfs=MC_NODES_IRFs,
+        config=irf_config,
+    params:
+        irf_pattern='irfs_*.fits.gz',
+        out=dl3,
+        in_irfs=irfs,
+    conda:
+        env
+    resources:
+        mem_mb=12000,
+        time=30,
+    log:
+        dl3 / "create_dl3_{run_id}.log"
+    shell:
+        """
+        lstchain_create_dl3_file  \
+            --input-dl2 {input.data}  \
+            --output-dl3-path {params.out}  \
+            --input-irf-path {params.in_irfs}  \
+            --irf-file-pattern {params.irf_pattern} \
+            --config {input.config} \
+            --gzip \
+            --use-nearest-irf-node \
+            --overwrite \
+            --log-file {log}
+        """
+#+end_src
+
+*** Background
+After some back and forth with pybkgmodel, I decided to write my own script.
+Its content is subject to change, but some design goals will probably stay the same, so
+the workflow will not change much (hopefully):
+1) Runwise background. There can be identical models, but every run gets a background model
+   file with the run_id included. Not changing this around when eventually producing
 
 
 def IRF_FILES(wildcards):
@@ -937,39 +1710,6 @@ rule dl2_to_dl3:
         """
 #+end_src
 
-*** Index
-The actual work consists of calling the lstchain script and then adding
-new rows to the table, that link to the background files.
-The script is very basic and assumes, that you can sort the background files and get the
-same order as when sorting the observations.
-That is true as long as the name of the background file contains the run_id
-and there are no shenanigans with the leading 0.
-
-#+begin_src snakemake
-rule dl3_hdu_index:
-    output:
-        dl3 / "hdu-index.fits.gz",
-    input:
-        runs=DL3_FILES,
-    params:
-        outdir=dl3
-    conda:
-        env
-    log:
-        dl3 / "hdu_index.log",
-    resources:
-        time=15,
-    shell:
-        """
-        lstchain_create_dl3_index_files  \
-            --input-dl3-dir {params.outdir}  \
-            --output-index-path {params.outdir}  \
-            --file-pattern '*.dl3.fits.gz'  \
-            --overwrite \
-            --log-file {log}
-        """
-
-#+end_src
 *** Background
 After some back and forth with pybkgmodel, I decided to write my own script.
 Its content is subject to change, but some design goals will probably stay the same, so
@@ -996,7 +1736,6 @@ rule calc_count_maps:
         dl3 / "bkg_cached_maps.pkl"
     input:
         runs=DL3_FILES,
-        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
         script=scripts/"precompute_background_maps.py",
     params:
@@ -1011,7 +1750,7 @@ rule calc_count_maps:
         dl3 / "calc_count_maps.log",
     shell:
         """python {input.script} \
-        --input-dir {params.obs_dir} \
+        --input-runs {input.runs} \
         --output {output} \
         --config {input.config} \
         --log-file {log} \
@@ -1021,12 +1760,11 @@ rule calc_count_maps:
 rule calc_background:
     output:
         dummy=dl3/"bkg-exists",
+        bkg=BKG_FILES,
     input:
         runs=DL3_FILES,
-        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
-        calc_script=scripts/"calc_background.py",
-        link_script=scripts / "link_bkg.py",
+        script=scripts/"calc_background.py",
         cached_maps=dl3/"bkg_cached_maps.pkl"
     params:
         obs_dir=dl3,
@@ -1034,24 +1772,59 @@ rule calc_background:
     conda:
         bkg_env
     resources:
-        partition="long",
-        time=360,
+        partition="short",
     log:
         dl3 / "calc_bkg.log",
     shell:
-        """python {input.calc_script} \
-        --input-dir {params.obs_dir} \
+        """python {input.script} \
+        --input-runs {input.runs} \
         --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
         --cached-maps {input.cached_maps} \
         --config {input.config} \
         --log-file {log} \
         --overwrite
+        """
+#+end_src
+
+*** Index
+The actual work consists of calling the lstchain script and then adding
+new rows to the table, that link to the background files.
+The script is very basic and assumes, that you can sort the background files and get the
+same order as when sorting the observations.
+That is true as long as the name of the background file contains the run_id
+and there are no shenanigans with the leading 0.
+
+#+begin_src snakemake
+rule dl3_hdu_index:
+    output:
+        dl3 / "hdu-index.fits.gz",
+    input:
+        runs=DL3_FILES,
+        bkg=BKG_FILES,
+        link_script=scripts / "link_bkg.py",
+    params:
+        outdir=dl3
+    conda:
+        env
+    log:
+        dl3 / "hdu_index.log",
+    resources:
+        time=15,
+    shell:
+        """
+        lstchain_create_dl3_index_files  \
+            --input-dl3-dir {params.outdir}  \
+            --output-index-path {params.outdir}  \
+            --file-pattern '*.dl3.fits.gz'  \
+            --overwrite \
+            --log-file {log}
 
         python {input.link_script} \
-        --hdu-index-path {input.index} \
-        --bkg-dir {params.bkg_dir} \
+        --hdu-index-path {output} \
+        --bkg-files {input.bkg} \
         """
+
 #+end_src
 ** Plot dl3 stuff
 *** Theta 2

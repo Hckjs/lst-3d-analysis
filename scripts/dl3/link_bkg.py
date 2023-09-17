@@ -10,11 +10,9 @@ from scriptutils.log import setup_logging
 log = logging.getLogger(__name__)
 
 
-def main(hdu_index_path, bkg_dir, bkg_pattern):
+def main(hdu_index_path, bkg_files):
     t = Table.read(hdu_index_path)
     ids = sorted(np.unique(t["OBS_ID"]))
-
-    bkg_files = list(Path(bkg_dir).glob(bkg_pattern))
 
     if len(bkg_files) == 1:
         bkg_files = bkg_files * len(ids)
@@ -37,7 +35,17 @@ def main(hdu_index_path, bkg_dir, bkg_pattern):
     t.remove_rows(np.nonzero(t["HDU_TYPE"] == "bkg"))
     for i, bkg in zip(ids, bkg_files):
         log.info(f"Linking {bkg} to obs id {i}")
-        t.add_row([i, "bkg", "bkg_3d", bkg_dir, str(bkg), "BACKGROUND", -1])
+        t.add_row(
+            [
+                i,
+                "bkg",
+                "bkg_3d",
+                Path(bkg).parent.as_posix(),
+                str(bkg),
+                "BACKGROUND",
+                -1,
+            ],
+        )
     log.info(t)
     t.write(hdu_index_path, overwrite=True)
 
@@ -45,10 +53,9 @@ def main(hdu_index_path, bkg_dir, bkg_pattern):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--hdu-index-path", required=True)
-    parser.add_argument("--bkg-dir", required=True)  # needs to be relative(?)
-    parser.add_argument("--bkg-pattern", default="bkg*.fits.gz")
+    parser.add_argument("--bkg-files", required=True, nargs="+")
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-    main(args.hdu_index_path, args.bkg_dir, args.bkg_pattern)
+    main(args.hdu_index_path, args.bkg_files)

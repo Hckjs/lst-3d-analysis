@@ -2,20 +2,17 @@
 # https://github.com/cta-observatory/pybkgmodel/tree/add_exlcusion_region_method
 import argparse
 import logging
-from pathlib import Path
-import yaml
-from rich import progress
-import astropy.units as u
-import numpy as np
-import pandas as pd
 import pickle
-from astropy.coordinates import AltAz, EarthLocation, SkyCoord
+
+import astropy.units as u
+import yaml
+from astropy.coordinates import EarthLocation, SkyCoord
 from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis
-from scriptutils.log import setup_logging
+
 from scriptutils.bkg import ExclusionMapBackgroundMaker
-import pickle
+from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +22,7 @@ def main():
     Function running the entire background reconstruction procedure.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-dir", required=True)
+    parser.add_argument("--input-runs", required=True, nargs="+")
     parser.add_argument("--config", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--overwrite", action="store_true")
@@ -50,7 +47,8 @@ def main():
         e_binning["n_bins"],
         name="energy",
     )
-    ds = DataStore.from_dir(args.input_dir)
+
+    ds = DataStore.from_events_files(args.input_runs)
     bkg_maker = ExclusionMapBackgroundMaker(
         e_reco,
         location,
@@ -59,10 +57,9 @@ def main():
         exclusion_radius=u.Quantity(exclusion["radius"]),
         exclusion_sources=[SkyCoord(**s) for s in exclusion["sources"]],
     )
-    cached_maps = bkg_maker.fill_all_maps(ds, None) # all ids
+    cached_maps = bkg_maker.fill_all_maps(ds, None)
     with open(args.output, "wb") as f:
         pickle.dump(cached_maps, f)
-
 
 
 if __name__ == "__main__":
