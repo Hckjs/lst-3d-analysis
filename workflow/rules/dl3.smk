@@ -93,7 +93,6 @@ rule calc_count_maps:
 rule calc_background:
     output:
         dummy=dl3 / "bkg-exists",
-        bkg=BKG_FILES,
     input:
         runs=DL3_FILES,
         config=bkg_config,
@@ -125,10 +124,11 @@ rule dl3_hdu_index:
         dl3 / "hdu-index.fits.gz",
     input:
         runs=DL3_FILES,
-        bkg=BKG_FILES,
         link_script=scripts / "link_bkg.py",
+        dummy=dl3 / "bkg-exists",
     params:
         outdir=dl3,
+        bkg=BKG_FILES,
     conda:
         env
     log:
@@ -146,7 +146,7 @@ rule dl3_hdu_index:
 
         python {input.link_script} \
         --hdu-index-path {output} \
-        --bkg-files {input.bkg} \
+        --bkg-files {params.bkg} \
         """
 
 
