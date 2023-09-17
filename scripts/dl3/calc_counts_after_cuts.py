@@ -69,7 +69,7 @@ def main(input_dl2, input_irf, config, output):
             #            for i in range(len(gh_cuts))
             #        ],
             #        "rad_max_cut": rad_max_cuts["RAD_MAX"][0, 0],
-            #        **gh_cuts,
+            **gh_cuts,
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )
