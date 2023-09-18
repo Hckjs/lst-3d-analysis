@@ -1286,7 +1286,7 @@ rule create_dataset:
     input:
         data=dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
-        script="scripts/write_datasets_3d.py",
+        script=scripts/"write_datasets_3d.py",
     conda:
         gammapy_env
     log:
