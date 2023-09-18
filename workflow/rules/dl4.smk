@@ -64,16 +64,16 @@ rule peek_datasets:
         "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data} --log-file {log}"
 
 
-rule plot_dl4:
+rule plot_dl4_dianotics:
     output:
-        plots / "{analysis}/{name}.pdf",
+        plots / "{analysis}/dl4_diagnostics.pdf",
     input:
-        data=dl4 / "{analysis}/{name}.fits.gz",
-        script=scripts / "plot_{name}.py",
+        data=dl4 / "{analysis}/dl4_diagnostics.fits.gz",
+        script=scripts / "plot_dl4_diagnostics.py",
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
     conda:
         gammapy_env
     log:
-        plots / "{analysis}/{name}.log",
+        plots / "{analysis}/dl4_diagnostics.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
