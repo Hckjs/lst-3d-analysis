@@ -314,9 +314,9 @@ rule stack_cuts_dl2_dl3:
     conda:
         env
     log:
-        dl3 / "counts_after_cuts/stack.log",
+        dl3 / "counts_after_cuts/stack.log",  # TODO use this
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
 rule plot_cuts_dl2_dl3:
