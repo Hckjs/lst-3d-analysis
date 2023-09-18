@@ -11,7 +11,6 @@ log = logging.getLogger(__name__)
 def main(input_paths, output_path, norm):
     cuts_after_trigger = []
     cuts_after_gh = []
-    cuts_after_gh_theta = []
     t_effective = []
     t_elapsed = []
 
@@ -19,7 +18,7 @@ def main(input_paths, output_path, norm):
         cuts = Table.read(path, path="cuts")
         cuts_after_trigger.append(cuts["after_trigger"])
         cuts_after_gh.append(cuts["after_gh"])
-        cuts_after_gh_theta.append(cuts["after_gh_theta"])
+        # cuts_after_gh_theta.append(cuts["after_gh_theta"])
         t_effective.append(cuts.meta["t_effective"])
         t_elapsed.append(cuts.meta["t_elapsed"])
 
