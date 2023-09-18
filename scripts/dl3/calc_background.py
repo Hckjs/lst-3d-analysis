@@ -69,7 +69,7 @@ def main():
     zens = []
     for obs_id in ds.obs_ids:
         obs = ds.obs(obs_id)
-        zens.append(obs.pointing.get_icrs().dec.to_value(u.deg))
+        zens.append(obs.pointing.get_icrs().dec.deg)
     criteria = pd.DataFrame(
         {
             "obs_id": ds.obs_ids,
