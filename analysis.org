@@ -1289,7 +1289,7 @@ rule create_dataset:
     log:
         dl4/ "{analysis}/datasets.log",,
     shell:
-        "python {input.script} -c {input.config} -o {output}"
+        "python {input.script} -c {input.config} -o {output} --log-file {log}"
 #+end_src
 
 ** Plot DL4 statistics
@@ -1309,7 +1309,7 @@ rule calc_dl4_diagnostics:
     log:
         dl4/ "{analysis}/dl4_diagnostics.log",,
     shell:
-        "python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
+        "python {input.script} -c {input.config} -o {output} --dataset-path {input.data} --log-file {log}"
 
 
 rule peek_datasets:
@@ -1325,7 +1325,7 @@ rule peek_datasets:
     log:
         plots/ "{analysis}/dataset_peek.log",,
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data} --log-file {log}"
 
 
 rule plot_dl4:
@@ -1340,7 +1340,7 @@ rule plot_dl4:
     log:
         plots/ "{analysis}/{name}.log",,
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 #+end_src
 
