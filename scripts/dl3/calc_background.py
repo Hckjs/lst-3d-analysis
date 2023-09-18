@@ -64,12 +64,16 @@ def main():
     # Az is neglected for now, maybe thats fine for one LST
     # Time is neglected as well. Very different runs should be excluded before this
     # and there is no notion of MC-periods in LST so far
+
+    # looks like obs_table isbehaving inconsistenly
+    zens = []
+    for obs_id in ds.obs_ids:
+        obs = ds.obs(obs_id)
+        zens.append(obs.pointing.get_icrs().dec.to_value(u.deg))
     criteria = pd.DataFrame(
-        {
-            "obs_id": ds.obs_table["OBS_ID"],
-            "cos_zenith": np.cos(ds.obs_table["ZEN_PNT"].quantity),
-        },
+        {"obs_ids": ds.obs_ids, "cos_zenith": np.cos(np.deg2rad(zens))},
     )
+
     for obs_id in ds.obs_ids:
         cos_zenith_diff = np.abs(
             (criteria["cos_zenith"] - criteria["cos_zenith"][0]).values,
