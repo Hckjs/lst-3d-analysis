@@ -4,7 +4,7 @@ dl4 = Path(OUTDIRS["dl4"])
 plots = dl4 / "plots"
 scripts = Path(SCRIPTS["dl4"])
 
-plot_types = ["dataset_peek"]  # , "dl4_diagnostics"]
+dl4_plot_types = ["dataset_peek"]  # , "dl4_diagnostics"]
 
 
 rule dl4:
@@ -12,7 +12,7 @@ rule dl4:
         [
             plots / "{analysis}/{plot}.pdf"
             for analysis in analyses
-            for plot in plot_types
+            for plot in dl4_plot_types
         ],
 
 

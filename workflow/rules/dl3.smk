@@ -13,14 +13,14 @@ irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 data_selection_config = CONFIGS["data_selection"]
 
-plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
+dl3_plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
 # bkg plots as well!
 
 
 def DL3_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
-    per_run = [plots / f"{p}/{p}_{run}.pdf" for p in plot_types for run in ids]
-    return per_run + [plots / f"{p}/{p}_stacked.pdf" for p in plot_types[:-1]]
+    per_run = [plots / f"{p}/{p}_{run}.pdf" for p in dl3_plot_types for run in ids]
+    return per_run + [plots / f"{p}/{p}_stacked.pdf" for p in dl3_plot_types[:-1]]
 
 
 rule dl3:
