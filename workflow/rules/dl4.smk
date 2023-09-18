@@ -10,7 +10,7 @@ dl4_plot_types = ["dataset_peek"]  # , "dl4_diagnostics"]
 rule dl4:
     input:
         [
-            plots / "{analysis}/{plot}.pdf"
+            plots / f"{analysis}/{plot}.pdf"
             for analysis in analyses
             for plot in dl4_plot_types
         ],
