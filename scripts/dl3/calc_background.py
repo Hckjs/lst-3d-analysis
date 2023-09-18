@@ -71,7 +71,7 @@ def main():
         obs = ds.obs(obs_id)
         zens.append(obs.pointing.get_icrs().dec.to_value(u.deg))
     criteria = pd.DataFrame(
-        {"obs_ids": ds.obs_ids, "cos_zenith": np.cos(np.deg2rad(zens))},
+        {"obs_id": ds.obs_ids, "cos_zenith": np.cos(np.deg2rad(zens))},
     )
 
     for obs_id in ds.obs_ids:
