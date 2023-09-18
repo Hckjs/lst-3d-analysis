@@ -63,36 +63,11 @@ rule dl2_to_dl3:
         """
 
 
-rule dl3_hdu_index:
-    output:
-        dl3 / "hdu-index.fits.gz",
-    input:
-        runs=DL3_FILES,
-    params:
-        outdir=dl3,
-    conda:
-        env
-    log:
-        dl3 / "hdu_index.log",
-    resources:
-        time=15,
-    shell:
-        """
-        lstchain_create_dl3_index_files  \
-            --input-dl3-dir {params.outdir}  \
-            --output-index-path {params.outdir}  \
-            --file-pattern '*.dl3.fits.gz'  \
-            --overwrite \
-            --log-file {log}
-        """
-
-
 rule calc_count_maps:
     output:
         dl3 / "bkg_cached_maps.pkl",
     input:
         runs=DL3_FILES,
-        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
         script=scripts / "precompute_background_maps.py",
     params:
@@ -107,7 +82,7 @@ rule calc_count_maps:
         dl3 / "calc_count_maps.log",
     shell:
         """python {input.script} \
-        --input-dir {params.obs_dir} \
+        --input-runs {input.runs} \
         --output {output} \
         --config {input.config} \
         --log-file {log} \
@@ -120,10 +95,8 @@ rule calc_background:
         dummy=dl3 / "bkg-exists",
     input:
         runs=DL3_FILES,
-        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
-        calc_script=scripts / "calc_background.py",
-        link_script=scripts / "link_bkg.py",
+        script=scripts / "calc_background.py",
         cached_maps=dl3 / "bkg_cached_maps.pkl",
     params:
         obs_dir=dl3,
@@ -131,23 +104,49 @@ rule calc_background:
     conda:
         bkg_env
     resources:
-        partition="long",
-        time=360,
+        partition="short",
     log:
         dl3 / "calc_bkg.log",
     shell:
-        """python {input.calc_script} \
-        --input-dir {params.obs_dir} \
+        """python {input.script} \
+        --input-runs {input.runs} \
         --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
         --cached-maps {input.cached_maps} \
         --config {input.config} \
         --log-file {log} \
         --overwrite
+        """
+
+
+rule dl3_hdu_index:
+    output:
+        dl3 / "hdu-index.fits.gz",
+    input:
+        runs=DL3_FILES,
+        link_script=scripts / "link_bkg.py",
+        dummy=dl3 / "bkg-exists",
+    params:
+        outdir=dl3,
+        bkg=BKG_FILES,
+    conda:
+        env
+    log:
+        dl3 / "hdu_index.log",
+    resources:
+        time=15,
+    shell:
+        """
+        lstchain_create_dl3_index_files  \
+            --input-dl3-dir {params.outdir}  \
+            --output-index-path {params.outdir}  \
+            --file-pattern '*.dl3.fits.gz'  \
+            --overwrite \
+            --log-file {log}
 
         python {input.link_script} \
-        --hdu-index-path {input.index} \
-        --bkg-dir {params.bkg_dir} \
+        --hdu-index-path {output} \
+        --bkg-files {params.bkg} \
         """
 
 

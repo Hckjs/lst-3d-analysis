@@ -25,7 +25,7 @@ def main():
     Function running the entire background reconstruction procedure.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-dir", required=True)
+    parser.add_argument("--input-runs", required=True, nargs="+")
     parser.add_argument("--cached-maps", required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--output-dir", required=True)
@@ -55,7 +55,7 @@ def main():
         e_binning["n_bins"],
         name="energy",
     )
-    ds = DataStore.from_dir(args.input_dir)
+    ds = DataStore.from_events_files(args.input_runs)
     with open(args.cached_maps, "rb") as f:
         cached_maps = pickle.load(f)
 

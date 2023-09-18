@@ -163,6 +163,12 @@ def MC_NODES_IRFs(wildcards):
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
     return [out/f"{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce]
 
+models_to_train = [
+    Path(OUTDIRS["models"]) / "reg_energy.sav",
+    Path(OUTDIRS["models"]) / "cls_gh.sav",
+    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
+    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
+]
 
 def DL2_FILES(wildcards):
     ids = RUN_IDS(wildcards)
@@ -176,19 +182,18 @@ def DL3_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
 
 
-
 def IRF_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"])
     return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
 
 
-models_to_train = [
-    Path(OUTDIRS["models"]) / "reg_energy.sav",
-    Path(OUTDIRS["models"]) / "cls_gh.sav",
-    Path(OUTDIRS["models"]) / "reg_disp_norm.sav",
-    Path(OUTDIRS["models"]) / "cls_disp_sign.sav",
-]
+def BKG_FILES(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"])
+    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]
+
+
 #+end_src
 
 * DL1
@@ -937,39 +942,6 @@ rule dl2_to_dl3:
         """
 #+end_src
 
-*** Index
-The actual work consists of calling the lstchain script and then adding
-new rows to the table, that link to the background files.
-The script is very basic and assumes, that you can sort the background files and get the
-same order as when sorting the observations.
-That is true as long as the name of the background file contains the run_id
-and there are no shenanigans with the leading 0.
-
-#+begin_src snakemake
-rule dl3_hdu_index:
-    output:
-        dl3 / "hdu-index.fits.gz",
-    input:
-        runs=DL3_FILES,
-    params:
-        outdir=dl3
-    conda:
-        env
-    log:
-        dl3 / "hdu_index.log",
-    resources:
-        time=15,
-    shell:
-        """
-        lstchain_create_dl3_index_files  \
-            --input-dl3-dir {params.outdir}  \
-            --output-index-path {params.outdir}  \
-            --file-pattern '*.dl3.fits.gz'  \
-            --overwrite \
-            --log-file {log}
-        """
-
-#+end_src
 *** Background
 After some back and forth with pybkgmodel, I decided to write my own script.
 Its content is subject to change, but some design goals will probably stay the same, so
@@ -996,7 +968,6 @@ rule calc_count_maps:
         dl3 / "bkg_cached_maps.pkl"
     input:
         runs=DL3_FILES,
-        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
         script=scripts/"precompute_background_maps.py",
     params:
@@ -1011,7 +982,7 @@ rule calc_count_maps:
         dl3 / "calc_count_maps.log",
     shell:
         """python {input.script} \
-        --input-dir {params.obs_dir} \
+        --input-runs {input.runs} \
         --output {output} \
         --config {input.config} \
         --log-file {log} \
@@ -1023,10 +994,8 @@ rule calc_background:
         dummy=dl3/"bkg-exists",
     input:
         runs=DL3_FILES,
-        index=dl3 / "hdu-index.fits.gz",
         config=bkg_config,
-        calc_script=scripts/"calc_background.py",
-        link_script=scripts / "link_bkg.py",
+        script=scripts/"calc_background.py",
         cached_maps=dl3/"bkg_cached_maps.pkl"
     params:
         obs_dir=dl3,
@@ -1034,24 +1003,60 @@ rule calc_background:
     conda:
         bkg_env
     resources:
-        partition="long",
-        time=360,
+        partition="short",
     log:
         dl3 / "calc_bkg.log",
     shell:
-        """python {input.calc_script} \
-        --input-dir {params.obs_dir} \
+        """python {input.script} \
+        --input-runs {input.runs} \
         --output-dir {params.bkg_dir} \
         --dummy-output {output.dummy} \
         --cached-maps {input.cached_maps} \
         --config {input.config} \
         --log-file {log} \
         --overwrite
+        """
+#+end_src
+
+*** Index
+The actual work consists of calling the lstchain script and then adding
+new rows to the table, that link to the background files.
+The script is very basic and assumes, that you can sort the background files and get the
+same order as when sorting the observations.
+That is true as long as the name of the background file contains the run_id
+and there are no shenanigans with the leading 0.
+
+#+begin_src snakemake
+rule dl3_hdu_index:
+    output:
+        dl3 / "hdu-index.fits.gz",
+    input:
+        runs=DL3_FILES,
+        link_script=scripts / "link_bkg.py",
+        dummy=dl3/"bkg-exists",
+    params:
+        outdir=dl3,
+        bkg=BKG_FILES,
+    conda:
+        env
+    log:
+        dl3 / "hdu_index.log",
+    resources:
+        time=15,
+    shell:
+        """
+        lstchain_create_dl3_index_files  \
+            --input-dl3-dir {params.outdir}  \
+            --output-index-path {params.outdir}  \
+            --file-pattern '*.dl3.fits.gz'  \
+            --overwrite \
+            --log-file {log}
 
         python {input.link_script} \
-        --hdu-index-path {input.index} \
-        --bkg-dir {params.bkg_dir} \
+        --hdu-index-path {output} \
+        --bkg-files {params.bkg} \
         """
+
 #+end_src
 ** Plot dl3 stuff
 *** Theta 2
