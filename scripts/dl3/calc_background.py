@@ -71,15 +71,23 @@ def main():
         obs = ds.obs(obs_id)
         zens.append(obs.pointing.get_icrs().dec.to_value(u.deg))
     criteria = pd.DataFrame(
-        {"obs_id": ds.obs_ids, "cos_zenith": np.cos(np.deg2rad(zens))},
+        {
+            "obs_id": ds.obs_ids,
+            "zenith": np.deg2rad(zens),
+            "cos_zenith": np.cos(np.deg2rad(zens)),
+        },
     )
 
-    for obs_id in ds.obs_ids:
+    log.info(f"Selection criteria: {criteria}")
+
+    for i, obs_id in enumerate(ds.obs_ids):
         cos_zenith_diff = np.abs(
-            (criteria["cos_zenith"] - criteria["cos_zenith"][0]).values,
+            (criteria["cos_zenith"] - criteria["cos_zenith"][i]).values,
         )
         mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
         selected_ids = criteria["obs_id"][mask].values
+        log.info(f"cos zenith diff: {cos_zenith_diff}")
+        log.info(f"Selected to match {obs_id}: {selected_ids}")
         # select fitting runs
         bkg_maker = ExclusionMapBackgroundMaker(
             e_reco,
