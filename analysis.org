@@ -19,8 +19,7 @@ include: "rules/dl1.smk"
 include: "rules/mc.smk"
 include: "rules/dl2.smk"
 include: "rules/dl3.smk"
-
-# include: "rules/dl4.smk"
+include: "rules/dl4.smk"
 # include: "rules/dl5.smk"
 
 #+end_src
@@ -1259,63 +1258,36 @@ rule plot_cuts_dl2_dl3:
 #+end_src
 
 * DL4
-:PROPERTIES:
- :header-args:  :tangle ./workflow/rules/dl4.smk :mkdirp yes
-:END:
-
 ** Definitions
 
 #+begin_src snakemake
-env = ENVS["gammapy"]
-
+gammapy_env = ENVS["gammapy"]
 dl3 = Path(OUTDIRS["dl3"])
 dl4 = Path(OUTDIRS["dl4"])
+plots = dl4 / "plots"
 scripts = Path(SCRIPTS["dl4"])
 
-plot_types = ["obs_plots", "dataset_peek"]#, "dl4_diagnostics"]
+plot_types = ["dataset_peek"]#, "dl4_diagnostics"]
 rule dl4:
     input:
-        [dl4 / "{analysis}/{plot}.pdf" for analysis in analyses for plot in plot_types]
+        [plots / "{analysis}/{plot}.pdf" for analysis in analyses for plot in plot_types]
 
 #+end_src
 
-** Obs plots
-#+begin_src snakemake
-rule observation_plots:
-    output:
-        plots / "{analysis}/obs_plots.pdf",
-    input:
-        dl3 / "hdu-index.fits.gz",
-        config=config_dir / "{analysis}/analysis.yaml",
-        script=scripts/"obs_plots.py",
-        rc=MATPLOTLIBRC,
-    resources:
-        mem_mb=16000,
-    conda:
-        gammapy_env
-    log:
-        plots / "{analysis}/obs_plots.log"
-    shell:
-        """
-        MATPLOTLIBRC={input.rc} \
-        python {input.script} \
-            -c {input.config} \
-            -o {output} \
-            --log-file {log}
-        """
-#+end_src
 ** Create MapDataset
 
 #+begin_src snakemake
-rule dataset_3d:
+rule create_dataset:
     output:
-        build_dir / "dl4/{analysis}/datasets.fits.gz",
+        dl4/ "{analysis}/datasets.fits.gz",
     input:
-        data=build_dir / "dl3/hdu-index.fits.gz",
+        data=dl3/ / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script="scripts/write_datasets_3d.py",
     conda:
-        env
+        gammapy_env
+    log:
+        dl4/ "{analysis}/datasets.log",,
     shell:
         "python {input.script} -c {input.config} -o {output}"
 #+end_src
@@ -1325,42 +1297,48 @@ rule dataset_3d:
 #+begin_src snakemake
 rule calc_dl4_diagnostics:
     output:
-        build_dir / "dl4/{analysis}/dl4_diagnostics.fits.gz",
+        dl4/ "{analysis}/dl4_diagnostics.fits.gz",
     input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        data=dl4/"{analysis}/datasets.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
-        script="scripts/calc_dl4_diagnostics.py",
+        script=scripts/"calc_dl4_diagnostics.py",
     resources:
         mem_mb=16000,
     conda:
         gammapy_env
+    log:
+        dl4/ "{analysis}/dl4_diagnostics.log",,
     shell:
         "python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
 
 
 rule peek_datasets:
     output:
-        build_dir / "plots/{analysis}/dataset_peek.pdf",
+        plots/"{analysis}/dataset_peek.pdf",
     input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        script="scripts/plot_dataset_peek.py",
+        data=dl4/ "{analysis}/datasets.fits.gz",
+        script=scripts/"plot_dataset_peek.py",
         config=config_dir / "{analysis}/analysis.yaml",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        rc=MATPLOTLIBRC,
     conda:
         gammapy_env
+    log:
+        plots/ "{analysis}/dataset_peek.log",,
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
 
 
 rule plot_dl4:
     output:
-        build_dir / "plots/{analysis}/{name}.pdf",
+        plots/ "{analysis}/{name}.pdf",
     input:
-        data=build_dir / "dl4/{analysis}/{name}.fits.gz",
-        script="scripts/plot_{name}.py",
+        data=dl4/"{analysis}/{name}.fits.gz",
+        script=scripts/"plot_{name}.py",
         rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
     conda:
         gammapy_env
+    log:
+        plots/ "{analysis}/{name}.log",,
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 

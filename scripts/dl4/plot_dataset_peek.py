@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 
 import matplotlib
@@ -5,10 +6,14 @@ import matplotlib.pyplot as plt
 from gammapy.analysis import Analysis, AnalysisConfig
 from gammapy.datasets import Datasets
 
+from scriptutils.log import setup_logging
+
 if matplotlib.get_backend() == "pgf":
     from matplotlib.backends.backend_pgf import PdfPages
 else:
     from matplotlib.backends.backend_pdf import PdfPages
+
+log = logging.getLogger(__name__)
 
 
 def peek(data):
@@ -57,5 +62,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", required=True)
     parser.add_argument("-c", "--config", required=True)
     parser.add_argument("--dataset-path", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
     main(args.config, args.dataset_path, args.output)

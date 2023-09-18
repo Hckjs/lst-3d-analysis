@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 
 import numpy as np
@@ -6,11 +7,9 @@ from astropy.table import Table
 from gammapy.analysis import Analysis, AnalysisConfig
 from gammapy.datasets import Datasets
 
-parser = ArgumentParser()
-parser.add_argument("-c", "--config", required=True)
-parser.add_argument("--dataset-path", required=True)
-parser.add_argument("-o", "--output", required=True)
-args = parser.parse_args()
+from scriptutils.log import setup_logging
+
+log = logging.getLogger(__name__)
 
 
 def main(config, dataset_path, output):
@@ -60,4 +59,12 @@ def main(config, dataset_path, output):
 
 
 if __name__ == "__main__":
-    main(**vars(args))
+    parser = ArgumentParser()
+    parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--dataset-path", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
+    main(args.config, args.dataset_path, args.output)
