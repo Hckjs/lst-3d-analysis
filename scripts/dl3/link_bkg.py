@@ -5,8 +5,6 @@ from pathlib import Path
 import numpy as np
 from astropy.table import Table
 
-from scriptutils.log import setup_logging
-
 log = logging.getLogger(__name__)
 
 
@@ -55,7 +53,10 @@ if __name__ == "__main__":
     parser.add_argument("--hdu-index-path", required=True)
     parser.add_argument("--bkg-files", required=True, nargs="+")
     parser.add_argument("--log-file")
-    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+    )  # TODO setup logging without scriptutils...
     args = parser.parse_args()
-    setup_logging(logfile=args.log_file, verbose=args.verbose)
     main(args.hdu_index_path, args.bkg_files)
