@@ -86,6 +86,7 @@ def main() -> None:
         alt=u.Quantity(runsummary[mask]["mean_altitude"].value, u.rad),
         az=u.Quantity(runsummary[mask]["mean_azimuth"].value, u.rad),
     )
+    log.info(pointings)
 
     wrap_angles = u.Quantity([0, 90, 180, 270, 360], u.deg, dtype="int")
     table = Table(
@@ -97,6 +98,7 @@ def main() -> None:
     table["alt"] = pointings.alt
     table["zen"] = pointings.zen
     table["run_id"] = runsummary[mask]["runnumber"]
+    log.info(table)
     table.write(args.output_path, overwrite=True)
 
 
