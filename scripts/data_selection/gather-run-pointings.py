@@ -77,10 +77,12 @@ def main() -> None:
     with open(args.runs, "r") as f:
         runs = json.load(f)
 
-    run_ids = list(chain(*runs.values()))
+    run_ids = np.array(list(chain(*runs.values())), dtype=int)
+    log.info(run_ids)
     runsummary = Table.read(args.runsummary)
 
     mask = np.in1d(runsummary["runnumber"], run_ids)
+    log.info(mask.sum())
 
     pointings = AltAz(
         alt=u.Quantity(runsummary[mask]["mean_altitude"].value, u.rad),
