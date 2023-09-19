@@ -7,11 +7,11 @@ run_matching:
 binning:
   offset:
     max: "1.5 deg"
-    n_bins: 10
+    n_bins: 15
   energy:
-    min: "500 GeV"
+    min: "5 GeV"
     max: "50 TeV"
-    n_bins: 10
+    n_bins: 20
 
 exclusion:
   radius: "0.35 deg"
