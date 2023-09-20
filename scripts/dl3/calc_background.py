@@ -73,7 +73,7 @@ def main():
     criteria = pd.DataFrame(
         {
             "obs_id": ds.obs_ids,
-            "zenith": np.deg2rad(zens),
+            "zenith": zens,
             "cos_zenith": np.cos(np.deg2rad(zens)),
         },
     )
