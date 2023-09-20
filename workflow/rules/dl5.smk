@@ -1,28 +1,104 @@
+gammapy_env = ENVS["gammapy"]
+dl4 = Path(OUTDIRS["dl4"])
+dl5 = Path(OUTDIRS["dl5"])
+plots = dl5 / "plots"
+scripts = Path(SCRIPTS["dl5"])
+
+dl5_plot_types = [
+    "significance_map",
+]  # 2d_flux_profile, flux_points, light_curve]
+
+
+rule dl5:
+    input:
+        [
+            plots / f"{analysis}/{plot}.pdf"
+            for analysis in analyses
+            for plot in dl5_plot_types
+        ],
+
+
 rule calc_significance_map:
     output:
-        build_dir / "dl4/{analysis}/significance_map.fits.gz",
+        dl5 / "{analysis}/significance_map.fits.gz",
     input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        script="scripts/calc_significance_map.py",
-        config=config_dir / "{analysis}/analysis.yaml",
+        data=dl4 / "{analysis}/datasets.fits.gz",
+        script=scripts / "calc_significance_map.py",
     conda:
         gammapy_env
+    log:
+        dl5 / "{analysis}/calc_significance_map.log",
     shell:
-        "python {input.script} -c {input.config} -o {output} --dataset-path {input.data}"
+        """
+        python {input.script} \
+        --dataset-path {input.data} \
+        --output {output} \
+        --log-file {log}
+        """
 
 
 rule plot_significance_map:
     output:
-        build_dir / "plots/{analysis}/significance_map.pdf",
+        plots / "{analysis}/significance_map.pdf",
     input:
-        lima_map=build_dir / "dl4/{analysis}/significance_map.fits.gz",
-        exclusion_mask=build_dir / "{analysis}/exclusion.fits.gz",
-        script="scripts/plot_significance_map.py",
-        rc=os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc"),
+        lima_map=dl5 / "{analysis}/significance_map.fits.gz",
+        script=scripts / "plot_significance_map.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        gammapy_env
+    log:
+        dl5 / "{analysis}/plot_significance_map.log",
+    shell:
+        """
+        MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+        --input {input.lima_map} \
+        --output {output} \
+        --log-file {log}
+        """
+
+
+rule plot_significance_distribution:
+    output:
+        plots / "{analysis}/significance_distribution.pdf",
+    input:
+        lima_map=dl5 / "{analysis}/significance_map.fits.gz",
+        script=scripts / "plot_significance_distribution.py",
+        rc=MATPLOTLIBRC,
+        exclusion_mask=dl4 / "{analysis}/exclusion.fits.gz",
+    conda:
+        gammapy_env
+    log:
+        dl5 / "{analysis}/plot_significance_distribution.log",
+    shell:
+        """
+        MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+        --input-maps {input.lima_map} \
+        --exclusion-mask {input.exclusion_mask} \
+        --output {output} \
+        --log-file {log}
+        """
+
+
+rule model_best_fit:
+    input:
+        config=config_dir / "{analysis}/analysis.yaml",
+        dataset=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        model=config_dir / "{analysis}/models.yaml",
+        script="scripts/fit-model.py",
+    output:
+        build_dir / "dl4/{analysis}/model-best-fit.yaml",
     conda:
         gammapy_env
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} --lima-maps-input {input.lima_map} --exclusion-map-input {input.exclusion_mask} -o {output}"
+        """
+        python {input.script} \
+            -c {input.config} \
+            --dataset-path {input.dataset} \
+            --model-config {input.model} \
+            -o {output} \
+        """
 
 
 # Fit flux etc.
@@ -80,25 +156,5 @@ rule calc_light_curve:
             -c {input.config} \
             --dataset-path {input.dataset} \
             --best-model-path {input.model} \
-            -o {output} \
-        """
-
-
-rule model_best_fit:
-    input:
-        config=config_dir / "{analysis}/analysis.yaml",
-        dataset=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        model=config_dir / "{analysis}/models.yaml",
-        script="scripts/fit-model.py",
-    output:
-        build_dir / "dl4/{analysis}/model-best-fit.yaml",
-    conda:
-        gammapy_env
-    shell:
-        """
-        python {input.script} \
-            -c {input.config} \
-            --dataset-path {input.dataset} \
-            --model-config {input.model} \
             -o {output} \
         """

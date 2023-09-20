@@ -12,23 +12,17 @@ if matplotlib.get_backend() == "pgf":
 else:
     from matplotlib.backends.backend_pdf import PdfPages
 
-parser = ArgumentParser()
-parser.add_argument("--lima-maps-input", required=True)
-parser.add_argument("--exclusion-map-input", required=True)
-parser.add_argument("-o", "--output", required=True)
-args = parser.parse_args()
 
-
-def main(lima_maps_input, exclusion_map_input, output):
+# TODO Lots of hardcoded values here
+def main(lima_maps_input, exclusion_mask, output):
     figures = []
     lima_maps = FluxMaps.read(lima_maps_input)
-    exclusion_mask = WcsNDMap.read(exclusion_map_input)
+    exclusion_mask = WcsNDMap.read(exclusion_mask)
 
     significance_map = lima_maps["sqrt_ts"]
     excess_map = lima_maps["npred_excess"]
 
     fig, (ax1, ax2) = plt.subplots(
-        figsize=(11, 5),
         subplot_kw={"projection": lima_maps.geom.wcs},
         ncols=2,
     )
@@ -83,4 +77,10 @@ def main(lima_maps_input, exclusion_map_input, output):
 
 
 if __name__ == "__main__":
-    main(**vars(args))
+    parser = ArgumentParser()
+    parser.add_argument("--input-maps", required=True)
+    parser.add_argument("--exclusion-mask", required=True)
+    parser.add_argument("-o", "--output", required=True)
+    args = parser.parse_args()
+
+    main(args.ts_maps, args.exclusion_mask, args.output)
