@@ -26,17 +26,6 @@ localrules:
     data_check,
 
 
-rule runlist:
-    output:
-        out / "runlist.html",
-    shell:
-        """
-        echo 'Provide the file {output}. The command is:'
-        echo 'curl --user <username>:<password> https://lst1.iac.es/datacheck/lstosa/LST_source_catalog.html -o {output}'
-        echo 'You might need to create the output directory first.'
-        """
-
-
 rule select_datasets:
     output:
         out / "runlist.csv",

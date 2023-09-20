@@ -265,8 +265,8 @@ It is just a simple `curl` command, so not a big deal.
 *Note:* The analysis will not know of new runs until you redownload the runlist.
 That should not matter most of the times, but keep it in mind!
 
-#+begin_src snakemake
 
+#+begin_src snakemake :header-args: :tangle no
 rule runlist:
     output:
         out / "runlist.html",
