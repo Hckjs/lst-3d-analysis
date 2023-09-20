@@ -1445,6 +1445,9 @@ rule plot_significance_distribution:
 https://docs.gammapy.org/1.1/tutorials/analysis-3d/flux_profiles.html
 
 ** Fit Skymodel(s)
+:PROPERTIES:
+ :header-args:  :tangle no
+:END:
 https://docs.gammapy.org/1.1/tutorials/analysis-3d/analysis_3d.html
 - with 3d residuals map
 - model für die ghostbuster?
