@@ -1364,7 +1364,7 @@ dl5 = Path(OUTDIRS["dl5"])
 plots = dl5 / "plots"
 scripts = Path(SCRIPTS["dl5"])
 
-dl5_plot_types = ["significance_map",]# 2d_flux_profile, flux_points, light_curve]
+dl5_plot_types = ["significance_map", "2d_flux_profile"]#, flux_points, light_curve]
 rule dl5:
     input:
         [plots / f"{analysis}/{plot}.pdf" for analysis in analyses for plot in dl5_plot_types]
@@ -1444,6 +1444,50 @@ rule plot_significance_distribution:
 ** 2D Flux profile
 https://docs.gammapy.org/1.1/tutorials/analysis-3d/flux_profiles.html
 
+#+begin_src snakemake
+rule calc_2d_flux_profile:
+    output:
+        dl5 / "{analysis}/2d_flux_profile.fits.gz",
+    input:
+        data=dl4 / "{analysis}/datasets.fits.gz",
+        script=scripts/"calc_2d_flux_profile.py",
+    conda:
+        gammapy_env
+    log:
+        dl5/ "{analysis}/calc_2d_flux_profile.log",
+    shell:
+        """
+        python {input.script} \
+        --dataset-path {input.data} \
+        --output {output} \
+        --log-file {log}
+        """
+#+end_src
+
+
+#+begin_src snakemake
+
+rule plot_2d_flux_profile:
+    output:
+        plots / "{analysis}/2d_flux_profile.pdf",
+    input:
+        flux_points=dl5 / "{analysis}/2d_flux_profile.fits.gz",
+        script=scripts/"plot_2d_flux_profile.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        gammapy_env
+    log:
+        dl5 / "{analysis}/plot_2d_flux_profile.log",
+    shell:
+        """
+        MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+        --flux-points {input.flux_points} \
+        --output {output} \
+        --log-file {log}
+        """
+
+#+end_src
 ** Fit Skymodel(s)
 :PROPERTIES:
  :header-args:  :tangle no
