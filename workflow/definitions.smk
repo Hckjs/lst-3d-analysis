@@ -63,12 +63,12 @@ ENVS = {
 SCRIPTS = {
     "data_selection": (scripts_dir / "data_selection").absolute(),
     "mc": (scripts_dir / "mc").absolute(),
+    "irfs": (scripts_dir / "irfs").absolute(),
     "dl1": (scripts_dir / "dl1").absolute(),
     "dl2": (scripts_dir / "dl2").absolute(),
-    "irfs": (scripts_dir / "irfs").absolute(),
     "dl3": (scripts_dir / "dl3").absolute(),
     "dl4": (scripts_dir / "dl4").absolute(),
-    "fit": (scripts_dir / "fit").absolute(),
+    "dl5": (scripts_dir / "dl5").absolute(),
     "dm": (scripts_dir / "dm").absolute(),
 }
 
