@@ -19,26 +19,27 @@ log = logging.getLogger(__name__)
 
 
 def main(input_path, output_path):
+    # TODO: This could be a h5 table with units attached
     pointings = Table.read(input_path)
     figures = []
 
     fig, ax = plt.subplots()
-    ax.plot(pointings["run_id"], pointings["zen"].quantity.to_value(u.rad), ls="")
+    ax.scatter(pointings["run_id"], pointings["zen"])
     ax.set_xlabel("Run Id")
     ax.set_ylabel("Zenith / deg")
     figures.append(fig)
 
-    ax.plot(
+    fig, ax = plt.subplots()
+    ax.scatter(
         pointings["run_id"],
-        np.cos(pointings["zen"].quantity.to_value(u.rad)),
-        ls="",
+        np.cos(np.deg2rad(pointings["zen"])),
     )
     ax.set_xlabel("Run Id")
     ax.set_ylabel("Cos (zenith)")
     figures.append(fig)
 
     fig, ax = plt.subplots()
-    ax.plot(pointings["run_id"], pointings["az"].quantity.to_value(u.rad), ls="")
+    ax.scatter(pointings["run_id"], pointings["az"])
     ax.set_xlabel("Run Id")
     ax.set_ylabel("Azimuth / deg")
     figures.append(fig)

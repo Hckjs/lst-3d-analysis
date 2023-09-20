@@ -98,6 +98,7 @@ def main() -> None:
         },
     )
     table["alt"] = pointings.alt
+    table["az"] = pointings.az
     table["zen"] = pointings.zen
     table["run_id"] = runsummary[mask]["runnumber"]
     log.info(table)
