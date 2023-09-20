@@ -1409,7 +1409,7 @@ rule plot_significance_map:
         """
         MATPLOTLIBRC={input.rc} \
         python {input.script} \
-        --flux-map {input.lima_map} \
+        --flux-maps {input.lima_map} \
         --output {output} \
         --log-file {log}
         """
