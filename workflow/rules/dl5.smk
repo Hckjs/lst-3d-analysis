@@ -52,7 +52,7 @@ rule plot_significance_map:
         """
         MATPLOTLIBRC={input.rc} \
         python {input.script} \
-        --input {input.lima_map} \
+        --flux-map {input.lima_map} \
         --output {output} \
         --log-file {log}
         """
