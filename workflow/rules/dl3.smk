@@ -70,7 +70,7 @@ rule calc_count_maps:
         runs=DL3_FILES,
         config=bkg_config,
         script=scripts / "precompute_background_maps.py",
-        bkg_exclusion_regions=config / "bkg_exclusion",
+        bkg_exclusion_regions=config_dir / "bkg_exclusion",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
@@ -100,7 +100,7 @@ rule calc_background:
         config=bkg_config,
         script=scripts / "calc_background.py",
         cached_maps=dl3 / "bkg_cached_maps.pkl",
-        bkg_exclusion_regions=config / "bkg_exclusion",
+        bkg_exclusion_regions=config_dir / "bkg_exclusion",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
@@ -158,7 +158,7 @@ rule create_fov_bkg_exclusion:
     output:
         dl3 / "bkg_exclusion.fits.gz",
     input:
-        region=config / "bkg_exclusion",
+        region=config_dir / "bkg_exclusion",
         script=dl3 / "create_fits_exclusion.py",
     conda:
         gammapy_env
