@@ -107,8 +107,7 @@ class ExclusionMapBackgroundMaker:
         radec = obs.events.radec
         # select all
         mask = np.ones(len(radec), dtype=bool)
-        if self.exclusion_mask:
-            mask &= ~self.exclusion_geom.contains(radec)
+        mask &= ~self.exclusion_geom.contains(radec)
         return mask
 
     def fill_counts(self, obs, exclusion_mask):
