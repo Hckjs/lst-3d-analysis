@@ -100,6 +100,7 @@ rule calc_background:
         config=bkg_config,
         script=scripts / "calc_background.py",
         cached_maps=dl3 / "bkg_cached_maps.pkl",
+        bkg_exclusion_regions=config / "bkg_exclusion",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
@@ -113,6 +114,7 @@ rule calc_background:
         """python {input.script} \
         --input-runs {input.runs} \
         --output-dir {params.bkg_dir} \
+        --exclusion {input.bkg_exclusion_regions} \
         --dummy-output {output.dummy} \
         --cached-maps {input.cached_maps} \
         --config {input.config} \

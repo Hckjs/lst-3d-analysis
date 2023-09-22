@@ -9,10 +9,11 @@ import astropy.units as u
 import numpy as np
 import pandas as pd
 import yaml
-from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.coordinates import EarthLocation
 from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis
+from regions import Regions
 
 from scriptutils.bkg import ExclusionMapBackgroundMaker
 from scriptutils.log import setup_logging
@@ -28,6 +29,7 @@ def main():
     parser.add_argument("--input-runs", required=True, nargs="+")
     parser.add_argument("--cached-maps", required=True)
     parser.add_argument("--config", required=True)
+    parser.add_argument("--exclusion", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--output-prefix", default="bkg")
     parser.add_argument("--dummy-output", required=True)
@@ -38,13 +40,13 @@ def main():
     setup_logging(logfile=args.log_file, verbose=args.verbose)
     out = Path(args.output_dir)
 
+    exclusion_regions = Regions.parse(args.exclusion, format="ds9")
     erfa_astrom.set(ErfaAstromInterpolator(300 * u.s))
 
     with open(args.config) as f:
         config = yaml.safe_load(f)
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
-    exclusion = config["exclusion"]
     matching = config["run_matching"]
 
     # TODO Define that properly somewhere
@@ -90,16 +92,14 @@ def main():
         )
         mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
         selected_ids = criteria["obs_id"][mask].values
-        log.info(f"cos zenith diff: {cos_zenith_diff}")
         log.info(f"Selected to match {obs_id}: {selected_ids}")
         # select fitting runs
         bkg_maker = ExclusionMapBackgroundMaker(
             e_reco,
             location,
+            exclusion_regions=exclusion_regions,
             nbins=fov_binning["n_bins"],
             offset_max=u.Quantity(fov_binning["max"]),
-            exclusion_radius=u.Quantity(exclusion["radius"]),
-            exclusion_sources=[SkyCoord(**s) for s in exclusion["sources"]],
         )
         bkg_maker.run(ds, selected_ids, cached_maps=cached_maps)
         if config["hdu_type"] == "3D":
