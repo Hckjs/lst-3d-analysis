@@ -39,7 +39,7 @@ def main():
         config = yaml.safe_load(f)
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
-    exclusion_regions = Regions.parse(args.exclusion, format="ds9")
+    exclusion_regions = Regions.read(args.exclusion, format="ds9")
 
     # TODO Define that properly somewhere
     location = EarthLocation.of_site("Roque de los Muchachos")

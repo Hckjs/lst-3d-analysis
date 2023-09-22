@@ -40,7 +40,7 @@ def main():
     setup_logging(logfile=args.log_file, verbose=args.verbose)
     out = Path(args.output_dir)
 
-    exclusion_regions = Regions.parse(args.exclusion, format="ds9")
+    exclusion_regions = Regions.read(args.exclusion, format="ds9")
     erfa_astrom.set(ErfaAstromInterpolator(300 * u.s))
 
     with open(args.config) as f:
