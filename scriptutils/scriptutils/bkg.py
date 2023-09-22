@@ -5,7 +5,7 @@ import numpy as np
 from astropy.coordinates import AltAz, Angle, SkyCoord
 from astropy.time import Time
 from gammapy.irf import Background2D, Background3D
-from gammapy.maps import MapAxis, RegionGeom, WcsGeom
+from gammapy.maps import MapAxis, RegionGeom
 from gammapy.utils.coordinates import fov_to_sky, sky_to_fov
 
 log = logging.getLogger(__name__)
@@ -162,12 +162,6 @@ class ExclusionMapBackgroundMaker:
 
     def fill_time_maps(self, obs, exclusion_mask):
         log.info(f"Filling time map(s) for obs {obs.obs_id}")
-        WcsGeom.create(
-            skydir=obs.pointing_radec,
-            axes=[self.e_reco],
-            width=2 * self.offset_max + 2 * self.exclusion_radius,
-        )
-
         # time_map
         t_binning = np.linspace(obs.tstart.value, obs.tstop.value, 30)
         t_binning = Time(t_binning, format="mjd")
