@@ -23,12 +23,13 @@ rule create_dataset:
         data=dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "write_datasets_3d.py",
+        bkg_exclusion_regions=dl3 / "bkg_exclusion.fits.gz",
     conda:
         gammapy_env
     log:
         dl4 / "{analysis}/datasets.log",
     shell:
-        "python {input.script} -c {input.config} -o {output} --log-file {log}"
+        "python {input.script} -c {input.config}  -o {output} --log-file {log}"
 
 
 rule calc_dl4_diagnostics:

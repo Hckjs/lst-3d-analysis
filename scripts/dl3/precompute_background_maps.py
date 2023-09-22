@@ -6,10 +6,11 @@ import pickle
 
 import astropy.units as u
 import yaml
-from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.coordinates import EarthLocation
 from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis
+from regions import Regions
 
 from scriptutils.bkg import ExclusionMapBackgroundMaker
 from scriptutils.log import setup_logging
@@ -24,6 +25,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-runs", required=True, nargs="+")
     parser.add_argument("--config", required=True)
+    parser.add_argument("--exclusion", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--log-file")
@@ -37,7 +39,7 @@ def main():
         config = yaml.safe_load(f)
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
-    exclusion = config["exclusion"]
+    exclusion_regions = Regions.parse(args.exclusion, format="ds9")
 
     # TODO Define that properly somewhere
     location = EarthLocation.of_site("Roque de los Muchachos")
@@ -52,10 +54,9 @@ def main():
     bkg_maker = ExclusionMapBackgroundMaker(
         e_reco,
         location,
+        exclusion_regions=exclusion_regions,
         nbins=fov_binning["n_bins"],
         offset_max=u.Quantity(fov_binning["max"]),
-        exclusion_radius=u.Quantity(exclusion["radius"]),
-        exclusion_sources=[SkyCoord(**s) for s in exclusion["sources"]],
     )
     cached_maps = bkg_maker.fill_all_maps(ds, None)
     with open(args.output, "wb") as f:

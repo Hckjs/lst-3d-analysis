@@ -12,8 +12,3 @@ binning:
     min: "5 GeV"
     max: "50 TeV"
     n_bins: 20
-
-exclusion:
-  radius: "0.32 deg"
-  sources:
-    - { "frame": "icrs", "ra": "187.70593076 deg", "dec": "12.39112329 deg" }

@@ -32,9 +32,15 @@ datasets:
         nbins: 9
   background:
     method: "fov_background"
-    parameters: {"method": "fit"}
+    parameters: { "method": "fit" }
+    exclusion: build/M87/dl3/bkg_exclusion.fits.gz
   on_region:
-    { frame: icrs, lon: 187.70593076 deg, lat: 12.39112329 deg, radius: 0.2 deg }
+    {
+      frame: icrs,
+      lon: 187.70593076 deg,
+      lat: 12.39112329 deg,
+      radius: 0.2 deg,
+    }
   containment_correction: false
 
 fit:

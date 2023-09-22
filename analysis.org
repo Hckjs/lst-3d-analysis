@@ -940,7 +940,6 @@ rule dl2_to_dl3:
             --log-file {log}
         """
 #+end_src
-
 *** Background
 After some back and forth with pybkgmodel, I decided to write my own script.
 Its content is subject to change, but some design goals will probably stay the same, so
@@ -969,6 +968,7 @@ rule calc_count_maps:
         runs=DL3_FILES,
         config=bkg_config,
         script=scripts/"precompute_background_maps.py",
+        bkg_exclusion_regions=config/"bkg_exclusion",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
@@ -982,6 +982,7 @@ rule calc_count_maps:
     shell:
         """python {input.script} \
         --input-runs {input.runs} \
+        --exclusion {input.bkg_exclusion_regions} \
         --output {output} \
         --config {input.config} \
         --log-file {log} \
@@ -1025,7 +1026,9 @@ same order as when sorting the observations.
 That is true as long as the name of the background file contains the run_id
 and there are no shenanigans with the leading 0.
 
+
 #+begin_src snakemake
+
 rule dl3_hdu_index:
     output:
         dl3 / "hdu-index.fits.gz",
@@ -1056,6 +1059,23 @@ rule dl3_hdu_index:
         --bkg-files {params.bkg} \
         """
 
+#+end_src
+
+
+#+begin_src snakemake
+
+rule create_fov_bkg_exclusion:
+    output:
+        dl3 / "bkg_exclusion.fits.gz"
+    input:
+        region=config / "bkg_exclusion",
+        script=dl3/"create_fits_exclusion.py"
+    conda:
+        gammapy_env
+    log:
+        dl3/ "create_exclusion.log",
+    shell:
+        "python {input.script}  -i {input.region} -o {output} --log-file {log}"
 #+end_src
 ** Plot dl3 stuff
 *** Theta 2
@@ -1278,7 +1298,6 @@ rule dl4:
 #+end_src
 
 ** Create MapDataset
-
 #+begin_src snakemake
 rule create_dataset:
     output:
@@ -1287,12 +1306,13 @@ rule create_dataset:
         data=dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts/"write_datasets_3d.py",
+        bkg_exclusion_regions=dl3 / "bkg_exclusion.fits.gz"
     conda:
         gammapy_env
     log:
         dl4/ "{analysis}/datasets.log",
     shell:
-        "python {input.script} -c {input.config} -o {output} --log-file {log}"
+        "python {input.script} -c {input.config}  -o {output} --log-file {log}"
 #+end_src
 
 ** Plot DL4 statistics

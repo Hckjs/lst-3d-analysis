@@ -1,16 +1,15 @@
-import astropy.units as u
-import numpy as np
-import pandas as pd
-from astropy.coordinates import AltAz, Angle, EarthLocation, SkyCoord
-from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
-from astropy.time import Time
-from gammapy.maps import MapAxis, WcsGeom
-from gammapy.catalog import CATALOG_REGISTRY
-from gammapy.irf import Background2D, Background3D
-from gammapy.utils.coordinates import fov_to_sky, sky_to_fov
 import logging
 
+import astropy.units as u
+import numpy as np
+from astropy.coordinates import AltAz, Angle, SkyCoord
+from astropy.time import Time
+from gammapy.irf import Background2D, Background3D
+from gammapy.maps import MapAxis, RegionGeom, WcsGeom
+from gammapy.utils.coordinates import fov_to_sky, sky_to_fov
+
 log = logging.getLogger(__name__)
+
 
 def cone_solid_angle(angle):
     """
@@ -56,15 +55,13 @@ class ExclusionMapBackgroundMaker:
         self,
         e_reco,
         location,
+        exclusion_regions,
         nbins=20,
-        exclusion_radius="0.3 deg",
         offset_max="1.75 deg",
-        exclusion_sources=None,
     ):
         self.e_reco = e_reco
         self.location = location
         self.nbins = nbins
-        self.exclusion_radius = Angle(exclusion_radius)
         self.offset_max = Angle(offset_max)
         self.offset = MapAxis.from_bounds(
             0,
@@ -99,7 +96,7 @@ class ExclusionMapBackgroundMaker:
         self.time_map_obs = u.Quantity(np.zeros((nbins, nbins)), u.h)
         self.time_map_eff = u.Quantity(np.zeros((nbins, nbins)), u.h)
         self.get_offset_map()
-        self.exclusion_sources = exclusion_sources
+        self.exclusion_geom = RegionGeom.from_regions(exclusion_regions)
 
     def get_offset_map(self):
         """Calculate offset to pointing position for every bin."""
@@ -107,30 +104,12 @@ class ExclusionMapBackgroundMaker:
         self.offset_map = np.sqrt(lon**2 + lat**2)
 
     def get_exclusion_mask(self, obs):
-        """If no sources are defined, query 4fgl in FoV"""
-        if self.exclusion_sources is not None:
-            sources = self.exclusion_sources
-            exclusion_mask = np.ones(len(obs.events.radec), dtype=bool)
-            for s in sources:
-                exclusion_mask &= s.separation(obs.events.radec) > self.exclusion_radius
-        else:
-            fgl = CATALOG_REGISTRY.get_cls("4fgl")()
-            geom = WcsGeom.create(
-                skydir=obs.pointing_radec,
-                axes=[self.e_reco],
-                width=2 * self.offset_max + 2 * self.exclusion_radius,
-            )
-            inside_geom = geom.to_image().contains(fgl.positions)
-            idx = np.where(inside_geom)[0]
-            exclusion_mask = (
-                fgl.positions[0].separation(obs.events.radec) > self.exclusion_radius
-            )
-            for id in idx:
-                exclusion_mask &= (
-                    fgl.positions[id].separation(obs.events.radec)
-                    > self.exclusion_radius
-                )
-        return exclusion_mask
+        radec = obs.events.radec
+        # select all
+        mask = np.ones(len(radec), dtype=bool)
+        if self.exclusion_mask:
+            mask &= ~self.exclusion_geom.contains(radec)
+        return mask
 
     def fill_counts(self, obs, exclusion_mask):
         # hist events in evergy energy bin
@@ -182,17 +161,13 @@ class ExclusionMapBackgroundMaker:
         counts_map_obs = counts_map_obs.transpose()
         return counts_map_eff, counts_map_obs
 
-    def fill_time_maps(self, obs):
+    def fill_time_maps(self, obs, exclusion_mask):
         log.info(f"Filling time map(s) for obs {obs.obs_id}")
-        # define exclusion mask for all sources in 4fgl catalog in the region
-        fgl = CATALOG_REGISTRY.get_cls("4fgl")()
-        geom = WcsGeom.create(
+        WcsGeom.create(
             skydir=obs.pointing_radec,
             axes=[self.e_reco],
             width=2 * self.offset_max + 2 * self.exclusion_radius,
         )
-        inside_geom = geom.to_image().contains(fgl.positions)
-        idx = np.where(inside_geom)[0]
 
         # time_map
         t_binning = np.linspace(obs.tstart.value, obs.tstop.value, 30)
@@ -219,24 +194,20 @@ class ExclusionMapBackgroundMaker:
             )
             az, alt = np.meshgrid(az, alt)
 
-            coord_radec = SkyCoord(az, alt, frame=frame).transform_to("icrs")
+            SkyCoord(az, alt, frame=frame).transform_to("icrs")
             # calculate masks for FoV and exclusion regions in Ra/Dec coordinates
             coord_lonlat = SkyCoord(lon, lat)
             mask_fov = (
                 coord_lonlat.separation(SkyCoord(0 * u.deg, 0 * u.deg))
                 < self.offset_max
             )
-            exclusion_mask = (
-                fgl.positions[0].separation(coord_radec) > self.exclusion_radius
-            )
-            for id in idx:
-                exclusion_mask &= (
-                    fgl.positions[id].separation(coord_radec) > self.exclusion_radius
-                )
             # fill observatione time 2d arays
             observation_time_obs[mask_fov] += t_d.to(u.Unit(u.h)).value
             observation_time_eff[exclusion_mask & mask_fov] += t_d.to(u.Unit(u.h)).value
-        return u.Quantity(observation_time_eff, u.h), u.Quantity(observation_time_obs, u.h)
+        return u.Quantity(observation_time_eff, u.h), u.Quantity(
+            observation_time_obs,
+            u.h,
+        )
 
     def fill_all_maps(self, data_store, obs_ids=None):
         counts_obs = {}
@@ -246,22 +217,24 @@ class ExclusionMapBackgroundMaker:
         observations = data_store.get_observations(obs_ids, required_irf=[])
         for obs in observations:
             exclusion_mask = self.get_exclusion_mask(obs)
-            
+
             counts_map_eff, counts_map_obs = self.fill_counts(obs, exclusion_mask)
             counts_eff[obs.obs_id] = counts_map_eff
             counts_obs[obs.obs_id] = counts_map_obs
 
-            time_map_eff, time_map_obs = self.fill_time_maps(obs)
+            time_map_eff, time_map_obs = self.fill_time_maps(obs, exclusion_mask)
             times_eff[obs.obs_id] = time_map_eff
             times_obs[obs.obs_id] = time_map_obs
-        return {"counts_obs": counts_obs, "counts_eff": counts_eff, "times_obs": times_obs, "times_eff": times_eff}
-            
-    
+        return {
+            "counts_obs": counts_obs,
+            "counts_eff": counts_eff,
+            "times_obs": times_obs,
+            "times_eff": times_eff,
+        }
+
     def run(self, data_store, obs_ids=None, cached_maps=None):
         print(f"running on {obs_ids}")
-        observations = data_store.get_observations(
-            obs_ids,
-            required_irf=[])
+        observations = data_store.get_observations(obs_ids, required_irf=[])
         if cached_maps is None:
             cached_maps = self.fill_all_maps(data_store, obs_ids)
         for obs in observations:
@@ -269,7 +242,7 @@ class ExclusionMapBackgroundMaker:
             counts_map_obs = cached_maps["counts_obs"][obs.obs_id]
             times_map_eff = cached_maps["times_eff"][obs.obs_id]
             times_map_obs = cached_maps["times_obs"][obs.obs_id]
-    
+
             self.counts_map_eff += counts_map_eff
             self.counts_map_obs += counts_map_obs
             self.time_map_eff += times_map_eff
@@ -333,5 +306,3 @@ class ExclusionMapBackgroundMaker:
             meta={"FOVALIGN": "ALTAZ"},
         )
         return bg_3d
-
-

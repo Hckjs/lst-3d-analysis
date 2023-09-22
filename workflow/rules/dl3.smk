@@ -70,6 +70,7 @@ rule calc_count_maps:
         runs=DL3_FILES,
         config=bkg_config,
         script=scripts / "precompute_background_maps.py",
+        bkg_exclusion_regions=config / "bkg_exclusion",
     params:
         obs_dir=dl3,
         bkg_dir=dl3,
@@ -83,6 +84,7 @@ rule calc_count_maps:
     shell:
         """python {input.script} \
         --input-runs {input.runs} \
+        --exclusion {input.bkg_exclusion_regions} \
         --output {output} \
         --config {input.config} \
         --log-file {log} \
@@ -148,6 +150,20 @@ rule dl3_hdu_index:
         --hdu-index-path {output} \
         --bkg-files {params.bkg} \
         """
+
+
+rule create_fov_bkg_exclusion:
+    output:
+        dl3 / "bkg_exclusion.fits.gz",
+    input:
+        region=config / "bkg_exclusion",
+        script=dl3 / "create_fits_exclusion.py",
+    conda:
+        gammapy_env
+    log:
+        dl3 / "create_exclusion.log",
+    shell:
+        "python {input.script}  -i {input.region} -o {output} --log-file {log}"
 
 
 rule calc_theta2_per_obs:
