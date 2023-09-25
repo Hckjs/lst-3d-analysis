@@ -103,18 +103,13 @@ class ExclusionMapBackgroundMaker:
         lon, lat = np.meshgrid(self.lon_axis.center.value, self.lat_axis.center.value)
         self.offset_map = np.sqrt(lon**2 + lat**2)
 
-    def get_exclusion_mask(self, obs):
-        radec = obs.events.radec
-        # select all
-        mask = np.ones(len(radec), dtype=bool)
-        mask &= ~self.exclusion_geom.contains(radec)
-        return mask
-
-    def fill_counts(self, obs, exclusion_mask):
+    def fill_counts(self, obs):
         # hist events in evergy energy bin
         log.info(f"Filling counts map(s) for obs {obs.obs_id}")
         # convert coordinates from Ra/Dec to Alt/Az
         t = obs.events.time
+        radec = obs.events.radec
+        exclusion_mask = ~self.exclusion_geom.contains(radec)
         frame = AltAz(obstime=t, location=self.location)
         pointing_altaz = obs.events.pointing_radec.transform_to(frame)
         position_events = obs.events.radec.transform_to(frame)
@@ -160,7 +155,7 @@ class ExclusionMapBackgroundMaker:
         counts_map_obs = counts_map_obs.transpose()
         return counts_map_eff, counts_map_obs
 
-    def fill_time_maps(self, obs, exclusion_mask):
+    def fill_time_maps(self, obs):
         log.info(f"Filling time map(s) for obs {obs.obs_id}")
         # time_map
         t_binning = np.linspace(obs.tstart.value, obs.tstop.value, 30)
@@ -187,8 +182,13 @@ class ExclusionMapBackgroundMaker:
             )
             az, alt = np.meshgrid(az, alt)
 
-            SkyCoord(az, alt, frame=frame).transform_to("icrs")
-            # calculate masks for FoV and exclusion regions in Ra/Dec coordinates
+            # Exclusion mask needs to be constructed for each time bin, because
+            # the source will move in the FoV
+            coord_radec = SkyCoord(az, alt, frame=frame).transform_to("icrs")
+            exclusion_mask = ~self.exclusion_geom.contains(coord_radec)
+
+            # We have a n-deg square, so some pixels
+            # are more than n-deg away from the center
             coord_lonlat = SkyCoord(lon, lat)
             mask_fov = (
                 coord_lonlat.separation(SkyCoord(0 * u.deg, 0 * u.deg))
@@ -209,13 +209,11 @@ class ExclusionMapBackgroundMaker:
         times_eff = {}
         observations = data_store.get_observations(obs_ids, required_irf=[])
         for obs in observations:
-            exclusion_mask = self.get_exclusion_mask(obs)
-
-            counts_map_eff, counts_map_obs = self.fill_counts(obs, exclusion_mask)
+            counts_map_eff, counts_map_obs = self.fill_counts(obs)
             counts_eff[obs.obs_id] = counts_map_eff
             counts_obs[obs.obs_id] = counts_map_obs
 
-            time_map_eff, time_map_obs = self.fill_time_maps(obs, exclusion_mask)
+            time_map_eff, time_map_obs = self.fill_time_maps(obs)
             times_eff[obs.obs_id] = time_map_eff
             times_obs[obs.obs_id] = time_map_obs
         return {
