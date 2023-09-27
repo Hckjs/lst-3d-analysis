@@ -159,7 +159,7 @@ rule create_fov_bkg_exclusion:
         dl3 / "bkg_exclusion.fits.gz",
     input:
         region=config_dir / "bkg_exclusion",
-        script=dl3 / "create_fits_exclusion.py",
+        script=scripts / "create_fits_exclusion.py",
     conda:
         gammapy_env
     log:
