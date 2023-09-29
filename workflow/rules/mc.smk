@@ -95,6 +95,7 @@ rule merge_proton_mc_per_node:
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
+        --pattern 'dl1_*.h5' \
         --log-file {log}"
 
 
