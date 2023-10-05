@@ -1,0 +1,6 @@
+name: lstchain
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - lstchain=0.10.4

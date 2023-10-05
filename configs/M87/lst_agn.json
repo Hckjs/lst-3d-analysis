@@ -1,6 +1,6 @@
 {
   "production": "20230901_v0.10.4_allsky_base_prod",
   "declination": "dec_931",
-  "lstchain_enviroment": "lstchain-v0.10.4",
+  "lstchain_enviroment": "workflow/envs/lstchain.yml",
   "n_off_regions": 1
 }
