@@ -4,3 +4,4 @@ channels:
 dependencies:
   - python=3.11
   - lstchain=0.10.4
+  - scikit-learn=1.2
