@@ -1,4 +1,4 @@
-env = ENVS["lstchain"]
+lstchain_env = ENVS["lstchain"]
 bkg_env = ENVS["background"]
 gammapy_env = ENVS["gammapy"]
 
@@ -42,7 +42,7 @@ rule dl2_to_dl3:
         out=dl3,
         in_irfs=irfs,
     conda:
-        env
+        lstchain_env
     resources:
         mem_mb=12000,
         time=30,
@@ -134,7 +134,7 @@ rule dl3_hdu_index:
         outdir=dl3,
         bkg=BKG_FILES,
     conda:
-        env
+        lstchain_env
     log:
         dl3 / "hdu_index.log",
     resources:

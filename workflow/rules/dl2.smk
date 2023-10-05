@@ -1,4 +1,4 @@
-env = ENVS["lstchain"]
+lstchain_env = ENVS["lstchain"]
 plot_env = ENVS["gammapy"]
 irfs = Path(OUTDIRS["irfs"])
 irf_config = CONFIGS["irf_tool"]
@@ -23,7 +23,7 @@ rule dl1_to_dl2:
         config=config,
         models=models_to_train,
     conda:
-        env
+        lstchain_env
     resources:
         mem_mb=64000,
         cpus=4,
@@ -47,7 +47,7 @@ rule irf:
         config=irf_config,
         edisp_script=irf_scripts / "fix_edisp.py",
     conda:
-        env
+        lstchain_env
     resources:
         mem_mb=8000,
         time=10,

@@ -520,7 +520,7 @@ rule plot_run_pointings:
 ** Variables
 
 #+begin_src snakemake
-env = ENVS["lstchain"]
+lstchain_env = ENVS["lstchain"]
 link_env = ENVS["data_selection"]
 plot_env = ENVS["gammapy"]
 scripts = Path(SCRIPTS["mc"])
@@ -599,7 +599,7 @@ rule merge_gamma_mc_per_node:
         train_size=train_size,
         directory=lambda wildcards: mc_nodes / f"GammaDiffuse/{wildcards.node}",
     conda:
-        env
+        lstchain_env
     log:
         mc / "GammaDiffuse/dl1/merge_gamma_mc_{node}.log",
     shell:
@@ -621,7 +621,7 @@ rule merge_proton_mc_per_node:
         train_size=1.0,
         directory=lambda wildcards: mc_nodes / f"Protons/{wildcards.node}",
     conda:
-        env
+        lstchain_env
     log:
         mc / "Protons/dl1/merge_proton_mc_{node}.log",
     shell:
@@ -652,7 +652,7 @@ rule merge_train_or_test_of_all_nodes:
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
         out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
     conda:
-        env
+        lstchain_env
     log:
         mc / "{particle}/merge_all_{particle}_{train_or_test}.log",
     shell:
@@ -686,7 +686,7 @@ rule train_models:
         partition="long",
         time=1200,
     conda:
-        env
+        lstchain_env
     log:
         models / "train_models.log",
     shell:
@@ -721,7 +721,7 @@ All IRFs and all dl2 files.
 These are defined in [[variables]] and include the linking checkpoints.
 
 #+begin_src snakemake
-env = ENVS["lstchain"]
+lstchain_env = ENVS["lstchain"]
 plot_env = ENVS["gammapy"]
 irfs = Path(OUTDIRS["irfs"])
 irf_config = CONFIGS["irf_tool"]
@@ -753,7 +753,7 @@ rule dl1_to_dl2:
         config=config,
         models=models_to_train,
     conda:
-        env
+        lstchain_env
     resources:
         mem_mb=64000,
         cpus=4,
@@ -795,7 +795,7 @@ rule irf:
         config=irf_config,
         edisp_script=irf_scripts / "fix_edisp.py",
     conda:
-        env
+        lstchain_env
     resources:
         mem_mb=8000,
         time=10,
@@ -869,7 +869,7 @@ Need to define the runwise plots extra here, because exapdn does not seem to wor
 the RUN_IDS function (remember its not just a variable due to the checkpoint thing)
 
 #+begin_src snakemake
-env = ENVS["lstchain"]
+lstchain_env = ENVS["lstchain"]
 bkg_env = ENVS["background"]
 gammapy_env = ENVS["gammapy"]
 
@@ -921,7 +921,7 @@ rule dl2_to_dl3:
         out=dl3,
         in_irfs=irfs,
     conda:
-        env
+        lstchain_env
     resources:
         mem_mb=12000,
         time=30,
@@ -1043,7 +1043,7 @@ rule dl3_hdu_index:
         outdir=dl3,
         bkg=BKG_FILES,
     conda:
-        env
+        lstchain_env
     log:
         dl3 / "hdu_index.log",
     resources:

@@ -1,4 +1,4 @@
-env = ENVS["lstchain"]
+lstchain_env = ENVS["lstchain"]
 link_env = ENVS["data_selection"]
 plot_env = ENVS["gammapy"]
 scripts = Path(SCRIPTS["mc"])
@@ -64,7 +64,7 @@ rule merge_gamma_mc_per_node:
         train_size=train_size,
         directory=lambda wildcards: mc_nodes / f"GammaDiffuse/{wildcards.node}",
     conda:
-        env
+        lstchain_env
     log:
         mc / "GammaDiffuse/dl1/merge_gamma_mc_{node}.log",
     shell:
@@ -87,7 +87,7 @@ rule merge_proton_mc_per_node:
         train_size=1.0,
         directory=lambda wildcards: mc_nodes / f"Protons/{wildcards.node}",
     conda:
-        env
+        lstchain_env
     log:
         mc / "Protons/dl1/merge_proton_mc_{node}.log",
     shell:
@@ -110,7 +110,7 @@ rule merge_train_or_test_of_all_nodes:
         pattern=lambda wildcards: f"*_{wildcards.train_or_test}.dl1.h5",
         out_type=lambda wildcards: f"output-{wildcards.train_or_test}",
     conda:
-        env
+        lstchain_env
     log:
         mc / "{particle}/merge_all_{particle}_{train_or_test}.log",
     shell:
@@ -137,7 +137,7 @@ rule train_models:
         partition="long",
         time=1200,
     conda:
-        env
+        lstchain_env
     log:
         models / "train_models.log",
     shell:
