@@ -18,7 +18,6 @@ def main(input_dl2, input_irf, config, output):
         config = json.load(f)
 
     events, _ = read_data_dl2_to_QTable(input_dl2, None)
-
     t_eff, t_ela = get_effective_time(events)
     events.meta["t_effective"] = t_eff
     events.meta["t_elapsed"] = t_ela

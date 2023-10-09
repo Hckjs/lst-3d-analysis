@@ -39,7 +39,7 @@ def main(hdu_index_path, bkg_files):
                 "bkg",
                 "bkg_3d",
                 Path(bkg).parent.as_posix(),
-                str(bkg),
+                Path(bkg).name,
                 "BACKGROUND",
                 -1,
             ],
