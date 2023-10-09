@@ -137,8 +137,6 @@ rule dl3_hdu_index:
         lstchain_env
     log:
         dl3 / "hdu_index.log",
-    resources:
-        time=15,
     shell:
         """
         lstchain_create_dl3_index_files  \
