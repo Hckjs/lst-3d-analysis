@@ -1063,21 +1063,6 @@ rule dl3_hdu_index:
 #+end_src
 
 
-#+begin_src snakemake
-
-rule create_fov_bkg_exclusion:
-    output:
-        dl3 / "bkg_exclusion.fits.gz"
-    input:
-        region=config_dir / "bkg_exclusion",
-        script=scripts/"create_fits_exclusion.py"
-    conda:
-        gammapy_env
-    log:
-        dl3/ "create_exclusion.log",
-    shell:
-        "python {input.script}  -i {input.region} -o {output} --log-file {log}"
-#+end_src
 ** Plot dl3 stuff
 *** Theta 2
 #+begin_src snakemake
@@ -1299,6 +1284,24 @@ rule dl4:
 #+end_src
 
 ** Create MapDataset
+
+#+begin_src snakemake
+
+rule create_fov_bkg_exclusion:
+    output:
+        dl3 / "bkg_exclusion.fits.gz"
+    input:
+        region=config_dir / "bkg_exclusion",
+        script=scripts/"create_fits_exclusion.py",
+        config=config_dir / "{analysis}/analysis.yaml",
+    conda:
+        gammapy_env
+    log:
+        dl3/ "create_exclusion.log",
+    shell:
+        "python {input.script}  -i {input.region} -o {output} --log-file {log} -c {input.config}"
+#+end_src
+
 #+begin_src snakemake
 rule create_dataset:
     output:

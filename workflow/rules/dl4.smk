@@ -16,6 +16,21 @@ rule dl4:
         ],
 
 
+rule create_fov_bkg_exclusion:
+    output:
+        dl3 / "bkg_exclusion.fits.gz",
+    input:
+        region=config_dir / "bkg_exclusion",
+        script=scripts / "create_fits_exclusion.py",
+        config=config_dir / "{analysis}/analysis.yaml",
+    conda:
+        gammapy_env
+    log:
+        dl3 / "create_exclusion.log",
+    shell:
+        "python {input.script}  -i {input.region} -o {output} --log-file {log} -c {input.config}"
+
+
 rule create_dataset:
     output:
         dl4 / "{analysis}/datasets.fits.gz",
