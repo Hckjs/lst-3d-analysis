@@ -1297,7 +1297,7 @@ rule create_fov_bkg_exclusion:
     conda:
         gammapy_env
     log:
-        dl3/ "create_exclusion.log",
+        dl4 / "{analysis}/create_exclusion.log",
     shell:
         "python {input.script}  -i {input.region} -o {output} --log-file {log} -c {input.config}"
 #+end_src
