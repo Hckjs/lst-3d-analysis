@@ -18,7 +18,7 @@ rule dl4:
 
 rule create_fov_bkg_exclusion:
     output:
-        dl3 / "bkg_exclusion.fits.gz",
+        dl4 / "{analysis}/bkg_exclusion.fits.gz",
     input:
         region=config_dir / "bkg_exclusion",
         script=scripts / "create_fits_exclusion.py",
@@ -38,7 +38,7 @@ rule create_dataset:
         data=dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "write_datasets_3d.py",
-        bkg_exclusion_regions=dl3 / "bkg_exclusion.fits.gz",
+        bkg_exclusion_regions=dl4 / "{analysis}/bkg_exclusion.fits.gz",
     conda:
         gammapy_env
     log:
