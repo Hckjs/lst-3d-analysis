@@ -13,7 +13,7 @@ observations:
 
 datasets:
   type: 3d
-  stack: true
+  stack: false
   geom:
     wcs:
       skydir: { frame: icrs, lon: 187.70593076 deg, lat: 12.39112329 deg }
