@@ -729,13 +729,11 @@ dl2 = Path(OUTDIRS["dl2"])
 dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
 config = lstchain_config
-plots = dl2 / "plots"
 
 rule dl2:
     input:
         irfs=MC_NODES_IRFs,
         runs=DL2_FILES,
-        irf_plots = [plots / f"{irf}.pdf" for irf in irfs_to_produce]
 #+end_src
 
 ** Create DL2
