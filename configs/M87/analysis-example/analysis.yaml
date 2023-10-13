@@ -12,7 +12,7 @@ observations:
     - edisp
 
 datasets:
-  type: 1d
+  type: 3d
   stack: true
   geom:
     wcs:
@@ -33,7 +33,7 @@ datasets:
   background:
     method: "fov_background"
     parameters: { "method": "fit" }
-    exclusion: build/M87/dl3/bkg_exclusion.fits.gz
+    exclusion: build/M87/dl4/analysis-example/bkg_exclusion.fits.gz
   on_region:
     {
       frame: icrs,
