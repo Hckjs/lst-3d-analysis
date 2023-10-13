@@ -16,9 +16,12 @@ plots = mc / "plots"
 # TODO Configurable
 train_size = 0.4
 
+irf_plots = [plots / f"{irf}.pdf" for irf in irfs_to_produce]
+
 
 rule mc:
     input:
+        irf_plots,
         link=mc / "mc-linked.txt",
         models=models_to_train,
 

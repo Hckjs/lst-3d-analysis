@@ -14,6 +14,8 @@ bkg_config = CONFIGS["bkg_model"]
 data_selection_config = CONFIGS["data_selection"]
 
 dl3_plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
+
+irf_plots = [plots / f"{irf}.pdf" for irf in irfs_to_produce]
 # bkg plots as well!
 
 
@@ -28,6 +30,7 @@ rule dl3:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3 / "bkg-exists",
         runwise_plots=DL3_PLOTS,
+        irf_plots=irf_plots,
 
 
 rule dl2_to_dl3:
