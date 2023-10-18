@@ -42,6 +42,13 @@ datasets:
       radius: 0.2 deg,
     }
   containment_correction: false
+  safe_mask:
+    methods:
+      - "aeff-default"
+      - "bkg-peak"
+      - "offset-max"
+    parameters:
+      - offset_max: "1.5 deg"
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }
