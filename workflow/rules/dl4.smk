@@ -1,7 +1,6 @@
 gammapy_env = ENVS["gammapy"]
 dl3 = Path(OUTDIRS["dl3"])
 dl4 = Path(OUTDIRS["dl4"])
-plots = dl4 / "plots"
 scripts = Path(SCRIPTS["dl4"])
 
 dl4_plot_types = ["dataset_peek"]  # , "dl4_diagnostics"]
@@ -10,7 +9,7 @@ dl4_plot_types = ["dataset_peek"]  # , "dl4_diagnostics"]
 rule dl4:
     input:
         [
-            plots / f"{analysis}/{plot}.pdf"
+            dl4 / f"{analysis}/plots/{plot}.pdf"
             for analysis in analyses
             for plot in dl4_plot_types
         ],
@@ -66,7 +65,7 @@ rule calc_dl4_diagnostics:
 
 rule peek_datasets:
     output:
-        plots / "{analysis}/dataset_peek.pdf",
+        dl4 / "{analysis}/plots/dataset_peek.pdf",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
         script=scripts / "plot_dataset_peek.py",
@@ -75,14 +74,14 @@ rule peek_datasets:
     conda:
         gammapy_env
     log:
-        plots / "{analysis}/dataset_peek.log",
+        dl4 / "{analysis}/plots/dataset_peek.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data} --log-file {log}"
 
 
 rule plot_dl4_dianotics:
     output:
-        plots / "{analysis}/dl4_diagnostics.pdf",
+        dl4 / "{analysis}/plots/dl4_diagnostics.pdf",
     input:
         data=dl4 / "{analysis}/dl4_diagnostics.fits.gz",
         script=scripts / "plot_dl4_diagnostics.py",
@@ -90,6 +89,6 @@ rule plot_dl4_dianotics:
     conda:
         gammapy_env
     log:
-        plots / "{analysis}/dl4_diagnostics.log",
+        dl4 / "{analysis}/plots/dl4_diagnostics.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"

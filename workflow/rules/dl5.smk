@@ -1,7 +1,6 @@
 gammapy_env = ENVS["gammapy"]
 dl4 = Path(OUTDIRS["dl4"])
 dl5 = Path(OUTDIRS["dl5"])
-plots = dl5 / "plots"
 scripts = Path(SCRIPTS["dl5"])
 
 dl5_plot_types = ["significance_map", "2d_flux_profile"]  # , flux_points, light_curve]
@@ -10,7 +9,7 @@ dl5_plot_types = ["significance_map", "2d_flux_profile"]  # , flux_points, light
 rule dl5:
     input:
         [
-            plots / f"{analysis}/{plot}.pdf"
+            dl5 / f"{analysis}/plots/{plot}.pdf"
             for analysis in analyses
             for plot in dl5_plot_types
         ],
@@ -37,7 +36,7 @@ rule calc_significance_map:
 
 rule plot_significance_map:
     output:
-        plots / "{analysis}/significance_map.pdf",
+        dl5 / "{analysis}/plots/significance_map.pdf",
     input:
         lima_map=dl5 / "{analysis}/significance_map.fits.gz",
         script=scripts / "plot_significance_map.py",
@@ -45,7 +44,7 @@ rule plot_significance_map:
     conda:
         gammapy_env
     log:
-        dl5 / "{analysis}/plot_significance_map.log",
+        dl5 / "{analysis}/plots/plot_significance_map.log",
     shell:
         """
         MATPLOTLIBRC={input.rc} \
@@ -58,7 +57,7 @@ rule plot_significance_map:
 
 rule plot_significance_distribution:
     output:
-        plots / "{analysis}/significance_distribution.pdf",
+        dl5 / "{analysis}/plots/significance_distribution.pdf",
     input:
         lima_map=dl5 / "{analysis}/significance_map.fits.gz",
         script=scripts / "plot_significance_distribution.py",
@@ -67,7 +66,7 @@ rule plot_significance_distribution:
     conda:
         gammapy_env
     log:
-        dl5 / "{analysis}/plot_significance_distribution.log",
+        dl5 / "{analysis}/plots/plot_significance_distribution.log",
     shell:
         """
         MATPLOTLIBRC={input.rc} \
@@ -100,7 +99,7 @@ rule calc_2d_flux_profile:
 
 rule plot_2d_flux_profile:
     output:
-        plots / "{analysis}/2d_flux_profile.pdf",
+        dl5 / "{analysis}/plots/2d_flux_profile.pdf",
     input:
         flux_points=dl5 / "{analysis}/2d_flux_profile.fits.gz",
         script=scripts / "plot_2d_flux_profile.py",
@@ -108,7 +107,7 @@ rule plot_2d_flux_profile:
     conda:
         gammapy_env
     log:
-        dl5 / "{analysis}/plot_2d_flux_profile.log",
+        dl5 / "{analysis}/plots/plot_2d_flux_profile.log",
     shell:
         """
         MATPLOTLIBRC={input.rc} \
