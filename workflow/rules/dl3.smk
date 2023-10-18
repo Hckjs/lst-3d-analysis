@@ -15,8 +15,9 @@ data_selection_config = CONFIGS["data_selection"]
 
 dl3_plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
 
-irf_plots = [plots / f"{irf}.pdf" for irf in irfs_to_produce]
-# bkg plots as well!
+irf_plots = [
+    plots / f"{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in RUN_IDS
+]
 
 
 def DL3_PLOTS(wildcards):
@@ -337,3 +338,27 @@ rule plot_cuts_dl2_dl3:
         plots / "counts_after_cuts/plot_counts_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+
+
+rule plot_run_irf:
+    output:
+        "{somepath}/plots/{irf}_{run_id}.pdf",
+    input:
+        data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+        script=irf_scripts / "plot_irf_{irf}.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        plot_env
+    resources:
+        mem_mb=1000,
+        time=20,
+    wildcard_constraints:
+        irf="|".join(irfs_to_produce),
+    log:
+        "{somepath}/plots/{irf}_{base}.log",
+    shell:
+        "MATPLOTLIBRC={input.rc} \
+        python {input.script} \
+        -i {input.data} \
+        -o {output} \
+        --log-file {log}"
