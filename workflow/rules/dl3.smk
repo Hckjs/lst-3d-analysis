@@ -343,7 +343,7 @@ rule plot_run_irf:
     wildcard_constraints:
         irf="|".join(irfs_to_produce),
     log:
-        "{somepath}/plots/{irf}_{base}.log",
+        "{somepath}/plots/{irf}_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \
