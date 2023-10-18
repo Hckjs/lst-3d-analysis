@@ -59,7 +59,7 @@ def main(flux_maps, output):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--flux_maps", required=True)
+    parser.add_argument("--flux-maps", required=True)
     parser.add_argument("-o", "--output", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
