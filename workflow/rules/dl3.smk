@@ -13,25 +13,13 @@ irf_config = CONFIGS["irf_tool"]
 bkg_config = CONFIGS["bkg_model"]
 data_selection_config = CONFIGS["data_selection"]
 
-dl3_plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
-
-irf_plots = [
-    plots / f"{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in RUN_IDS
-]
-
-
-def DL3_PLOTS(wildcards):
-    ids = RUN_IDS(wildcards)
-    per_run = [dl3 / f"plots/{p}/{p}_{run}.pdf" for p in dl3_plot_types for run in ids]
-    return per_run + [dl3 / f"plots/{p}/{p}_stacked.pdf" for p in dl3_plot_types[:-1]]
-
 
 rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3 / "bkg-exists",
         runwise_plots=DL3_PLOTS,
-        irf_plots=irf_plots,
+        irf_plots=DL3_IRF_PLOTS,
 
 
 rule dl2_to_dl3:

@@ -103,6 +103,7 @@ def MC_NODES_DL2(wildcards):
 # TODO: cuts are not really IRFs, should separate that.
 # Add radmax here if 1D
 irfs_to_produce = ["aeff", "gh_cut", "edisp", "psf"]  # TODO script missing
+dl3_plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
 
 
 def MC_NODES_IRFs(wildcards):
@@ -131,6 +132,19 @@ def DL3_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"])
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
+
+
+def DL3_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards)
+    per_run = [dl3 / f"plots/{p}/{p}_{run}.pdf" for p in dl3_plot_types for run in ids]
+    # bkg does not get stacked (yet?)
+    return per_run + [dl3 / f"plots/{p}/{p}_stacked.pdf" for p in dl3_plot_types[:-1]]
+
+
+def DL3_IRF_PLOTS(wildcards):
+    ids = RUN_IDS(wildcards)
+    out = Path(OUTDIRS["dl3"]) / "plots"
+    return [out / f"{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in ids]
 
 
 def IRF_FILES(wildcards):
