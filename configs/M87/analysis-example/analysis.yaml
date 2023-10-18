@@ -48,7 +48,7 @@ datasets:
       - "bkg-peak"
       - "offset-max"
     parameters:
-      - offset_max: "1.5 deg"
+      offset_max: "1.5 deg"
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }
