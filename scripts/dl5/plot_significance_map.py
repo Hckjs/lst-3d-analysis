@@ -25,7 +25,7 @@ def main(flux_maps, output):
     figures.append(fig)
 
     fig = plt.figure()
-    ax = ts_maps.flux_err_maps.plot(add_cbar=True, fig=fig)
+    ax = ts_maps.flux_err.plot(add_cbar=True, fig=fig)
     ax.set_title("Flux Error")
     figures.append(fig)
 
