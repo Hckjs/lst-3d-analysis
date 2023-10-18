@@ -66,7 +66,7 @@ rule irf:
 
 rule plot_irf:
     output:
-        "{somepath}/plots/{irf}_{base}.pdf",
+        "{somepath}/plots/{irf}/{irf}_{base}.pdf",
     input:
         data="{somepath}/irfs_{base}.fits.gz",
         script=irf_scripts / "plot_irf_{irf}.py",
@@ -79,7 +79,7 @@ rule plot_irf:
     wildcard_constraints:
         irf="|".join(irfs_to_produce),
     log:
-        "{somepath}/plots/{irf}_{base}.log",
+        "{somepath}/plots/{irf}/{irf}_{base}.log",
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \

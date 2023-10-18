@@ -111,7 +111,9 @@ def MC_NODES_IRFs(wildcards):
     out = Path(OUTDIRS["irfs"]) / "plots"
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
-    return [out / f"{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce]
+    return [
+        out / f"{irf}/{node}_{irf}.pdf" for node in nodes for irf in irfs_to_produce
+    ]
 
 
 models_to_train = [
@@ -144,7 +146,9 @@ def DL3_PLOTS(wildcards):
 def DL3_IRF_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"]) / "plots"
-    return [out / f"{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in ids]
+    return [
+        out / f"{irf}/{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in ids
+    ]
 
 
 def IRF_FILES(wildcards):
