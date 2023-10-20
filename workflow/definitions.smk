@@ -112,7 +112,7 @@ def MC_NODES_IRFs(wildcards):
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
     return [
-        out / f"{irf}/{node}_{irf}.pdf" for node in nodes for irf in irfs_to_produce
+        out / f"{irf}/{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce
     ]
 
 
