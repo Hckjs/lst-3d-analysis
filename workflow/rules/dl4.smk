@@ -32,18 +32,19 @@ rule create_fov_bkg_exclusion:
 
 rule create_dataset:
     output:
-        dl4 / "{analysis}/datasets.fits.gz",
+        datasets=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
     input:
         data=dl3 / "hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
-        script=scripts / "write_datasets_3d.py",
+        script=scripts / "write_datasets_3d_manual.py",
         bkg_exclusion_regions=dl4 / "{analysis}/bkg_exclusion.fits.gz",
     conda:
         gammapy_env
     log:
         dl4 / "{analysis}/datasets.log",
     shell:
-        "python {input.script} -c {input.config}  -o {output} --log-file {log}"
+        "python {input.script} -c {input.config}  -o {output.datasets} -m {output.bkg_fit} --log-file {log}"
 
 
 rule calc_dl4_diagnostics:
@@ -51,6 +52,7 @@ rule calc_dl4_diagnostics:
         dl4 / "{analysis}/dl4_diagnostics.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "calc_dl4_diagnostics.py",
     resources:
@@ -60,7 +62,7 @@ rule calc_dl4_diagnostics:
     log:
         dl4 / "{analysis}/dl4_diagnostics.log",
     shell:
-        "python {input.script} -c {input.config} -o {output} --dataset-path {input.data} --log-file {log}"
+        "python {input.script} -c {input.config} -o {output} --datasets-path {input.data} --models-path {input.bkg_fit} --log-file {log}"
 
 
 rule peek_datasets:
@@ -68,6 +70,7 @@ rule peek_datasets:
         dl4 / "{analysis}/plots/dataset_peek.pdf",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         script=scripts / "plot_dataset_peek.py",
         config=config_dir / "{analysis}/analysis.yaml",
         rc=MATPLOTLIBRC,
@@ -76,7 +79,7 @@ rule peek_datasets:
     log:
         dl4 / "{analysis}/plots/dataset_peek.log",
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --dataset-path {input.data} --log-file {log}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -c {input.config} -o {output} --datasets-path {input.data} --models-path {input.bkg_fit} --log-file {log}"
 
 
 rule plot_dl4_dianotics:

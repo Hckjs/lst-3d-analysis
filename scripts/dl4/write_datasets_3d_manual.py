@@ -1,105 +1,67 @@
+import logging
 from argparse import ArgumentParser
-from os import cpu_count
 
 import numpy as np
-import yaml
-from astropy.coordinates import SkyCoord
 from gammapy.analysis import Analysis, AnalysisConfig
-from gammapy.datasets import MapDataset
 from gammapy.makers import (
     DatasetsMaker,
-    FoVBackgroundMaker,
-    MapDatasetMaker,
 )
-from gammapy.maps import MapAxis, RegionGeom
 from gammapy.modeling.models import PiecewiseNormSpectralModel
-from regions import PointSkyRegion, Regions
+
+from scriptutils.io import save_datasets_with_models
+
+log = logging.getLogger("__name__")
 
 
-def main(config, bkg_config, output, n_jobs):
-    """
-    Create dl4 datasets from a dl3 datastore for a pointlike analysis
-    This can currently (Gammapy 0.20.1) not be done with the high-level interface
-    as energy-dependent theta-cuts have just been added.
-    """
-    if n_jobs == 0:
-        n_jobs = cpu_count()
+def main(config, bkg_config, output_datasets, output_models):
     # Standard high-level interface stuff
     config = AnalysisConfig.read(config)
     analysis = Analysis(config)
     analysis.get_observations()
 
-    # Define things for the dataset maker step
-    # point sky region > circle sky region for energy dependent cuts
-    on_region = analysis.config.datasets.on_region
-    target_position = SkyCoord(on_region.lon, on_region.lat, frame=on_region.frame)
-    on_region = PointSkyRegion(target_position)
+    datasets_settings = analysis.config.datasets
+    offset_max = datasets_settings.geom.selection.offset_max
 
-    with open(bkg_config) as f:
-        b = yaml.safe_load(f)["exclusion_regions"]
-        exclusion_regions = [
-            Regions.parse(reg, format="ds9") for reg in b["exclusion_regions"]
-        ]
+    log.info("Creating reference dataset and makers.")
+    stacked = analysis._create_reference_dataset(name="stacked")
 
-    energy_axis_config = config.datasets.geom.axes.energy
-    energy_axis = MapAxis.from_bounds(
-        name="energy",
-        lo_bnd=energy_axis_config.min.value,
-        hi_bnd=energy_axis_config.max.to_value(energy_axis_config.min.unit),
-        nbin=energy_axis_config.nbins,
-        unit=energy_axis_config.min.unit,
-        interp="log",
-        node_type="edges",
-    )
-    energy_axis_true_config = config.datasets.geom.axes.energy_true
-    energy_axis_true = MapAxis.from_bounds(
-        name="energy_true",
-        lo_bnd=energy_axis_true_config.min.value,
-        hi_bnd=energy_axis_true_config.max.to_value(energy_axis_true_config.min.unit),
-        nbin=energy_axis_true_config.nbins,
-        unit=energy_axis_true_config.min.unit,
-        interp="log",
-        node_type="edges",
-    )
-    geom = RegionGeom.create(region=on_region, axes=[energy_axis])
-    empty = MapDataset.create(
-        geom=geom,
-        energy_axis_true=energy_axis_true,
-        name="empty",
-    )
-
-    dataset_maker = MapDatasetMaker()
-    safe_mask_maker = analysis._create_safe_mask_maker()
-    bkg_spektral = PiecewiseNormSpectralModel(
+    maker = analysis._create_dataset_maker()
+    maker_safe_mask = analysis._create_safe_mask_maker()
+    bkg_maker = analysis._create_background_maker()
+    energy_axis = analysis._make_energy_axis(analysis.config.datasets.geom.axes.energy)
+    bkg_spectral = PiecewiseNormSpectralModel(
         energy_axis.center,
         norms=np.ones(len(energy_axis.center)),
     )
-    bkg_maker = FoVBackgroundMaker(
-        method=config.background.parameters["method"],  # Needs to be set
-        exclusion_mask=~geom.region_mask(regions=[exclusion_regions]),
-        spectral_model=bkg_spektral,
+    bkg_maker.default_spectral_model = bkg_spectral
+
+    makers = [maker, maker_safe_mask, bkg_maker]
+    makers = [maker for maker in makers if maker is not None]
+
+    log.info("Start the data reduction loop.")
+
+    datasets_maker = DatasetsMaker(
+        makers,
+        stack_datasets=datasets_settings.stack,
+        n_jobs=analysis.config.general.n_jobs,
+        cutout_mode="trim",
+        cutout_width=2 * offset_max,
     )
+    analysis.datasets = datasets_maker.run(stacked, analysis.observations)
 
-    makers = [
-        dataset_maker,
-        safe_mask_maker,
-        bkg_maker,
-    ]
-
-    datasets_maker = DatasetsMaker(makers, stack_datasets=False, n_jobs=n_jobs)
-    datasets = datasets_maker.run(
-        empty,
-        analysis.observations,
+    save_datasets_with_models(
+        analysis.datasets,
+        output_datasets,
+        output_models,
     )
-
-    datasets.write(output, overwrite=True)
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-c", "--config", required=True)
     parser.add_argument("-b", "--bkg-config", required=True)
-    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("-o", "--output-datasets", required=True)
+    parser.add_argument("-m", "--output-models", required=True)
     parser.add_argument("-j", "--n-jobs", default=1, type=int)
     args = parser.parse_args()
     main(**vars(args))

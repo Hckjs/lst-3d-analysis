@@ -20,6 +20,7 @@ rule calc_significance_map:
         dl5 / "{analysis}/significance_map.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         script=scripts / "calc_significance_map.py",
     conda:
         gammapy_env
@@ -28,7 +29,8 @@ rule calc_significance_map:
     shell:
         """
         python {input.script} \
-        --dataset-path {input.data} \
+        --datasets-path {input.data} \
+        --models-path {input.bkg_fit} \
         --output {output} \
         --log-file {log}
         """
@@ -83,6 +85,7 @@ rule calc_2d_flux_profile:
         dl5 / "{analysis}/2d_flux_profile.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         script=scripts / "calc_2d_flux_profile.py",
     conda:
         gammapy_env
@@ -91,7 +94,8 @@ rule calc_2d_flux_profile:
     shell:
         """
         python {input.script} \
-        --dataset-path {input.data} \
+        --datasets-path {input.data} \
+        --models-path {input.bkg_fit} \
         --output {output} \
         --log-file {log}
         """

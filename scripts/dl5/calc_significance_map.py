@@ -1,7 +1,6 @@
 import logging
 from argparse import ArgumentParser
 
-from gammapy.datasets import Datasets
 from gammapy.estimators import TSMapEstimator
 from gammapy.modeling.models import (
     GaussianSpatialModel,
@@ -9,13 +8,14 @@ from gammapy.modeling.models import (
     SkyModel,
 )
 
+from scriptutils.io import load_datasets_with_models
 from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 
 
-def main(dataset_path, output):
-    datasets = Datasets.read(dataset_path)
+def main(datasets_path, models_path, output):
+    datasets = load_datasets_with_models(datasets_path, models_path)
     # TS map estimator only works on a single dataset (?)
     stacked = datasets.stack_reduce()
 
@@ -38,7 +38,8 @@ def main(dataset_path, output):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dataset-path", required=True)
+    parser.add_argument("--datasets-path", required=True)
+    parser.add_argument("--models-path", required=True)
     parser.add_argument("-o", "--output", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")

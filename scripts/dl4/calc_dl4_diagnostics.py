@@ -5,19 +5,19 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 from gammapy.analysis import Analysis, AnalysisConfig
-from gammapy.datasets import Datasets
 
+from scriptutils.io import load_datasets_with_models
 from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
 
 
-def main(config, dataset_path, output):
+def main(config, datasets_path, models_path, output):
     config = AnalysisConfig.read(config)
     analysis = Analysis(config)
     analysis.get_observations()
 
-    datasets = Datasets.read(dataset_path)
+    datasets = load_datasets_with_models(datasets_path, models_path)
     hdulist = [fits.PrimaryHDU()]
 
     # vs livetime
@@ -61,7 +61,8 @@ def main(config, dataset_path, output):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-c", "--config", required=True)
-    parser.add_argument("--dataset-path", required=True)
+    parser.add_argument("--datasets-path", required=True)
+    parser.add_argument("--models-path", required=True, help="Bkg fit")
     parser.add_argument("-o", "--output", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
