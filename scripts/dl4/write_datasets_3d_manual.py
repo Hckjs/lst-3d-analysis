@@ -9,6 +9,7 @@ from gammapy.makers import (
 from gammapy.modeling.models import PiecewiseNormSpectralModel
 
 from scriptutils.io import save_datasets_with_models
+from scriptutils.log import setup_logging
 
 log = logging.getLogger("__name__")
 
@@ -62,5 +63,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output-datasets", required=True)
     parser.add_argument("-m", "--output-models", required=True)
     parser.add_argument("-j", "--n-jobs", default=1, type=int)
+    parser.add_argument("--log-file")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+    setup_logging(logfile=args.log_file, verbose=args.verbose)
     main(**vars(args))
