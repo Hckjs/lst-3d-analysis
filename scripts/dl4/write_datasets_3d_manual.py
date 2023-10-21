@@ -14,7 +14,7 @@ from scriptutils.log import setup_logging
 log = logging.getLogger("__name__")
 
 
-def main(config, output_datasets, output_models):
+def main(config, output_datasets, output_models, n_jobs):
     # Standard high-level interface stuff
     config = AnalysisConfig.read(config)
     analysis = Analysis(config)
@@ -44,7 +44,7 @@ def main(config, output_datasets, output_models):
     datasets_maker = DatasetsMaker(
         makers,
         stack_datasets=datasets_settings.stack,
-        n_jobs=analysis.config.general.n_jobs,
+        n_jobs=n_jobs,
         cutout_mode="trim",
         cutout_width=2 * offset_max,
     )
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--output-models", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("--n-jobs", default=1)
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-    main(args.config, args.output_datasets, args.output_models)
+    main(args.config, args.output_datasets, args.output_models, args.n_jobs)
