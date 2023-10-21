@@ -41,10 +41,12 @@ rule create_dataset:
         bkg_exclusion_regions=dl4 / "{analysis}/bkg_exclusion.fits.gz",
     conda:
         gammapy_env
+    resources:
+        cpus=8,
     log:
         dl4 / "{analysis}/datasets.log",
     shell:
-        "python {input.script} -c {input.config}  -o {output.datasets} -m {output.bkg_fit} --log-file {log}"
+        "python {input.script} -c {input.config}  -o {output.datasets} -m {output.bkg_fit} --log-file {log} --n-jobs {resources.cpus}"
 
 
 rule calc_dl4_diagnostics:
