@@ -13,7 +13,7 @@ from scriptutils.io import save_datasets_with_models
 log = logging.getLogger("__name__")
 
 
-def main(config, bkg_config, output_datasets, output_models):
+def main(config, output_datasets, output_models):
     # Standard high-level interface stuff
     config = AnalysisConfig.read(config)
     analysis = Analysis(config)
@@ -59,7 +59,6 @@ def main(config, bkg_config, output_datasets, output_models):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-c", "--config", required=True)
-    parser.add_argument("-b", "--bkg-config", required=True)
     parser.add_argument("-o", "--output-datasets", required=True)
     parser.add_argument("-m", "--output-models", required=True)
     parser.add_argument("-j", "--n-jobs", default=1, type=int)
