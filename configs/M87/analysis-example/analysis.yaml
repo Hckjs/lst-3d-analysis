@@ -45,7 +45,6 @@ datasets:
   safe_mask:
     methods:
       - "aeff-default"
-      - "bkg-peak"
       - "offset-max"
     parameters:
       offset_max: "1.5 deg"
