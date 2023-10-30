@@ -32,10 +32,10 @@ def peek(data):
 def bkg_exclusion(data, exclusion_mask):
     fig, ax = plt.subplots()
     data.counts.sum_over_axes().plot(ax=ax)
-    data.mask_safe_image.plot(ax=ax, hatches=["///"], colors="C7")
+    data.mask_safe_image.plot_mask(ax=ax, hatches=["///"], colors="C7")
     exclusion_mask.interp_to_geom(geom=data.counts.geom).reduce_over_axes(
         func=np.logical_or,
-    ).plot(ax=ax, hatches=["\\"], colors="C8")
+    ).plot_mask(ax=ax, hatches=["\\"], colors="C8")
     return fig
 
 
@@ -52,12 +52,15 @@ def counts(data):
         geom = bkg_spectrum.geom.copy()
         energy_axis = geom.axes["energy"].center
         bkg_norm_model = data.models[f"{data.name}-bkg"].spectral_model
+        log.info(f"Model is an {bkg_norm_model.tag}")
         # the api for evaluate is slightly different...
         if isinstance(bkg_norm_model, PiecewiseNormSpectralModel):
+            log.info("Plotting piecewise norm")
             norms = bkg_norm_model.evaluate(energy_axis)
             norms_map = RegionNDMap(geom, norms.to_value(u.one))
             (bkg_spectrum * norms_map).plot(label="bkg fit", ax=ax)
         elif isinstance(bkg_norm_model, PowerLawNormSpectralModel):
+            log.info("Plotting global norm")
             norm = bkg_norm_model.parameters["norm"].value
             (bkg_spectrum * norm).plot(label="bkg fit", ax=ax)
     ax.legend()
@@ -65,23 +68,34 @@ def counts(data):
     return fig
 
 
+# maybe move to utils at some point
+def list_models(dataset):
+    if dataset.models:
+        log.info(f"Dataset {dataset.name} has the following models: {dataset.models.names}")
+    else:
+        log.info(f"Dataset {dataset.name} has no models")
+
+
 def main(config, datasets_path, models_path, output):
     config = AnalysisConfig.read(config)
 
     analysis = Analysis(config)
     datasets = load_datasets_with_models(datasets_path, models_path)
+
     exclusion_mask = WcsNDMap.read(config.datasets.background.exclusion)
     exclusion_mask.data = exclusion_mask.data.astype(bool)
 
     figures = []
     for d in datasets:
+        list_models(d)
         figures.append(peek(d))
         figures.append(bkg_exclusion(d, exclusion_mask))
         figures.append(counts(d))
 
     # TODO Mark this as stacked, the name cant be set unfortunately...
-    if len(analysis.datasets) > 1:
-        stacked = analysis.datasets.stack_reduce()
+    if len(datasets) > 1:
+        stacked = datasets.stack_reduce()
+        list_models(stacked)
         figures.append(peek(stacked))
         figures.append(counts(stacked))
         figures.append(bkg_exclusion(stacked, exclusion_mask))
@@ -101,4 +115,4 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-    main(args.config, args.dataset_path, args.output)
+    main(args.config, args.datasets_path, args.models_path, args.output)

@@ -34,6 +34,12 @@ def main(config, output_datasets, output_models, n_jobs):
         energy_axis.center,
         norms=np.ones(len(energy_axis.center)),
     )
+    # make sure norms are all positive
+    for p in bkg_spectral.parameters:
+        if p.name.startswith("norm_"):
+            p.min = 1e-3
+            p.max = 1e3
+
     bkg_maker.default_spectral_model = bkg_spectral
 
     makers = [maker, maker_safe_mask, bkg_maker]
@@ -64,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--output-models", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("--n-jobs", default=1)
+    parser.add_argument("--n-jobs", default=1, type=int)
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
     main(args.config, args.output_datasets, args.output_models, args.n_jobs)
