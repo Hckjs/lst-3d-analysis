@@ -49,6 +49,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-c", "--config", required=True)
     parser.add_argument("--datasets-path", required=True)
+    parser.add_argument("--bkg-models-path", required=True)
     parser.add_argument("--model-config", required=True)
     parser.add_argument("-o", "--output", required=True)
     parser.add_argument("--t-start", required=False)
