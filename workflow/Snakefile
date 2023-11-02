@@ -6,3 +6,13 @@ include: "rules/dl2.smk"
 include: "rules/dl3.smk"
 include: "rules/dl4.smk"
 include: "rules/dl5.smk"
+
+
+rule all:
+    input:
+        rules.dl1.input,
+        rules.dl2.input,
+        rules.mc.input,
+        rules.dl3.input,
+        rules.dl4.input,
+        rules.dl5.input,
