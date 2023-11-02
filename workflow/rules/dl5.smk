@@ -3,7 +3,8 @@ dl4 = Path(OUTDIRS["dl4"])
 dl5 = Path(OUTDIRS["dl5"])
 scripts = Path(SCRIPTS["dl5"])
 
-dl5_plot_types = ["significance_map", "2d_flux_profile"]  # , flux_points, light_curve]
+dl5_plot_types = ["significance_map", "2d_flux_profile", "flux_points", "fit_residuals"]
+# _curve]
 
 
 rule dl5:
@@ -148,7 +149,7 @@ rule model_best_fit:
 
 rule plot_residual_map:
     output:
-        dl5 / "{analysis}/plots/fit_residuals.fits.gz",
+        dl5 / "{analysis}/plots/fit_residuals.pdf",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
         bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
