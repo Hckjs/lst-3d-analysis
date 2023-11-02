@@ -1,7 +1,6 @@
 {
   "production": "20230901_v0.10.4_allsky_base_prod",
   "declination": "dec_2276",
-  "lstchain_enviroment": "lstchain-v0.10.4",
-  "n_off_regions": 1,
-  "bayesian_block_threshold": 0.0027
+  "lstchain_enviroment": "/fefs/aswg/workspace/lukas.nickel/lst-3d-analysis/workflow/envs/lstchain.yml",
+  "n_off_regions": 1
 }

@@ -6,14 +6,9 @@ run_matching:
 # TODO Align with other irfs?
 binning:
   offset:
-    max: "1.5 deg"
-    n_bins: 15
+    max: "2 deg"
+    n_bins: 20
   energy:
     min: "5 GeV"
     max: "50 TeV"
     n_bins: 20
-
-exclusion:
-  radius: "0.35 deg"
-  sources:
-    - { "frame": "icrs", "ra": "83.633 deg", "dec": "22.014 deg" }
