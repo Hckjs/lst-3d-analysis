@@ -171,7 +171,7 @@ rule plot_residual_map:
 # Fit flux etc.
 rule calc_flux_points:
     input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        data=dl4 / "{analysis}/datasets.fits.gz",
         bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         model=dl5 / "{analysis}/model-best-fit.yaml",
         config=config_dir / "{analysis}/analysis.yaml",
