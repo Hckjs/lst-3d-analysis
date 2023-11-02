@@ -3,8 +3,14 @@ dl4 = Path(OUTDIRS["dl4"])
 dl5 = Path(OUTDIRS["dl5"])
 scripts = Path(SCRIPTS["dl5"])
 
-dl5_plot_types = ["significance_map", "2d_flux_profile", "flux_points", "fit_residuals"]
-# _curve]
+dl5_plot_types = [
+    "significance_map",
+    "significance_distribution",
+    "2d_flux_profile",
+    "flux_points",
+    "fit_residuals",
+]
+# _curve] significance distribution on vs off
 
 
 rule dl5:
