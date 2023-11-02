@@ -10,6 +10,7 @@
 __pycache__/
 
 build
+sync.sh
 data/
 runlist.html
 scriptutils/build
