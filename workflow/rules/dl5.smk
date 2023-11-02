@@ -71,7 +71,7 @@ rule plot_significance_distribution:
         lima_map=dl5 / "{analysis}/significance_map.fits.gz",
         script=scripts / "plot_significance_distribution.py",
         rc=MATPLOTLIBRC,
-        exclusion_mask=rules.create_fov_bkg_exlusion.output,
+        exclusion_mask=rules.create_fov_bkg_exclusion.output,
     conda:
         gammapy_env
     log:
