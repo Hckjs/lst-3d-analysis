@@ -171,14 +171,14 @@ rule plot_residual_map:
 
 # Fit flux etc.
 rule calc_flux_points:
+    output:
+        dl5 / "{analysis}/flux_points.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
         bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         model=dl5 / "{analysis}/model-best-fit.yaml",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "calc_flux_points.py",
-    output:
-        dl5 / "{analysis}/flux_points.fits.gz",
     conda:
         gammapy_env
     shell:
@@ -193,12 +193,12 @@ rule calc_flux_points:
 
 
 rule plot_flux_points:
+    output:
+        dl5 / "{analysis}/plots/flux_points.pdf",
     input:
         data=dl5 / "{analysis}/flux_points.fits.gz",
         model=dl5 / "{analysis}/model-best-fit.yaml",
         script=scripts / "plot_flux_points.py",
-    output:
-        dl5 / "plots/{analysis}/flux_points.pdf",
     conda:
         gammapy_env
     shell:
