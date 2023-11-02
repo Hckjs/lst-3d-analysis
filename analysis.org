@@ -1344,7 +1344,8 @@ rule create_dataset:
     conda:
         gammapy_env
     resources:
-        cpus=8,
+        cpus=16,
+        mem_mb=32000,
     log:
         dl4/ "{analysis}/datasets.log",
     shell:
@@ -1551,9 +1552,6 @@ rule plot_2d_flux_profile:
 
 #+end_src
 ** Fit Skymodel(s)
-:PROPERTIES:
- :header-args:  :tangle no
-:END:
 
 https://docs.gammapy.org/1.1/tutorials/analysis-3d/analysis_3d.html
 - with 3d residuals map
@@ -1568,6 +1566,7 @@ rule model_best_fit:
     input:
         config=config_dir / "{analysis}/analysis.yaml",
         dataset=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4/"{analysis}/bkg_fit.yaml",
         model=config_dir / "{analysis}/models.yaml",
         script=scripts/"fit-model.py",
     conda:
@@ -1578,7 +1577,8 @@ rule model_best_fit:
         """
         python {input.script} \
             -c {input.config} \
-            --dataset-path {input.dataset} \
+            --datasets-path {input.dataset} \
+            --bkg-models-path {input.bkg_fit} \
             --model-config {input.model} \
             -o {output} \
         """
@@ -1587,20 +1587,14 @@ rule model_best_fit:
 
 #+begin_src snakemake
 rule plot_residual_map:
-    pass
-#+end_src
-
-#+begin_src snakemake
-
-# Fit flux etc.
-rule calc_flux_points:
-    input:
-        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        config=config_dir / "{analysis}/analysis.yaml",
-        model=build_dir / "dl4/{analysis}/model-best-fit.yaml",
-        script="scripts/calc_flux_points.py",
     output:
-        build_dir / "dl4/{analysis}/flux_points.fits.gz",
+        dl5/ "{analysis}/plots/fit_residuals.fits.gz",
+    input:
+        data=dl4/ "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4/"{analysis}/bkg_fit.yaml",
+        model=dl5/ "{analysis}/model-best-fit.yaml",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script=scripts/"plot_residuals.py",
     conda:
         gammapy_env
     shell:
@@ -1608,20 +1602,49 @@ rule calc_flux_points:
         python {input.script} \
             -c {input.config} \
             --dataset-path {input.data} \
+            --bkg-models-path {input.bkg_fit} \
+            --best-model-path {input.model} \
+            -o {output}
+        """
+#+end_src
+
+** Flux Points
+
+#+begin_src snakemake
+
+# Fit flux etc.
+rule calc_flux_points:
+    input:
+        data=build_dir / "dl4/{analysis}/datasets.fits.gz",
+        bkg_fit=dl4/"{analysis}/bkg_fit.yaml",
+        model=dl5/ "{analysis}/model-best-fit.yaml",
+        config=config_dir / "{analysis}/analysis.yaml",
+        script=scripts/"calc_flux_points.py",
+    output:
+        dl5/ "{analysis}/flux_points.fits.gz",
+    conda:
+        gammapy_env
+    shell:
+        """
+        python {input.script} \
+            -c {input.config} \
+            --dataset-path {input.data} \
+            --bkg-models-path {input.bkg_fit} \
             --best-model-path {input.model} \
             -o {output}
         """
 
 #+end_src
+
 #+begin_src snakemake
 
 rule plot_flux_points:
     input:
-        data=build_dir / "dl4/{analysis}/flux_points.fits.gz",
-        model=build_dir / "dl4/{analysis}/model-best-fit.yaml",
-        script="scripts/plot_flux_points.py",
+        data=dl5/ "{analysis}/flux_points.fits.gz",
+        model=dl5/ "{analysis}/model-best-fit.yaml",
+        script=scripts/"plot_flux_points.py",
     output:
-        build_dir / "plots/{analysis}/flux_points.pdf",
+        dl5 / "plots/{analysis}/flux_points.pdf",
     conda:
         gammapy_env
     shell:
@@ -1633,16 +1656,20 @@ rule plot_flux_points:
         """
 
 #+end_src
+
+** Light curve
+
 #+begin_src snakemake
 
 rule calc_light_curve:
     input:
-        model=build_dir / "dl4/{analysis}/model-best-fit.yaml",
+        model=dl5/ "{analysis}/model-best-fit.yaml",
         config=config_dir / "{analysis}/analysis.yaml",
-        dataset=build_dir / "dl4/{analysis}/datasets.fits.gz",
-        script="scripts/calc_light_curve.py",
+        dataset=dl4/ "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4/"{analysis}/bkg_fit.yaml",
+        script=scripts/"calc_light_curve.py",
     output:
-        build_dir / "dl4/{analysis}/light_curve.fits.gz",
+        dl5/ "{analysis}/light_curve.fits.gz",
     conda:
         gammapy_env
     shell:
@@ -1650,6 +1677,7 @@ rule calc_light_curve:
         python {input.script} \
             -c {input.config} \
             --dataset-path {input.dataset} \
+            --bkg-models-path {input.bkg_fit} \
             --best-model-path {input.model} \
             -o {output} \
         """

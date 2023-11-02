@@ -42,7 +42,8 @@ rule create_dataset:
     conda:
         gammapy_env
     resources:
-        cpus=8,
+        cpus=16,
+        mem_mb=32000,
     log:
         dl4 / "{analysis}/datasets.log",
     shell:
