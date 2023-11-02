@@ -91,4 +91,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
 
-    main(args.ts_maps, args.exclusion_mask, args.output)
+    main(args.input_maps, args.exclusion_mask, args.output)
