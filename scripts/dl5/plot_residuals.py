@@ -37,8 +37,10 @@ def main(  # noqa: PLR0913
     for d in analysis.datasets:
         fig, ax = plt.subplots()
         d.plot_residuals_spatial(ax=ax)
+        figures.append(fig)
         fig, ax = plt.subplots()
         d.plot_residuals_spectral(ax=ax)
+        figures.append(fig)
 
     with PdfPages(output) as pdf:
         for fig in figures:
