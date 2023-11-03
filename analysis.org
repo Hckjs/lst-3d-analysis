@@ -1611,7 +1611,7 @@ rule plot_residual_map:
         """
         python {input.script} \
             -c {input.config} \
-            --dataset-path {input.data} \
+            --datasets-path {input.data} \
             --bkg-models-path {input.bkg_fit} \
             --best-model-path {input.model} \
             -o {output}
@@ -1638,7 +1638,7 @@ rule calc_flux_points:
         """
         python {input.script} \
             -c {input.config} \
-            --dataset-path {input.data} \
+            --datasets-path {input.data} \
             --bkg-models-path {input.bkg_fit} \
             --best-model-path {input.model} \
             -o {output}
