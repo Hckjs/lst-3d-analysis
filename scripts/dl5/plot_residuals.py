@@ -34,11 +34,11 @@ def main(  # noqa: PLR0913
     analysis.read_models(best_model_path)
 
     figures = []
-    fig, ax = plt.subplots()
-    analysis.datasets.plot_residuals_spatial(ax=ax)
-
-    fig, ax = plt.subplots()
-    analysis.datasets.plot_residuals_spectral(ax=ax)
+    for d in analysis.datasets:
+        fig, ax = plt.subplots()
+        d.plot_residuals_spatial(ax=ax)
+        fig, ax = plt.subplots()
+        d.plot_residuals_spectral(ax=ax)
 
     with PdfPages(output) as pdf:
         for fig in figures:
