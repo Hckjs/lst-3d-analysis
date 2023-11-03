@@ -49,7 +49,7 @@ def main(lima_maps_input, exclusion_mask, output):
         f"Off significances: {np.mean(significance_off)} +- {np.std(significance_off)}",
     )
 
-    x = np.linspace(-5, 5, 100)
+    x = np.linspace(-5, 5, 50)
     fig, ax = plt.subplots()
     ax.hist(
         significance_all,
