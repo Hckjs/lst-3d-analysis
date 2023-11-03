@@ -42,6 +42,7 @@ def main(lima_maps_input, exclusion_mask, output):
     significance_all = significance_map.data[np.isfinite(significance_map.data)]
     significance_off = significance_map_off.data[np.isfinite(significance_map_off.data)]
 
+    x = np.linspace(-8, 8, 50)
     fig, ax = plt.subplots()
     ax.hist(
         significance_all,
@@ -49,7 +50,7 @@ def main(lima_maps_input, exclusion_mask, output):
         alpha=0.5,
         color="red",
         label="all bins",
-        bins=21,
+        bins=x,
     )
 
     ax.hist(
@@ -58,12 +59,11 @@ def main(lima_maps_input, exclusion_mask, output):
         alpha=0.5,
         color="blue",
         label="off bins",
-        bins=21,
+        bins=x,
     )
 
     # Now, fit the off distribution with a Gaussian
     mu, std = norm.fit(significance_off)
-    x = np.linspace(-8, 8, 50)
     p = norm.pdf(x, mu, std)
     ax.plot(x, p, lw=2, color="black", label=f"mu={mu:.2f}\nstd={std:.2f}")
     ax.legend()
