@@ -22,7 +22,8 @@ else:
 def main(lima_maps_input, exclusion_mask, output):
     figures = []
     lima_maps = FluxMaps.read(lima_maps_input)
-    exclusion_mask = WcsNDMap.read(exclusion_mask)
+    # this might have multiple energy bins and then the shapes will not match
+    exclusion_mask = WcsNDMap.read(exclusion_mask).sum_over_axes()
 
     significance_map = lima_maps["sqrt_ts"]
     excess_map = lima_maps["npred_excess"]
