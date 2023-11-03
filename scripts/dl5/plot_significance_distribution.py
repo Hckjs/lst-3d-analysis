@@ -35,8 +35,6 @@ def main(lima_maps_input, exclusion_mask, output):
     ax1.set_title("Significance map")
     significance_map.plot(ax=ax1, add_cbar=True)
 
-    exclusion_mask.plot(ax=ax1, hatches=["///"], colors="C7")
-
     ax2.set_title("Excess map")
     excess_map.plot(ax=ax2, add_cbar=True)
     figures.append(fig)
