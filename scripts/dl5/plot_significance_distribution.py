@@ -34,6 +34,9 @@ def main(lima_maps_input, exclusion_mask, output):
     )
     ax1.set_title("Significance map")
     significance_map.plot(ax=ax1, add_cbar=True)
+
+    exclusion_mask.plot(ax=ax1, hatches=["///"], colors="C7")
+
     ax2.set_title("Excess map")
     excess_map.plot(ax=ax2, add_cbar=True)
     figures.append(fig)
@@ -41,8 +44,14 @@ def main(lima_maps_input, exclusion_mask, output):
     significance_map_off = significance_map * exclusion_mask
     significance_all = significance_map.data[np.isfinite(significance_map.data)]
     significance_off = significance_map_off.data[np.isfinite(significance_map_off.data)]
+    log.info(
+        f"All significances: {np.mean(significance_all)} +- {np.std(significance_all)}",
+    )
+    log.info(
+        f"Off significances: {np.mean(significance_off)} +- {np.std(significance_off)}",
+    )
 
-    x = np.linspace(-8, 8, 50)
+    x = np.linspace(-5, 5, 100)
     fig, ax = plt.subplots()
     ax.hist(
         significance_all,
@@ -70,8 +79,8 @@ def main(lima_maps_input, exclusion_mask, output):
     ax.set_xlabel("Significance")
     ax.set_yscale("log")
     ax.set_ylim(1e-5, 1)
-    xmin, xmax = np.min(significance_all), np.max(significance_all)
-    ax.set_xlim(xmin, xmax)
+    # xmin, xmax = np.min(significance_all), np.max(significance_all)
+    #    ax.set_xlim(xmin, xmax)
     figures.append(fig)
 
     if output is None:
