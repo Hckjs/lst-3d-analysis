@@ -17,7 +17,7 @@ analyses = [
 # For now this is fine as mcpipe uses the default config from lstchain
 # (at least in my test production) and lstchain versions dont differ much in the output
 # (hopefully). Thats a fat TODO though...
-lstchain_config = build / "lstchain_config.json"
+# lstchain_config = build / "lstchain_config.json"
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 
 with open(main_config_path, "r") as f:
@@ -34,6 +34,7 @@ CONFIGS = {
     "data_selection": (config_dir / "data_selection.json").absolute(),
     "irf_tool": (config_dir / "irf_tool_config.json").absolute(),
     "bkg_model": (config_dir / "bkgmodel.yml").absolute(),
+    "lstchain": (config_dir / "lstchain.json").absolute(),
 }
 
 OUTDIRS = {

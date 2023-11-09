@@ -79,7 +79,7 @@ analyses = [
 # For now this is fine as mcpipe uses the default config from lstchain
 # (at least in my test production) and lstchain versions dont differ much in the output
 # (hopefully). Thats a fat TODO though...
-lstchain_config = build / "lstchain_config.json"
+# lstchain_config = build / "lstchain_config.json"
 MATPLOTLIBRC = os.environ.get("MATPLOTLIBRC", config_dir / "matplotlibrc")
 
 with open(main_config_path, "r") as f:
@@ -96,6 +96,7 @@ CONFIGS = {
     "data_selection": (config_dir / "data_selection.json").absolute(),
     "irf_tool": (config_dir / "irf_tool_config.json").absolute(),
     "bkg_model": (config_dir / "bkgmodel.yml").absolute(),
+    "lstchain": (config_dir / "lstchain.json").absolute(),
 }
 
 OUTDIRS = {
@@ -553,7 +554,8 @@ models = mc / "models"
 mc_nodes = Path(OUTDIRS["mc_nodes"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
-config = lstchain_config
+#config = lstchain_config
+config = CONFIGS["lstchain"]
 
 plots = mc / "plots"
 
@@ -578,7 +580,7 @@ localrules:
 checkpoint link_mc:
     output:
         dummy=mc / "mc-linked.txt",
-        config=config,
+        config=mc / "lstchain_mcpipe.json",
     input:
         script=scripts / "link-mc.py",
     params:
@@ -750,7 +752,8 @@ irf_scripts = Path(SCRIPTS["irfs"])
 dl2 = Path(OUTDIRS["dl2"])
 dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
-config = lstchain_config
+#config = lstchain_config
+config = CONFIGS["lstchain"]
 
 rule dl2:
     input:

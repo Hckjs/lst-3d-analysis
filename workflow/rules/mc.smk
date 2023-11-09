@@ -9,7 +9,8 @@ models = mc / "models"
 mc_nodes = Path(OUTDIRS["mc_nodes"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
-config = lstchain_config
+# config = lstchain_config
+config = CONFIGS["lstchain"]
 
 plots = mc / "plots"
 
@@ -30,7 +31,7 @@ localrules:
 checkpoint link_mc:
     output:
         dummy=mc / "mc-linked.txt",
-        config=config,
+        config=mc / "lstchain_mcpipe.json",
     input:
         script=scripts / "link-mc.py",
     params:

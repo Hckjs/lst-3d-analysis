@@ -6,7 +6,8 @@ irf_scripts = Path(SCRIPTS["irfs"])
 dl2 = Path(OUTDIRS["dl2"])
 dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
-config = lstchain_config
+# config = lstchain_config
+config = CONFIGS["lstchain"]
 
 
 rule dl2:
