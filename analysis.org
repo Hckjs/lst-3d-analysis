@@ -96,7 +96,7 @@ CONFIGS = {
     "data_selection": (config_dir / "data_selection.json").absolute(),
     "irf_tool": (config_dir / "irf_tool_config.json").absolute(),
     "bkg_model": (config_dir / "bkgmodel.yml").absolute(),
-    "lstchain": (config_dir / "lstchain.json").absolute(),
+    "lstchain": (config_dir / "lstchain_config.json").absolute(),
 }
 
 OUTDIRS = {
