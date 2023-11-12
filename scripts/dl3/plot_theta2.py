@@ -100,6 +100,22 @@ def plot_theta_squared_table(table, *, preliminary=False, ylim=None):
     return fig, ax
 
 
+def plot_excess(table, ax):
+    theta2_axis = MapAxis.from_bounds(
+        min(table["theta2_min"]),
+        max(table["theta2_max"]),
+        nbin=len(table["theta2_max"]),
+        unit=table["theta2_max"].unit,
+    )
+    on = table["counts"]
+    off = table["counts_off"]
+    x = theta2_axis.center
+    xerr = theta2_axis.bin_width
+    excess = on - off
+    ax.bar(x = x, width=xerr, height=excess)
+    return ax
+
+
 def main(input_path, output, preliminary):
     figures = []
     with fits.open(input_path) as f:
@@ -110,6 +126,11 @@ def main(input_path, output, preliminary):
             fig, ax = plot_theta_squared_table(table, preliminary=preliminary)
             low = table.meta["ELOW"]
             high = table.meta["EHI"]
+            ax.set_title(f"{low} - {high}")
+            figures.append(fig)
+
+            fig, ax = plt.subplots()
+            plot_excess(table, ax)
             ax.set_title(f"{low} - {high}")
             figures.append(fig)
 
