@@ -32,7 +32,7 @@
     },
     "events_filters": {
         "intensity": [
-            0,
+            50,
             Infinity
         ],
         "width": [
@@ -53,7 +53,7 @@
         ],
         "leakage_intensity_width_2": [
             0,
-            Infinity
+            0.2
         ]
     },
     "n_training_events": {
