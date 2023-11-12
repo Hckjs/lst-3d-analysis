@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 import astropy.units as u
 import numpy as np
 import matplotlib
-from gammapy.irf import Background3D
+from gammapy.irf import Background3D, Background2D
 from matplotlib import pyplot as plt
 
 from scriptutils.log import setup_logging
@@ -18,7 +18,7 @@ else:
 log = logging.getLogger(__name__)
 
 
-def plot_at_energy(
+def plot3d_at_energy(
     bkg3d, energy=None, add_cbar=True, ncols=3, figsize=None, **kwargs
 ):
     """Plot the background rate in Field of view coordinates at a given energy.
@@ -69,8 +69,6 @@ def plot_at_energy(
             #caxes = ax.pcolormesh(X, Y, bkg.squeeze(), **kwargs)
         caxes = ax.pcolormesh(X, Y, bkg.squeeze(), **kwargs)
 
-        print(bkg3d.axes)
-        print(bkg3d.axes["fov_lat"])
 #        bkg3d.axes["fov_lat"].format_plot_xaxis(ax)
 #        bkg3d.axes["fov_lon"].format_plot_yaxis(ax)
         ax.set_title(str(ee))
@@ -88,22 +86,43 @@ def plot_at_energy(
     return fig
 
 
+def plot_at_energy(bkg, energy=None, add_cbar=True, ncols=3, figsize=None, **kwargs):
+    if isinstance(bkg, Background3D):
+        return plot3d_at_energy(bkg, energy, add_cbar, ncols, figsize, **kwargs)
+    else:
+        return plot3d_at_energy(bkg.to_3d(), energy, add_cbar, ncols, figsize, **kwargs)
+
+
+
 def main(input_path, output):
-    bkg_3d = Background3D.read(input_path, hdu="BACKGROUND")
+    try:
+        bkg = Background3D.read(input_path, hdu="BACKGROUND")
+    except:
+        bkg = Background2D.read(input_path, hdu="BACKGROUND")
     # TODO: Could use the bins in the file, but unsure about edges vs centers etc...
     energies = u.Quantity([20, 50, 100, 200, 500, 1000, 2000, 5000], u.GeV)
     figures = []
 
     # there is no ax keyword or similar, figure always gets created in the function :/
     # All in one figure
-    #bkg_3d.plot_at_energy(energies, add_cbar=False)
-    #fig = plt.gcf()
-    fig = plot_at_energy(bkg_3d, energies, add_cbar=False)
+    fig = plot_at_energy(bkg, energies, add_cbar=False)
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    bkg.plot_energy_dependence(ax=ax)
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    bkg.plot_offset_dependence(ax=ax)
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    bkg.plot_spectrum(ax=ax)
     figures.append(fig)
 
     # separate figures
     for e in energies:
-        fig = plot_at_energy(bkg_3d, [e], add_cbar=False)
+        fig = plot_at_energy(bkg, [e], add_cbar=False)
         #bkg_3d.plot_at_energy([e], add_cbar=False)
         #fig = plt.gcf()
         figures.append(fig)
