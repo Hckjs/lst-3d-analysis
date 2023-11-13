@@ -1171,12 +1171,14 @@ rule calc_skymap:
     resources:
         # mem_mb=16000,
         time=5,
+    params:
+        n_bins=50,
     conda:
         gammapy_env
     log:
         dl3 / "skymap/calc_{run_id}.log",
     shell:
-        "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
+        "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log} --n-bins {params.n_bins}"
 
 
 def dl3_all_skymaps(wildcards):
