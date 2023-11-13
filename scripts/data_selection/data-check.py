@@ -102,12 +102,10 @@ if __name__ == "__main__":
     s = (
         "After selecting the time of the dataset, "
         "after removing runs with problems in pedestals and after removing "
-        f"mispointed runs, {after_pedestals_run_id_time_separation} runs are kept."
+        "mispointed runs and those with high zenith,"
+        f" {after_pedestals_run_id_time_separation} runs are kept."
     )
     log.info(s)
-
-    # Exclude runs with high zenith (?)
-    # Better later.
 
     location = EarthLocation.from_geodetic(
         u.Quantity(-17.89139, u.deg),
@@ -117,7 +115,7 @@ if __name__ == "__main__":
 
     altaz = AltAz(obstime=time[mask], location=location)
 
-    ped_std = runsummary["ped_charge_stddev"]
+    ped_std = runsummary["ped_charge_stddev"][mask]
 
     ped_ll = config.pedestal.ll
     ped_ul = config.pedestal.ul
@@ -126,7 +124,7 @@ if __name__ == "__main__":
         sigma = config.pedestal.sigma
         log.info(
             "Calculating pedestal cuts based on configured sigma interval "
-            "for pedestals with moon below horizon.",
+            "for runs selected before and with moon below horizon.",
         )
 
         altaz = AltAz(obstime=time, location=location)
