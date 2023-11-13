@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     altaz = AltAz(obstime=time[mask], location=location)
 
-    ped_std = runsummary["ped_charge_stddev"][mask]
+    ped_std = runsummary["ped_charge_stddev"]
 
     ped_ll = config.pedestal.ll
     ped_ul = config.pedestal.ul
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         altaz = AltAz(obstime=time, location=location)
         moon = get_moon(time, location=location).transform_to(altaz)
 
-        ped_ll, ped_ul = bounds(ped_std[moon.alt.to_value(u.deg) < 0], sigma)
+        ped_ll, ped_ul = bounds(ped_std[mask & moon.alt.to_value(u.deg) < 0], sigma)
 
         log.info("Calculated %f sigma interval is (%f, %f)", sigma, ped_ll, ped_ul)
 
