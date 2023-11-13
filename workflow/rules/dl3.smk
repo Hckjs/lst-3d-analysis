@@ -20,6 +20,7 @@ rule dl3:
         bkg=dl3 / "bkg-exists",
         runwise_plots=DL3_PLOTS,
         irf_plots=DL3_IRF_PLOTS,
+        compare_plots=plots / "pointing.pdf",
 
 
 rule dl2_to_dl3:
@@ -142,6 +143,21 @@ rule dl3_hdu_index:
         --hdu-index-path {output} \
         --bkg-files {params.bkg} \
         """
+
+
+rule plot_dl3_pointings:
+    output:
+        plots / "pointing.pdf",
+    input:
+        index=dl3 / "hdu-index.fits.gz",
+        script=scripts / "plot_pointing.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        gammapy_env
+    log:
+        plots / "pointing.log",
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule calc_theta2_per_obs:

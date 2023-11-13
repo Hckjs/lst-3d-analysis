@@ -496,8 +496,6 @@ For the run pointings, a new file containing just these is constructed.
 This is actually not a big step and could be done in the plot script aswell,
 but I like having the csv file with the pointing directions easily accesible.
 
-TODO This is not working!
-
 #+begin_src snakemake
 
 rule gather_run_pointings:
@@ -913,7 +911,8 @@ rule dl3:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3/"bkg-exists",
         runwise_plots=DL3_PLOTS,
-        irf_plots=DL3_IRF_PLOTS
+        irf_plots=DL3_IRF_PLOTS,
+        compare_plots=plots/"pointing.pdf"
 #+end_src
 
 ** Create DL3 Data
@@ -1079,6 +1078,26 @@ rule dl3_hdu_index:
 #+end_src
 
 ** Plot dl3 stuff
+*** obs_table
+#+begin_src snakemake
+
+rule plot_dl3_pointings:
+    output:
+        plots / "pointing.pdf",
+    input:
+        index=dl3 / "hdu-index.fits.gz",
+        script=scripts/"plot_pointing.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        gammapy_env
+    log:
+        plots / "pointing.log",
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+
+
+#+end_src
+
 *** Theta 2
 #+begin_src snakemake
 rule calc_theta2_per_obs:
