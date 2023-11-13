@@ -74,6 +74,8 @@ def main() -> None:
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
 
+    # Note: this could just as well be constructed from the mask_ columns
+    # although maybe then the white/black lists are not included
     with open(args.runs, "r") as f:
         runs = json.load(f)
 
@@ -101,6 +103,9 @@ def main() -> None:
     table["az"] = pointings.az
     table["zen"] = pointings.zen
     table["run_id"] = runsummary[mask]["runnumber"]
+    table["cosmics_rate"] = runsummary[mask]["cosmics_rate"]
+    table["cosmics_rate_10"] = runsummary[mask]["cosmics_rate_above10"]
+    table["cosmics_rate_30"] = runsummary[mask]["cosmics_rate_above30"]
     log.info(table)
     table.write(args.output_path, overwrite=True)
 

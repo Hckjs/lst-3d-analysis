@@ -1,7 +1,6 @@
 import logging
 from argparse import ArgumentParser
 
-import astropy.units as u
 import matplotlib
 import numpy as np
 from astropy.table import Table
@@ -43,6 +42,20 @@ def main(input_path, output_path):
     ax.set_xlabel("Run Id")
     ax.set_ylabel("Azimuth / deg")
     figures.append(fig)
+
+    for c in pointings.colnames:
+        if c.startswith("cosmic"):
+            fig, ax = plt.subplots()
+            ax.scatter(pointings["run_id"], pointings[c])
+            ax.set_xlabel("Run Id")
+            ax.set_ylabel(c)
+            figures.append(fig)
+
+            fig, ax = plt.subplots()
+            ax.scatter(pointings["zen"], pointings[c])
+            ax.set_xlabel("Zenith / deg")
+            ax.set_ylabel(c)
+            figures.append(fig)
 
     if output_path is None:
         plt.show()
