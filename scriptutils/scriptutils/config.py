@@ -59,6 +59,7 @@ class Config(BaseModel):
     cosmics: Limits
     cosmics_10: Limits
     cosmics_30: Limits
+    max_zenith_deg: float = 90.0
 
     time_start: Optional[TimeType]
     time_stop: Optional[TimeType]
@@ -68,17 +69,6 @@ class Config(BaseModel):
 
     _val_time_start = validator("time_start", allow_reuse=True, pre=True)(ll_or_inf)
     _val_time_stop = validator("time_stop", allow_reuse=True, pre=True)(ul_or_inf)
-
-    # # TODO this is only relevant for the data-check
-    # @root_validator
-    # def warn_if_sigma(cls, values):
-    #     for name, cfg in values.items():
-    #         if isinstance(cfg, Limits) and cfg.sigma is not None:
-    #             log = logging.getLogger('data-check')
-    #             log.warning(
-    #                 f"{name}.sigma is not None, will calculate new limits.",
-    #             )
-    #     return values
 
     class Config:
         json_encoders = {

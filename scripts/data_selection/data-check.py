@@ -83,12 +83,18 @@ if __name__ == "__main__":
         atol=0.15,
     )
 
-    mask = mask_pedestals_ok & mask_run_id & mask_time & mask_separation_low
+    zenith = 90 - np.rad2deg(runsummary["mean_altitude"])
+    mask_zenith = zenith < config.max_zenith_deg
+
+    mask = (
+        mask_pedestals_ok & mask_run_id & mask_time & mask_separation_low & mask_zenith
+    )
 
     runsummary["mask_run_id"] = mask_run_id
     runsummary["mask_time"] = mask_time
     runsummary["mask_separation_low"] = mask_separation_low
     runsummary["mask_pedestals_ok"] = mask_pedestals_ok
+    runsummary["mask_zenith"] = mask_zenith
 
     runsummary["mask_run_selection"] = mask
 

@@ -6,6 +6,7 @@
   "cosmics": { "ul": null, "ll": null, "sigma": 2 },
   "cosmics_10": { "ul": null, "ll": null, "sigma": 2 },
   "cosmics_30": { "ul": null, "ll": null, "sigma": 2 },
+  "max_zenith_deg": 45,
   "time_start": "2021-01-10",
   "time_stop": "2021-03-12"
 }
