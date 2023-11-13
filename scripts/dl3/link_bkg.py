@@ -4,6 +4,8 @@ from pathlib import Path
 
 import numpy as np
 from astropy.table import Table
+from astropy.io import fits
+from os.path import relpath
 
 log = logging.getLogger(__name__)
 
@@ -31,20 +33,22 @@ def main(hdu_index_path, bkg_files):
         )
     # remove old links in case of reexecution of bkg rules
     t.remove_rows(np.nonzero(t["HDU_TYPE"] == "bkg"))
-    for i, bkg in zip(ids, bkg_files):
+    for i, b in zip(ids, bkg_files):
+        bkg = Path(b)
         log.info(f"Linking {bkg} to obs id {i}")
-        t.add_row(
-            [
-                i,
-                "bkg",
-                "bkg_3d",
-                Path(bkg).parent.as_posix(),
-                Path(bkg).name,
-                "BACKGROUND",
-                -1,
-            ],
-        )
-    log.info(t)
+        with fits.open(bkg) as f:
+            t.add_row(
+                [
+                    i,
+                    "bkg",
+                    f[1].header['HDUCLAS4'].lower(),
+                    relpath(bkg.parent, hdu_index_path.parent),
+                    bkg.name,
+                    "BACKGROUND",
+                    -1,
+                ],
+            )
+        log.info(t)
     t.write(hdu_index_path, overwrite=True)
 
 
@@ -59,4 +63,4 @@ if __name__ == "__main__":
         action="store_true",
     )  # TODO setup logging without scriptutils...
     args = parser.parse_args()
-    main(args.hdu_index_path, args.bkg_files)
+    main(Path(args.hdu_index_path), args.bkg_files)
