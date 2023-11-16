@@ -141,6 +141,9 @@ rule model_best_fit:
         gammapy_env
     log:
         dl5 / "{analysis}/model_best_fit.log",
+    resources:
+        partition="long",
+        time=1200,
     shell:
         """
         python {input.script} \
