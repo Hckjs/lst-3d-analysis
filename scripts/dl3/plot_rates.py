@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 import astropy.units as u
 import matplotlib
+import numpy as np
 from astropy.table import Table
 from gammapy.data import DataStore
 from matplotlib import pyplot as plt
@@ -25,48 +26,55 @@ def main(input_path, output):
     zen = []
     az = []
     ontime = []
+    elapsed_time = []
     counts = []
     obs_ids = []
+    deadc = []
 
     for o in ds.get_observations():
         i = o.obs_info
+        log.info(o.obs_id)
         zen.append(90 - i["ALT_PNT"])
         az.append(i["AZ_PNT"])
         ontime.append(i["ONTIME"])
+        elapsed_time.append(i["TELAPSE"])
         counts.append(len(o.events.table))
-        obs_ids.append(obs_ids)
+        deadc.append(i["DEADC"])
+        obs_ids.append(o.obs_id)
+    rate = np.array(counts) / u.Quantity(ontime, u.s)
+    rate2 = np.array(counts) / u.Quantity(elapsed_time, u.s)
+    rate3 = np.array(counts) / u.Quantity(elapsed_time, u.s) / np.array(deadc)
 
-    rate = counts / (ontime * u.s)
-    data = Table(
+    Table(
         {
             "rate": rate,
             "counts": counts,
             "ontime": ontime,
+            "elapsed_time": elapsed_time,
             "obs_id": obs_ids,
             "zen": zen,
             "az": az,
         },
     )
-    log.info(data)
-    log.info(data["obs_id", "rate", "ontime"])
 
-    fig, ax = plt.subplots()
-    ax.scatter(obs_ids, rate)
-    ax.set_xlabel("Obs id")
-    ax.set_ylabel(f"Rate / {rate.unit}")
-    figures.append(fig)
+    for r in (rate, rate2, rate3):
+        fig, ax = plt.subplots()
+        ax.scatter(obs_ids, r)
+        ax.set_xlabel("Obs id")
+        ax.set_ylabel(f"Rate / {rate.unit}")
+        figures.append(fig)
 
-    fig, ax = plt.subplots()
-    ax.scatter(zen, rate)
-    ax.set_xlabel("Zenith / deg")
-    ax.set_ylabel(f"Rate / {rate.unit}")
-    figures.append(fig)
+        fig, ax = plt.subplots()
+        ax.scatter(zen, r)
+        ax.set_xlabel("Zenith / deg")
+        ax.set_ylabel(f"Rate / {rate.unit}")
+        figures.append(fig)
 
-    fig, ax = plt.subplots()
-    ax.scatter(zen, rate)
-    ax.set_xlabel("Azimuth / deg")
-    ax.set_ylabel(f"Rate / {rate.unit}")
-    figures.append(fig)
+        fig, ax = plt.subplots()
+        ax.scatter(az, r)
+        ax.set_xlabel("Azimuth / deg")
+        ax.set_ylabel(f"Rate / {rate.unit}")
+        figures.append(fig)
 
     if output is None:
         plt.show()
