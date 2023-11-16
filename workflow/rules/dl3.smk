@@ -20,7 +20,7 @@ rule dl3:
         bkg=dl3 / "bkg-exists",
         runwise_plots=DL3_PLOTS,
         irf_plots=DL3_IRF_PLOTS,
-        compare_plots=plots / "pointing.pdf",
+        compare_plots=[plots / "pointing.pdf", plots / "irfs.pdf"],
 
 
 rule dl2_to_dl3:
@@ -145,9 +145,24 @@ rule dl3_hdu_index:
         """
 
 
-rule plot_dl3_pointings:
+rule plot_dl3_rates:
     output:
-        plots / "pointing.pdf",
+        plots / "rates.pdf",
+    input:
+        index=dl3 / "hdu-index.fits.gz",
+        script=scripts / "plot_rates.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        gammapy_env
+    log:
+        plots / "rates.log",
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+
+
+rule plot_dl3_irf_comparison:
+    output:
+        plots / "irfs.pdf",
     input:
         index=dl3 / "hdu-index.fits.gz",
         script=scripts / "plot_pointing.py",
@@ -155,7 +170,7 @@ rule plot_dl3_pointings:
     conda:
         gammapy_env
     log:
-        plots / "pointing.log",
+        plots / "irfs.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 

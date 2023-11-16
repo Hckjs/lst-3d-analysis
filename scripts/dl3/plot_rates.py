@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 import astropy.units as u
 import matplotlib
+from astropy.table import Table
 from gammapy.data import DataStore
 from matplotlib import pyplot as plt
 
@@ -25,6 +26,7 @@ def main(input_path, output):
     az = []
     ontime = []
     counts = []
+    obs_ids = []
 
     for o in ds.get_observations():
         i = o.obs_info
@@ -32,8 +34,27 @@ def main(input_path, output):
         az.append(i["AZ_PNT"])
         ontime.append(i["ONTIME"])
         counts.append(len(o.events.table))
+        obs_ids.append(obs_ids)
 
     rate = counts / (ontime * u.s)
+    data = Table(
+        {
+            "rate": rate,
+            "counts": counts,
+            "ontime": ontime,
+            "obs_id": obs_ids,
+            "zen": zen,
+            "az": az,
+        },
+    )
+    log.info(data)
+    log.info(data["obs_id", "rate", "ontime"])
+
+    fig, ax = plt.subplots()
+    ax.scatter(obs_ids, rate)
+    ax.set_xlabel("Obs id")
+    ax.set_ylabel(f"Rate / {rate.unit}")
+    figures.append(fig)
 
     fig, ax = plt.subplots()
     ax.scatter(zen, rate)

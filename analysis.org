@@ -912,7 +912,8 @@ rule dl3:
         bkg=dl3/"bkg-exists",
         runwise_plots=DL3_PLOTS,
         irf_plots=DL3_IRF_PLOTS,
-        compare_plots=plots/"pointing.pdf"
+        compare_plots=[plots/"pointing.pdf", plots/"irfs.pdf"]
+
 #+end_src
 
 ** Create DL3 Data
@@ -1044,6 +1045,8 @@ same order as when sorting the observations.
 That is true as long as the name of the background file contains the run_id
 and there are no shenanigans with the leading 0.
 
+TODO: Could the file pattern be a OR of all runs?
+
 
 #+begin_src snakemake
 
@@ -1078,12 +1081,31 @@ rule dl3_hdu_index:
 #+end_src
 
 ** Plot dl3 stuff
-*** obs_table
+*** rates
 #+begin_src snakemake
 
-rule plot_dl3_pointings:
+rule plot_dl3_rates:
     output:
-        plots / "pointing.pdf",
+        plots / "rates.pdf",
+    input:
+        index=dl3 / "hdu-index.fits.gz",
+        script=scripts/"plot_rates.py",
+        rc=MATPLOTLIBRC,
+    conda:
+        gammapy_env
+    log:
+        plots / "rates.log",
+    shell:
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+
+
+#+end_src
+*** irf_comparison
+#+begin_src snakemake
+
+rule plot_dl3_irf_comparison:
+    output:
+        plots / "irfs.pdf",
     input:
         index=dl3 / "hdu-index.fits.gz",
         script=scripts/"plot_pointing.py",
@@ -1091,7 +1113,7 @@ rule plot_dl3_pointings:
     conda:
         gammapy_env
     log:
-        plots / "pointing.log",
+        plots / "irfs.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
