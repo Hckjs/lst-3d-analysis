@@ -912,7 +912,7 @@ rule dl3:
         bkg=dl3/"bkg-exists",
         runwise_plots=DL3_PLOTS,
         irf_plots=DL3_IRF_PLOTS,
-        compare_plots=[plots/"pointing.pdf", plots/"irfs.pdf"]
+        compare_plots=[plots/"rates.pdf", plots/"irfs.pdf"]
 
 #+end_src
 
