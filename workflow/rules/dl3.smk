@@ -18,9 +18,7 @@ rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3 / "bkg-exists",
-        runwise_plots=DL3_PLOTS,
-        irf_plots=DL3_IRF_PLOTS,
-        compare_plots=[plots / "rates.pdf", plots / "irfs.pdf"],
+        plots=DL3_PLOTS,
 
 
 rule dl2_to_dl3:

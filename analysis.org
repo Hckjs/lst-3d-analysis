@@ -31,6 +31,13 @@ rule all:
         rules.dl4.input,
         rules.dl5.input
 
+rule plots:
+    input:
+       run_selection_plots,
+       MC_NODES_IRFS,
+       DL3_PLOTS,
+       dl4_plots,
+       dl5_plots,
 
 #+end_src
 
@@ -193,7 +200,7 @@ def DL3_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
 
 
-def DL3_PLOTS(wildcards):
+def DL3_RUN_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
     per_run = [dl3 / f"plots/{p}/{p}_{run}.pdf" for p in dl3_plot_types for run in ids]
     # bkg does not get stacked (yet?)
@@ -204,6 +211,13 @@ def DL3_IRF_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"]) / "plots"
     return [out / f"{irf}/{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in ids]
+
+
+def DL3_PLOTS(wildcards):
+    runs = DL3_RUN_PLOTS(wildcards)
+    irfs = DL3_IRF_PLOTS(wildcards)
+    compare_plots=[dl3/"plots/rates.pdf", dl3/"plots/irfs.pdf"]
+    return runs + irfs + compare_plots
 
 
 def IRF_FILES(wildcards):
@@ -910,9 +924,7 @@ rule dl3:
     input:
         index=dl3 / "hdu-index.fits.gz",
         bkg=dl3/"bkg-exists",
-        runwise_plots=DL3_PLOTS,
-        irf_plots=DL3_IRF_PLOTS,
-        compare_plots=[plots/"rates.pdf", plots/"irfs.pdf"]
+        plots = DL3_PLOTS,
 
 #+end_src
 
@@ -1366,9 +1378,12 @@ dl4 = Path(OUTDIRS["dl4"])
 scripts = Path(SCRIPTS["dl4"])
 
 dl4_plot_types = ["dataset_peek"]#, "dl4_diagnostics"]
+dl4_plots = [dl4 / f"{analysis}/plots/{plot}.pdf" for analysis in analyses for plot in dl4_plot_types]
+
 rule dl4:
     input:
-        [dl4 / f"{analysis}/plots/{plot}.pdf" for analysis in analyses for plot in dl4_plot_types]
+        dl4_plots
+
 
 #+end_src
 
@@ -1485,9 +1500,12 @@ scripts = Path(SCRIPTS["dl5"])
 dl5_plot_types = ["significance_map", "significance_distribution", "2d_flux_profile", "fit_residuals"]
 #_curve] significance distribution on vs off
 
+dl5_plots = [dl5 / f"{analysis}/plots/{plot}.pdf" for analysis in analyses for plot in dl5_plot_types]
+
 rule dl5:
     input:
-        [dl5 / f"{analysis}/plots/{plot}.pdf" for analysis in analyses for plot in dl5_plot_types]
+        dl5_plots
+
 
 #+end_src
 

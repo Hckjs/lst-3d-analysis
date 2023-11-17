@@ -137,7 +137,7 @@ def DL3_FILES(wildcards):
     return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
 
 
-def DL3_PLOTS(wildcards):
+def DL3_RUN_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
     per_run = [dl3 / f"plots/{p}/{p}_{run}.pdf" for p in dl3_plot_types for run in ids]
     # bkg does not get stacked (yet?)
@@ -150,6 +150,13 @@ def DL3_IRF_PLOTS(wildcards):
     return [
         out / f"{irf}/{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in ids
     ]
+
+
+def DL3_PLOTS(wildcards):
+    runs = DL3_RUN_PLOTS(wildcards)
+    irfs = DL3_IRF_PLOTS(wildcards)
+    compare_plots = [dl3 / "plots/rates.pdf", dl3 / "plots/irfs.pdf"]
+    return runs + irfs + compare_plots
 
 
 def IRF_FILES(wildcards):

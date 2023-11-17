@@ -16,3 +16,12 @@ rule all:
         rules.dl3.input,
         rules.dl4.input,
         rules.dl5.input,
+
+
+rule plots:
+    input:
+        run_selection_plots,
+        MC_NODES_IRFS,
+        DL3_PLOTS,
+        dl4_plots,
+        dl5_plots,

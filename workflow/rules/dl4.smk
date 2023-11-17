@@ -4,15 +4,16 @@ dl4 = Path(OUTDIRS["dl4"])
 scripts = Path(SCRIPTS["dl4"])
 
 dl4_plot_types = ["dataset_peek"]  # , "dl4_diagnostics"]
+dl4_plots = [
+    dl4 / f"{analysis}/plots/{plot}.pdf"
+    for analysis in analyses
+    for plot in dl4_plot_types
+]
 
 
 rule dl4:
     input:
-        [
-            dl4 / f"{analysis}/plots/{plot}.pdf"
-            for analysis in analyses
-            for plot in dl4_plot_types
-        ],
+        dl4_plots,
 
 
 rule create_fov_bkg_exclusion:

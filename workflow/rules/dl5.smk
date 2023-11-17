@@ -11,14 +11,16 @@ dl5_plot_types = [
 ]
 # _curve] significance distribution on vs off
 
+dl5_plots = [
+    dl5 / f"{analysis}/plots/{plot}.pdf"
+    for analysis in analyses
+    for plot in dl5_plot_types
+]
+
 
 rule dl5:
     input:
-        [
-            dl5 / f"{analysis}/plots/{plot}.pdf"
-            for analysis in analyses
-            for plot in dl5_plot_types
-        ],
+        dl5_plots,
 
 
 rule calc_significance_map:
