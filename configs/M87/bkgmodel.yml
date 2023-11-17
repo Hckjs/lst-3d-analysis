@@ -1,7 +1,7 @@
 hdu_type: "3D"
 prefix: "bkg"
 run_matching:
-  max_cos_zenith_diff: 0.05
+  max_cos_zenith_diff: 0.3
 
 # TODO Align with other irfs?
 binning:

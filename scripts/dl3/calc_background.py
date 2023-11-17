@@ -92,7 +92,7 @@ def main():
         )
         mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
         selected_ids = criteria["obs_id"][mask].values
-        log.info(f"Selected to match {obs_id}: {selected_ids}")
+        log.info(f"Selected to match {obs_id}: {len(selected_ids)} ({selected_ids})")
         # select fitting runs
         bkg_maker = ExclusionMapBackgroundMaker(
             e_reco,
