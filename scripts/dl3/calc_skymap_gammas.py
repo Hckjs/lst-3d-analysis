@@ -75,7 +75,7 @@ if __name__ == "__main__":
         default="3 deg",
         type=u.Quantity,
     )
-    parser.add_argument("--n-bins", default=100)
+    parser.add_argument("--n-bins", default=100, type=int)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
