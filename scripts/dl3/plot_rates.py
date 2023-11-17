@@ -71,6 +71,12 @@ def main(input_path, output):
         figures.append(fig)
 
         fig, ax = plt.subplots()
+        ax.scatter(np.cos(zen), r)
+        ax.set_xlabel("cos(zd)")
+        ax.set_ylabel(f"Rate / {rate.unit}")
+        figures.append(fig)
+
+        fig, ax = plt.subplots()
         ax.scatter(az, r)
         ax.set_xlabel("Azimuth / deg")
         ax.set_ylabel(f"Rate / {rate.unit}")
