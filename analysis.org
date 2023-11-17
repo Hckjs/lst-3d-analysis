@@ -34,7 +34,7 @@ rule all:
 rule plots:
     input:
        run_selection_plots,
-       MC_NODES_IRFS,
+       MC_NODES_IRFs,
        DL3_PLOTS,
        dl4_plots,
        dl5_plots,
