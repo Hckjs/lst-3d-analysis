@@ -121,21 +121,23 @@ rule dl3_hdu_index:
         dl3 / "hdu-index.fits.gz",
     input:
         runs=DL3_FILES,
+        index_script=scripts / "create_hdu_index.py",
         link_script=scripts / "link_bkg.py",
         dummy=dl3 / "bkg-exists",
     params:
         outdir=dl3,
         bkg=BKG_FILES,
+        filelist="--file-list " + "--file-list ".join(DL3_FILES),
     conda:
         lstchain_env
     log:
         dl3 / "hdu_index.log",
     shell:
         """
-        lstchain_create_dl3_index_files  \
+        python {input.index_script}  \
             --input-dl3-dir {params.outdir}  \
             --output-index-path {params.outdir}  \
-            --file-pattern '*.dl3.fits.gz'  \
+            {params.filelist} \
             --overwrite \
             --log-file {log}
 
