@@ -1048,6 +1048,10 @@ and there are no shenanigans with the leading 0.
 
 #+begin_src snakemake
 
+def DL3_INDEX_FILELIST(wildcards):
+    files = DL3_FILES(wildcards)
+    return "--file-list " + "--file-list ".join([f.name for f in files]),
+
 rule dl3_hdu_index:
     output:
         dl3 / "hdu-index.fits.gz",
@@ -1059,7 +1063,7 @@ rule dl3_hdu_index:
     params:
         outdir=dl3,
         bkg=BKG_FILES,
-        filelist="--file-list " + "--file-list ".join(DL3_FILES),
+        filelist=DL3_INDEX_FILELIST,
     conda:
         lstchain_env
     log:

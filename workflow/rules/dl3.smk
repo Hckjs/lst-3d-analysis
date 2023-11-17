@@ -116,6 +116,11 @@ rule calc_background:
         """
 
 
+def DL3_INDEX_FILELIST(wildcards):
+    files = DL3_FILES(wildcards)
+    return ("--file-list " + "--file-list ".join([f.name for f in files]),)
+
+
 rule dl3_hdu_index:
     output:
         dl3 / "hdu-index.fits.gz",
@@ -127,7 +132,7 @@ rule dl3_hdu_index:
     params:
         outdir=dl3,
         bkg=BKG_FILES,
-        filelist="--file-list " + "--file-list ".join(DL3_FILES),
+        filelist=DL3_INDEX_FILELIST,
     conda:
         lstchain_env
     log:

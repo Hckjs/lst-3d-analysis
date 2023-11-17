@@ -103,9 +103,10 @@ class FITSIndexWriter(Tool):
         if self.file_list:
             self.list_files = []
             for f in self.file_list:
+                full_path = Path(self.input_dl3_dir) / f
                 print(f)
-                assert Path(f).exists()
-                self.list_files.append(f)
+                assert (full_path).exists()
+                self.list_files.append(full_path)
         else:
             self.list_files = sorted(self.input_dl3_dir.glob(self.file_pattern))
 
