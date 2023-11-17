@@ -1108,7 +1108,7 @@ rule plot_dl3_irf_comparison:
         plots / "irfs.pdf",
     input:
         index=dl3 / "hdu-index.fits.gz",
-        script=scripts/"plot_pointing.py",
+        script=scripts/"plot_irf_comparison.py",
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
