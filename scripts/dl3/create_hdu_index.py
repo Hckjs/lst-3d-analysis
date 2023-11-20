@@ -110,8 +110,6 @@ class FITSIndexWriter(Tool):
         else:
             self.list_files = sorted(self.input_dl3_dir.glob(self.file_pattern))
 
-        print(self.file_list)
-        1 / 0
         if len(self.list_files) == 0:
             raise ToolConfigurationError(
                 f"No files with pattern {self.file_pattern} in {self.input_dl3_dir}",
