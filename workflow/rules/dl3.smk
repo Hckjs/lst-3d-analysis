@@ -116,7 +116,7 @@ rule calc_background:
 
 def DL3_INDEX_FILELIST(wildcards):
     files = DL3_FILES(wildcards)
-    return ("--file-list " + "--file-list ".join([f.name for f in files]),)
+    return ("--file-list " + " --file-list ".join([f.name for f in files]),)
 
 
 rule dl3_hdu_index:

@@ -1062,7 +1062,7 @@ and there are no shenanigans with the leading 0.
 
 def DL3_INDEX_FILELIST(wildcards):
     files = DL3_FILES(wildcards)
-    return "--file-list " + "--file-list ".join([f.name for f in files]),
+    return "--file-list " + " --file-list ".join([f.name for f in files]),
 
 rule dl3_hdu_index:
     output:
