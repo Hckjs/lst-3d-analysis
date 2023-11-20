@@ -162,7 +162,7 @@ rule plot_dl3_rates:
     log:
         plots / "rates.log",
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.index} -o {output} --log-file {log}"
 
 
 rule plot_dl3_irf_comparison:
@@ -177,7 +177,7 @@ rule plot_dl3_irf_comparison:
     log:
         plots / "irfs.log",
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
+        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.index} -o {output} --log-file {log}"
 
 
 rule calc_theta2_per_obs:
