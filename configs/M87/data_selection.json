@@ -3,9 +3,9 @@
   "source_ra_deg": 187.70593076,
   "source_dec_deg": 12.39112329,
   "pedestal": { "ul": null, "ll": null, "sigma": 2 },
-  "cosmics": { "ul": null, "ll": null, "sigma": 2 },
-  "cosmics_10": { "ul": null, "ll": null, "sigma": 2 },
-  "cosmics_30": { "ul": null, "ll": null, "sigma": 2 },
+  "cosmics": { "ul": 7800, "ll": 2600, "sigma": null },
+  "cosmics_10": { "ul": 40, "ll": 18, "sigma": null },
+  "cosmics_30": { "ul": 6, "ll": 1.5, "sigma": null },
   "time_start": "2020-01-01",
   "time_stop": "2024-01-01",
   "max_zenith_deg": 60
