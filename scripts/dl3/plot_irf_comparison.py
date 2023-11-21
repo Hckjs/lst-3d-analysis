@@ -60,7 +60,7 @@ def x_vs_offset(ax):
     if matplotlib.rcParams["text.usetex"]:
         ax.set_xlabel(r"$\text{Offset} \mathbin{/} \unit{\degree}$")
     else:
-        ax.set_xlabel("E_true / GeV")
+        ax.set_xlabel("Offset / deg")
 
 
 def y_bkg(ax):
