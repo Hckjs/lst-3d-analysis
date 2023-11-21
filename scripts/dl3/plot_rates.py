@@ -52,7 +52,7 @@ def main(input_path, output):  # noqa
         threshold_5.append(aeff_energy[np.argmax(x > 0.05 * max(x))].to_value(u.GeV))
         threshold_10.append(aeff_energy[np.argmax(x > 0.01 * max(x))].to_value(u.GeV))
 
-        energies = o.events.energy
+        energies = o.events.energy.to(u.GeV)
         bins = np.linspace(0, 200, 200)
         counts, edges = np.histogram(energies, bins)
         centers = (edges[1:] + edges[:-1]) / 2
