@@ -71,7 +71,7 @@ rule plot_significance_map:
     output:
         dl5 / "{analysis}/plots/{significance}_map.pdf",
     input:
-        lima_map=dl5 / "{analysis}/{significance_map}.fits.gz",
+        lima_map=dl5 / "{analysis}/{significance}_map.fits.gz",
         script=scripts / "plot_significance_map.py",
         rc=MATPLOTLIBRC,
     conda:
