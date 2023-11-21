@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import matplotlib
 import matplotlib.pyplot as plt
 from gammapy.analysis import Analysis, AnalysisConfig
+from gammapy.datasets import Datasets
 
 from scriptutils.io import load_datasets_with_models
 from scriptutils.log import setup_logging
@@ -29,9 +30,12 @@ def main(  # noqa: PLR0913
     config = AnalysisConfig.read(config)
     analysis = Analysis(config)
 
-    analysis.datasets = load_datasets_with_models(datasets_path, bkg_models_path)
-    # should expand
+    # Die bkg modelle sind in best-model mit drin!
+    # brauche ich hier also gar nicht!!!
+    #analysis.datasets = load_datasets_with_models(datasets_path, bkg_models_path)
+    analysis.datasets = Datasets.read(datasets_path)
     analysis.read_models(best_model_path)
+    log.info([m.name for m in analysis.datasets.models])
 
     figures = []
     for d in analysis.datasets:
