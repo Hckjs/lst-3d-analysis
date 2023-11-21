@@ -19,7 +19,7 @@ else:
 log = logging.getLogger(__name__)
 
 
-def main(input_path, output):
+def main(input_path, output):  # noqa
     ds = DataStore.from_file(input_path)
     figures = []
 
@@ -31,6 +31,9 @@ def main(input_path, output):
     obs_ids = []
     deadc = []
 
+    threshold_5 = []
+    threshold_10 = []
+
     for o in ds.get_observations():
         i = o.obs_info
         log.info(o.obs_id)
@@ -41,6 +44,13 @@ def main(input_path, output):
         counts.append(len(o.events.table))
         deadc.append(i["DEADC"])
         obs_ids.append(o.obs_id)
+
+        aeff_energy = o.aeff.axes["energy_true"].center
+        # aeff in first fov offset bin
+        x = o.aeff.data[:, 0]
+        threshold_5.append(aeff_energy[np.argmax(x > 0.05 * max(x))].to_value(u.GeV))
+        threshold_10.append(aeff_energy[np.argmax(x > 0.01 * max(x))].to_value(u.GeV))
+
     rate = np.array(counts) / u.Quantity(ontime, u.s)
     rate2 = np.array(counts) / u.Quantity(elapsed_time, u.s)
     rate3 = np.array(counts) / u.Quantity(elapsed_time, u.s) / np.array(deadc)
@@ -57,6 +67,29 @@ def main(input_path, output):
         },
     )
 
+    fig, ax = plt.subplots()
+    ax.scatter(az, threshold_5)
+    ax.set_xlabel("Azimuth / deg")
+    ax.set_ylabel("Threshold energy (5% Aeff) / GeV")
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(np.cos(np.deg2rad(zen)), threshold_5)
+    ax.set_xlabel("cos(zd)")
+    ax.set_ylabel("Threshold energy (5% Aeff) / GeV")
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(az, threshold_10)
+    ax.set_xlabel("Azimuth / deg")
+    ax.set_ylabel("Threshold energy (10% Aeff) / GeV")
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(np.cos(np.deg2rad(zen)), threshold_10)
+    ax.set_xlabel("cos(zd)")
+    ax.set_ylabel("Threshold energy (10% Aeff) / GeV")
+    figures.append(fig)
     for r in (rate, rate2, rate3):
         fig, ax = plt.subplots()
         ax.scatter(obs_ids, r)
