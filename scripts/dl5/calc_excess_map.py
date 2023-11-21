@@ -19,7 +19,7 @@ def main(datasets_path, models_path, output):
     # Do I need the best fit models attached? fit bkg? No, right?
     # Kernel width vs spatial model size?
     estimator = ExcessMapEstimator(
-        correlation_radius_width="0.2 deg",
+        correlation_radius="0.2 deg",
         selection_optional="all",
     )
     ts_maps = estimator.run(stacked)
