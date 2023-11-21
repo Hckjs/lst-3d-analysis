@@ -4,8 +4,10 @@ dl5 = Path(OUTDIRS["dl5"])
 scripts = Path(SCRIPTS["dl5"])
 
 dl5_plot_types = [
-    "significance_map",
-    "significance_distribution",
+    "ts_significance_map",
+    "ts_significance_distribution",
+    "excess_significance_map",
+    "excess_significance_distribution",
     "2d_flux_profile",
     "fit_residuals",
 ]
@@ -25,7 +27,7 @@ rule dl5:
 
 rule calc_significance_map:
     output:
-        dl5 / "{analysis}/significance_map.fits.gz",
+        dl5 / "{analysis}/ts_significance_map.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
         bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
@@ -44,17 +46,38 @@ rule calc_significance_map:
         """
 
 
+rule calc_excess_map:
+    output:
+        dl5 / "{analysis}/excess_significance_map.fits.gz",
+    input:
+        data=dl4 / "{analysis}/datasets.fits.gz",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
+        script=scripts / "calc_excess_map.py",
+    conda:
+        gammapy_env
+    log:
+        dl5 / "{analysis}/calc_excess_map.log",
+    shell:
+        """
+        python {input.script} \
+        --datasets-path {input.data} \
+        --models-path {input.bkg_fit} \
+        --output {output} \
+        --log-file {log}
+        """
+
+
 rule plot_significance_map:
     output:
-        dl5 / "{analysis}/plots/significance_map.pdf",
+        dl5 / "{analysis}/plots/{significance}_map.pdf",
     input:
-        lima_map=dl5 / "{analysis}/significance_map.fits.gz",
+        lima_map=dl5 / "{analysis}/{significance_map}.fits.gz",
         script=scripts / "plot_significance_map.py",
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     log:
-        dl5 / "{analysis}/plots/plot_significance_map.log",
+        dl5 / "{analysis}/plots/plot_{significance}_map.log",
     shell:
         """
         MATPLOTLIBRC={input.rc} \
@@ -67,16 +90,16 @@ rule plot_significance_map:
 
 rule plot_significance_distribution:
     output:
-        dl5 / "{analysis}/plots/significance_distribution.pdf",
+        dl5 / "{analysis}/plots/{significance}_distribution.pdf",
     input:
-        lima_map=dl5 / "{analysis}/significance_map.fits.gz",
+        lima_map=dl5 / "{analysis}/{significance}_map.fits.gz",
         script=scripts / "plot_significance_distribution.py",
         rc=MATPLOTLIBRC,
         exclusion_mask=dl4 / "{analysis}/bkg_exclusion.fits.gz",
     conda:
         gammapy_env
     log:
-        dl5 / "{analysis}/plots/plot_significance_distribution.log",
+        dl5 / "{analysis}/plots/plot_{significance}_distribution.log",
     shell:
         """
         MATPLOTLIBRC={input.rc} \
