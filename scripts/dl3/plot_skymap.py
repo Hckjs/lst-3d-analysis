@@ -29,7 +29,6 @@ def main(input_path, output_path):
     mesh = ax.pcolormesh(
         *edges.to_value(angle),
         skymap.data[0, ...],
-        rasterized=True,
     )
 
     ax.scatter(
