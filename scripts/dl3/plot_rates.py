@@ -54,9 +54,9 @@ def main(input_path, output):  # noqa
 
         energies = o.events.energy.to_value(u.GeV)
         bins = np.linspace(0, 200, 200)
-        counts, edges = np.histogram(energies, bins)
+        c, edges = np.histogram(energies, bins)
         centers = (edges[1:] + edges[:-1]) / 2
-        threshold_reco_data.append(centers[np.argmax(counts)])
+        threshold_reco_data.append(centers[np.argmax(c)])
 
     rate = np.array(counts) / u.Quantity(ontime, u.s)
     rate2 = np.array(counts) / u.Quantity(elapsed_time, u.s)
