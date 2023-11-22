@@ -58,9 +58,13 @@ def main(input_path, output):  # noqa
         centers = (edges[1:] + edges[:-1]) / 2
         threshold_reco_data.append(centers[np.argmax(c)])
 
-    rate = np.array(counts) / u.Quantity(ontime, u.s)
-    rate2 = np.array(counts) / u.Quantity(elapsed_time, u.s)
-    rate3 = np.array(counts) / u.Quantity(elapsed_time, u.s) / np.array(deadc)
+    ontime = u.Quantity(ontime, u.s)
+    elapsed_time = u.Quantity(elapsed_time, u.s)
+    deadc = np.array(deadc)
+
+    rate = np.array(counts) / ontime
+    rate2 = np.array(counts) / elapsed_time
+    rate3 = np.array(counts) / elapsed_time / deadc
 
     Table(
         {
@@ -73,6 +77,32 @@ def main(input_path, output):  # noqa
             "az": az,
         },
     )
+    fig, ax = plt.subplots()
+    ax.scatter(az, ontime, label="ON Time")
+    ax.scatter(az, elapsed_time, label="Elapsed Time")
+    ax.scatter(az, elapsed_time * deadc, label="Elapsed Time * Deadc")
+    ax.set_xlabel("Azimuth / deg")
+    ax.set_ylabel("Time / s")
+    ax.legend()
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(zen, ontime, label="ON Time")
+    ax.scatter(zen, elapsed_time, label="Elapsed Time")
+    ax.scatter(zen, elapsed_time * deadc, label="Elapsed Time * Deadc")
+    ax.set_xlabel("Zenith / deg")
+    ax.set_ylabel("Time / s")
+    ax.legend()
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    ax.scatter(obs_ids, ontime, label="ON Time")
+    ax.scatter(obs_ids, elapsed_time, label="Elapsed Time")
+    ax.scatter(obs_ids, elapsed_time * deadc, label="Elapsed Time * Deadc")
+    ax.set_xlabel("Obs id")
+    ax.set_ylabel("Time / s")
+    ax.legend()
+    figures.append(fig)
 
     for t in (threshold_5, threshold_10, threshold_reco_data):
         fig, ax = plt.subplots()
