@@ -5,7 +5,7 @@
   "pedestal": { "ul": 2, "ll": null, "sigma": null },
   "cosmics": { "ul": 8000, "ll": 4000, "sigma": null },
   "cosmics_10": { "ul": 40, "ll": 20, "sigma": null },
-  "cosmics_30": { "ul": 6, "ll": 2, "sigma": null },
+  "cosmics_30": { "ul": 6, "ll": 4, "sigma": null },
   "time_start": "2020-01-01",
   "time_stop": "2024-01-01",
   "max_zenith_deg": 60,
