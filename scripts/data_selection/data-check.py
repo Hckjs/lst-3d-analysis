@@ -107,7 +107,7 @@ if __name__ == "__main__":
     )
     log.info(s)
 
-    mask = mask & (~np.isin(run_ids, config.never_include))
+    mask = mask & (~np.isin(runsummary["runnumber"], config.never_include))
     log.info(f"Selected runs after removing from blacklist: {run_ids[mask]}")
 
     location = EarthLocation.from_geodetic(
