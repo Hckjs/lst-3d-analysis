@@ -265,8 +265,10 @@ if __name__ == "__main__":
     log.info(
         f"Selected runs after whitelist: {list(runsummary['runnumber'][mask].data)}",
     )
+    runsummary["mask_final"] = mask
 
-    runs[mask].to_csv(args.output_runlist, index=False)
+    run_mask = np.in1d(run_ids, runsummary["runnumber"][mask])
+    runs[run_mask].to_csv(args.output_runlist, index=False)
 
     runsummary.write(
         args.output_datachecks,
