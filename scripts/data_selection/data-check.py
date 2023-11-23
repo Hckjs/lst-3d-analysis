@@ -108,7 +108,9 @@ if __name__ == "__main__":
     log.info(s)
 
     mask = mask & (~np.isin(runsummary["runnumber"], config.never_include))
-    log.info(f"Selected runs after removing from blacklist: {run_ids[mask]}")
+    log.info(
+        f"Selected runs after removing from blacklist: {runsummary['runnumber'][mask]}",
+    )
 
     location = EarthLocation.from_geodetic(
         u.Quantity(-17.89139, u.deg),
@@ -255,11 +257,14 @@ if __name__ == "__main__":
     )
     log.info(s)
 
-    mask = np.in1d(run_ids, runsummary["runnumber"][mask])
-    log.info(f"Selected runs after cuts: {run_ids[mask]}")
+    log.info(
+        f"Selected runs after all selection steps: {runsummary['runnumber'][mask]}",
+    )
 
-    mask = mask | np.isin(run_ids, config.always_include)
-    log.info(f"Selected runs after adding from whitelist: {run_ids[mask]}")
+    mask = mask | np.isin(runsummary["runnumber"], config.always_include)
+    log.info(
+        f"Selected runs after adding from whitelist: {runsummary['runnumber'][mask]}",
+    )
 
     runs[mask].to_csv(args.output_runlist, index=False)
 
