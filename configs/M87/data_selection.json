@@ -9,5 +9,5 @@
   "time_start": "2020-01-01",
   "time_stop": "2024-01-01",
   "max_zenith_deg": 60,
-  "never_include": [8091]
+  "never_include": [8091, 13301]
 }
