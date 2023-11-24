@@ -2,5 +2,6 @@
   "production": "20230901_v0.10.4_allsky_base_prod",
   "declination": "dec_931",
   "lstchain_enviroment": "/fefs/aswg/workspace/lukas.nickel/lst-3d-analysis/workflow/envs/lstchain.yml",
-  "n_off_regions": 1
+  "n_off_regions": 1,
+  "train_size": 0.4
 }
