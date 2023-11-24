@@ -14,9 +14,6 @@ config = CONFIGS["lstchain"]
 
 plots = mc / "plots"
 
-# TODO Configurable
-train_size = 0.4
-
 
 rule mc:
     input:

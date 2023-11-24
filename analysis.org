@@ -93,6 +93,8 @@ with open(main_config_path, "r") as f:
     config_agn = json.load(f)
 PRODUCTION = config_agn["production"]
 DECLINATION = config_agn["declination"]
+train_size = config_agn["train_size"]
+
 
 # Set all configs
 # .absolute(), because I am paranoid. Thats a TODO kinda
@@ -570,10 +572,6 @@ models = Path(OUTDIRS["models"])
 config = CONFIGS["lstchain"]
 
 plots = mc / "plots"
-
-# TODO Configurable
-train_size = 0.4
-
 
 
 rule mc:
