@@ -121,7 +121,7 @@ rule calc_significance_map:
         dl5 / "{analysis}/ts_significance_map.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
-        fit=dl4 / "{analysis}/model-best-fit.yaml",
+        fit=dl5 / "{analysis}/model-best-fit.yaml",
         script=scripts / "calc_significance_map.py",
     conda:
         gammapy_env
@@ -142,7 +142,7 @@ rule calc_excess_map:
         dl5 / "{analysis}/excess_significance_map.fits.gz",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
-        fit=dl4 / "{analysis}/model-fit.yaml",
+        fit=dl5 / "{analysis}/model-fit.yaml",
         script=scripts / "calc_excess_map.py",
     conda:
         gammapy_env
