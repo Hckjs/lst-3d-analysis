@@ -23,7 +23,7 @@ def get_mask(x, le=np.inf, ge=-np.inf):
     )
 
 
-def get_moon_info(data):
+def get_moon_info(runsummary):
     location = EarthLocation.from_geodetic(
         u.Quantity(-17.89139, u.deg),
         u.Quantity(28.76139, u.deg),
@@ -282,6 +282,9 @@ if __name__ == "__main__":
         f"Selected runs after whitelist: {list(runsummary['runnumber'][mask].data)}",
     )
     runsummary["mask_final"] = mask
+    moon_alt, moon_ill = get_moon_info(runsummary)
+    runsummary["moon_altitude"] = moon_alt
+    runsummary["moon_illumination"] = moon_ill
 
     run_mask = np.in1d(run_ids, runsummary["runnumber"][mask])
     runs[run_mask].to_csv(args.output_runlist, index=False)
