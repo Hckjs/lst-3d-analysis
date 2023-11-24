@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 import pandas as pd
+from astroplan.moon import moon_illumination
 from astropy import units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_moon
 from astropy.table import Table
@@ -20,6 +21,21 @@ def get_mask(x, le=np.inf, ge=-np.inf):
         np.greater_equal(x, ge),
         np.less_equal(x, le),
     )
+
+
+def get_moon_info(data):
+    location = EarthLocation.from_geodetic(
+        u.Quantity(-17.89139, u.deg),
+        u.Quantity(28.76139, u.deg),
+        height=u.Quantity(2184, u.m),
+    )
+
+    time = Time(runsummary["time"], format="unix", scale="utc")
+    altaz = AltAz(obstime=time, location=location)
+    moon = get_moon(time, location=location).transform_to(altaz)
+
+    moon_light = moon_illumination(time)
+    return moon.alt.to_value(u.deg), moon_light
 
 
 if __name__ == "__main__":
