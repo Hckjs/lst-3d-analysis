@@ -21,7 +21,7 @@ from scriptutils.log import setup_logging
 log = logging.getLogger(__name__)
 
 
-def main():
+def main():  # noqa
     """
     Function running the entire background reconstruction procedure.
     """
@@ -48,6 +48,9 @@ def main():
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
     matching = config["run_matching"]
+    assert len(matching) == 1, "Got more than one matching key in config"
+    match_on = list(matching.keys())[0]
+    log.info(f"Selecting based on: {match_on}")
 
     # TODO Define that properly somewhere
     location = EarthLocation.of_site("Roque de los Muchachos")
@@ -87,12 +90,33 @@ def main():
     log.info(f"Selection criteria: {criteria}")
 
     for i, obs_id in enumerate(ds.obs_ids):
-        cos_zenith_diff = np.abs(
-            (criteria["cos_zenith"] - criteria["cos_zenith"][i]).values,
-        )
-        mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
-        selected_ids = criteria["obs_id"][mask].values
+        if match_on == "max_cos_zenith_diff":
+            cos_zenith_diff = np.abs(
+                (criteria["cos_zenith"] - criteria["cos_zenith"][i]).values,
+            )
+            mask = cos_zenith_diff < matching["max_cos_zenith_diff"]
+            selected_ids = criteria["obs_id"][mask].values
+        elif match_on == "zenith_bin_edges":
+            # this is a bit of a waste creating the bins and indices for every obs...
+            edges = matching["zenith_bin_edges"]
+            # Select all runs ending up in the same bin
+            idx = np.digitize(criteria["zenith"], edges)
+            mask = idx == idx[i]
+            selected_ids = criteria["obs_id"][mask].values
+        elif match_on == "cos_zenith_bin_edges":
+            # this is a bit of a waste creating the bins and indices for every obs...
+            edges = matching["cos_zenith_bin_edges"]
+            # Select all runs ending up in the same bin
+            idx = np.digitize(criteria["cos_zenith"], edges)
+            mask = idx == idx[i]
+            selected_ids = criteria["obs_id"][mask].values
+        # TODO n_zenith_bins? then I have bins with the same amount of runs...
+        else:
+            raise NotImplementedError()
+
         log.info(f"Selected to match {obs_id}: {len(selected_ids)} ({selected_ids})")
+        log.info(f"Selected to match {criteria[mask]}")
+
         # select fitting runs
         bkg_maker = ExclusionMapBackgroundMaker(
             e_reco,
