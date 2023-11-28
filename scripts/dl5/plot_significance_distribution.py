@@ -45,7 +45,7 @@ def main(lima_maps_input, exclusion_mask, output):
     ).plot_mask(ax=ax2, hatches=["\\"], colors="C8")
     figures.append(fig)
 
-    significance_map_off = significance_map * (~exclusion_mask)
+    significance_map_off = significance_map[exclusion_mask]
     significance_all = significance_map.data[np.isfinite(significance_map.data)]
     significance_off = significance_map_off.data[np.isfinite(significance_map_off.data)]
     log.info(f"{len(significance_all)} bins in total")
