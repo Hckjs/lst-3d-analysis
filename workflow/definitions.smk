@@ -35,7 +35,6 @@ CONFIGS = {
     "agn": (config_dir / "lst_agn.json").absolute(),
     "data_selection": (config_dir / "data_selection.json").absolute(),
     "irf_tool": (config_dir / "irf_tool_config.json").absolute(),
-    "bkg_model": (config_dir / "bkgmodel.yml").absolute(),
     "lstchain": (config_dir / "lstchain_config.json").absolute(),
 }
 
@@ -111,9 +110,9 @@ dl3_plot_types = ["theta2", "skymap", "counts_after_cuts", "bkg"]
 
 def MC_NODES_IRFs(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
-    out = Path(OUTDIRS["irfs"]) / "plots"
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
+    out = Path(OUTDIRS["irfs"]) / f"plots/{wildcards.analysis}"
     return [
         out / f"{irf}/{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce
     ]
@@ -136,38 +135,66 @@ def DL2_FILES(wildcards):
 def DL3_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"])
-    return [out / f"LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids]
+    return [
+        out / f"{wildcards.analysis}/LST-1.Run{run_id}.dl3.fits.gz" for run_id in ids
+    ]
 
 
 def DL3_RUN_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
-    per_run = [dl3 / f"plots/{p}/{p}_{run}.pdf" for p in dl3_plot_types for run in ids]
+    per_run = [
+        dl3 / f"{analysis}/plots/{p}/{p}_{run}.pdf"
+        for p in dl3_plot_types
+        for run in ids
+        for analysis in analyses
+    ]
     # bkg does not get stacked (yet?)
-    return per_run + [dl3 / f"plots/{p}/{p}_stacked.pdf" for p in dl3_plot_types[:-1]]
+    return per_run + [
+        dl3 / f"{analysis}/plots/{p}/{p}_stacked.pdf"
+        for p in dl3_plot_types[:-1]
+        for analysis in analyses
+        for plot in dl4_plot_types
+    ]
 
 
 def DL3_IRF_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
-    out = Path(OUTDIRS["dl3"]) / "plots"
+    out = Path(OUTDIRS["dl3"]) / f"{analysis}/plots"
     return [
-        out / f"{irf}/{irf}_{run_id}.pdf" for irf in irfs_to_produce for run_id in ids
+        out / f"{irf}/{irf}_{run_id}.pdf"
+        for irf in irfs_to_produce
+        for run_id in ids
+        for analysis in analyses
+        for plot in dl4_plot_types
     ]
 
 
 def DL3_PLOTS(wildcards):
     runs = DL3_RUN_PLOTS(wildcards)
     irfs = DL3_IRF_PLOTS(wildcards)
-    compare_plots = [dl3 / "plots/rates.pdf", dl3 / "plots/irfs.pdf"]
+    compare_plots = [
+        dl3 / f"{analysis}/plots/{x}.pdf"
+        for x in ("irfs", "rates")
+        for analysis in analyses
+    ]
     return runs + irfs + compare_plots
 
 
 def IRF_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"])
-    return [out / f"irfs_{run_id}.fits.gz" for run_id in ids]
+    return [
+        out / f"{wildcards.analysis}/irfs_{run_id}.fits.gz"
+        for run_id in ids
+        for plot in dl4_plot_types
+    ]
 
 
 def BKG_FILES(wildcards):
     ids = RUN_IDS(wildcards)
     out = Path(OUTDIRS["dl3"])
-    return [out / f"bkg_{run_id}.fits.gz" for run_id in ids]
+    return [
+        out / f"{wildcards.analysis}/bkg_{run_id}.fits.gz"
+        for run_id in ids
+        for plot in dl4_plot_types
+    ]

@@ -4,7 +4,6 @@ gammapy_env = ENVS["gammapy"]
 
 dl2 = Path(OUTDIRS["dl2"])
 dl3 = Path(OUTDIRS["dl3"])
-plots = dl3 / "plots"
 irfs = Path(OUTDIRS["irfs"])
 
 scripts = Path(SCRIPTS["dl3"])
@@ -16,29 +15,29 @@ data_selection_config = CONFIGS["data_selection"]
 
 rule dl3:
     input:
-        index=dl3 / "hdu-index.fits.gz",
-        bkg=dl3 / "bkg-exists",
+        index=[dl3 / f"{analysis}/hdu-index.fits.gz" for analysis in analyses],
+        bkg=[dl3 / f"{analysis}/bkg-exists" for analysis in analyses],
         plots=DL3_PLOTS,
 
 
 rule dl2_to_dl3:
     output:
-        run=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+        run=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
     input:
         data=dl2 / "LST-1.Run{run_id}.dl2.h5",
-        irfs=MC_NODES_IRFs,
-        config=irf_config,
+        irfs=MC_NODES_IRFs,  # changes baes on analysis
+        config=config_dir / "{analysis}/irf_tool_config.json",
     params:
         irf_pattern="irfs_*.fits.gz",
-        out=dl3,
-        in_irfs=irfs,
+        out=dl3 / "{analysis}",
+        in_irfs=irfs / "{analysis}",
     conda:
         lstchain_env
     resources:
         mem_mb=12000,
         time=30,
     log:
-        dl3 / "create_dl3_{run_id}.log",
+        dl3 / "{analysis}/create_dl3_{run_id}.log",
     shell:
         """
         lstchain_create_dl3_file  \
@@ -56,22 +55,19 @@ rule dl2_to_dl3:
 
 rule calc_count_maps:
     output:
-        dl3 / "bkg_cached_maps.pkl",
+        dl3 / "{analysis}/bkg_cached_maps.pkl",
     input:
         runs=DL3_FILES,
-        config=bkg_config,
+        config=config_dir / "{analysis}/bkgmodel.yml",
         script=scripts / "precompute_background_maps.py",
-        bkg_exclusion_regions=config_dir / "bkg_exclusion",
-    params:
-        obs_dir=dl3,
-        bkg_dir=dl3,
+        bkg_exclusion_regions=config_dir / "{analysis}/bkg_exclusion",
     conda:
         bkg_env
     resources:
         partition="long",
         time=360,
     log:
-        dl3 / "calc_count_maps.log",
+        dl3 / "{analysis}/calc_count_maps.log",
     shell:
         """python {input.script} \
         --input-runs {input.runs} \
@@ -85,22 +81,21 @@ rule calc_count_maps:
 
 rule calc_background:
     output:
-        dummy=dl3 / "bkg-exists",
+        dummy=dl3 / "{analysis}/bkg-exists",
     input:
         runs=DL3_FILES,
         config=bkg_config,
         script=scripts / "calc_background.py",
-        cached_maps=dl3 / "bkg_cached_maps.pkl",
-        bkg_exclusion_regions=config_dir / "bkg_exclusion",
+        cached_maps=dl3 / "{analysis}/bkg_cached_maps.pkl",
+        bkg_exclusion_regions=config_dir / "{analysis}/bkg_exclusion",
     params:
-        obs_dir=dl3,
-        bkg_dir=dl3,
+        bkg_dir=dl3 / "{analysis}",
     conda:
         bkg_env
     resources:
         partition="short",
     log:
-        dl3 / "calc_bkg.log",
+        dl3 / "{analysis}/calc_bkg.log",
     shell:
         """python {input.script} \
         --input-runs {input.runs} \
@@ -121,20 +116,20 @@ def DL3_INDEX_FILELIST(wildcards):
 
 rule dl3_hdu_index:
     output:
-        dl3 / "hdu-index.fits.gz",
+        dl3 / "{analysis}/hdu-index.fits.gz",
     input:
         runs=DL3_FILES,
         index_script=scripts / "create_hdu_index.py",
         link_script=scripts / "link_bkg.py",
-        dummy=dl3 / "bkg-exists",
+        dummy=dl3 / "{analysis}/bkg-exists",
     params:
-        outdir=dl3,
+        outdir=dl3 / "{analysis}",
         bkg=BKG_FILES,
         filelist=DL3_INDEX_FILELIST,
     conda:
         lstchain_env
     log:
-        dl3 / "hdu_index.log",
+        dl3 / "{analysis}/hdu_index.log",
     shell:
         """
         python {input.index_script}  \
@@ -152,42 +147,42 @@ rule dl3_hdu_index:
 
 rule plot_dl3_rates:
     output:
-        plots / "rates.pdf",
+        dl3 / "{analysis}/plots/rates.pdf",
     input:
-        index=dl3 / "hdu-index.fits.gz",
+        index=dl3 / "{analysis}/hdu-index.fits.gz",
         script=scripts / "plot_rates.py",
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     log:
-        plots / "rates.log",
+        plots / "{analysis}/rates.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.index} -o {output} --log-file {log}"
 
 
 rule plot_dl3_irf_comparison:
     output:
-        plots / "irfs.pdf",
+        dl3 / "{analysis}/plots/irfs.pdf",
     input:
-        index=dl3 / "hdu-index.fits.gz",
+        index=dl3 / "{analysis}/hdu-index.fits.gz",
         script=scripts / "plot_irf_comparison.py",
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     log:
-        plots / "irfs.log",
+        dl3 / "{analysis}/plots/irfs.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.index} -o {output} --log-file {log}"
 
 
 rule calc_theta2_per_obs:
     output:
-        dl3 / "theta2/{run_id}.fits.gz",
+        dl3 / "{analysis}/theta2/{run_id}.fits.gz",
     input:
-        data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+        data=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_theta2_per_obs.py",
         config=data_selection_config,  # this seems unnecessary
-        index=dl3 / "hdu-index.fits.gz",
+        index=dl3 / "{analysis}/hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
     resources:
@@ -195,33 +190,33 @@ rule calc_theta2_per_obs:
     conda:
         gammapy_env
     log:
-        dl3 / "theta2/calc_{run_id}.log",
+        dl3 / "{analysis}/theta2/calc_{run_id}.log",
     shell:
         "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
 
 
 def dl3_all_theta_tables(wildcards):
     ids = RUN_IDS(wildcards)
-    return [dl3 / f"theta2/{run}.fits.gz" for run in ids]
+    return [dl3 / f"{wildcards.analysis}/theta2/{run}.fits.gz" for run in ids]
 
 
 rule stack_theta2:
     output:
-        dl3 / "theta2/stacked.fits.gz",
+        dl3 / "{analysis}/theta2/stacked.fits.gz",
     input:
         runs=dl3_all_theta_tables,
         script=scripts / "stack_theta2.py",
     conda:
         gammapy_env
     log:
-        dl3 / "theta2/theta2_stacked.log",
+        dl3 / "{analysis}/theta2/theta2_stacked.log",
     shell:
         "python {input.script} -o {output} --input-files {input.runs} --log-file {log}"
 
 
 rule plot_theta:
     output:
-        plots / "theta2/theta2_{run_id}.pdf",
+        dl3 / "{analysis}/plots/theta2/theta2_{run_id}.pdf",
     input:
         data=dl3 / "theta2/{run_id}.fits.gz",
         script=scripts / "plot_theta2.py",
@@ -229,16 +224,16 @@ rule plot_theta:
     conda:
         gammapy_env
     log:
-        plots / "theta2/plot_{run_id}.log",
+        dl3 / "{analysis}/plots/theta2/plot_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule plot_background:
     output:
-        plots / "bkg/bkg_{run_id}.pdf",
+        dl3 / "{analysis}/plots/bkg/bkg_{run_id}.pdf",
     input:
-        data=dl3 / "bkg-exists",
+        data=dl3 / "{analysis}/bkg-exists",
         script=scripts / "plot_bkg.py",
         rc=MATPLOTLIBRC,
     params:
@@ -246,19 +241,19 @@ rule plot_background:
     conda:
         gammapy_env
     log:
-        dl3 / "plots/bkg/bkg_{run_id}.log",
+        dl3 / "{analysis}/plots/bkg/bkg_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {params.data} -o {output}"
 
 
 rule calc_skymap:
     output:
-        dl3 / "skymap/{run_id}.fits.gz",
+        dl3 / "{analysis}/skymap/{run_id}.fits.gz",
     input:
-        data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+        data=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
         script=scripts / "calc_skymap_gammas.py",
-        config=irf_config,
-        index=dl3 / "hdu-index.fits.gz",
+        config=config_dir / "{analysis}/irf_tool_config.json",
+        index=dl3 / "{analysis}/hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
     resources:
@@ -269,35 +264,35 @@ rule calc_skymap:
     conda:
         gammapy_env
     log:
-        dl3 / "skymap/calc_{run_id}.log",
+        dl3 / "{analysis}/skymap/calc_{run_id}.log",
     shell:
         "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log} --n-bins {params.n_bins}"
 
 
 def dl3_all_skymaps(wildcards):
     ids = RUN_IDS(wildcards)
-    return [dl3 / f"skymap/{run}.fits.gz" for run in ids]
+    return [dl3 / f"{wildcards.analysis}/skymap/{run}.fits.gz" for run in ids]
 
 
 rule stack_skymaps:
     output:
-        dl3 / "skymap/stacked.fits.gz",
+        dl3 / "{analysis}/skymap/stacked.fits.gz",
     input:
         data=dl3_all_skymaps,
         script=scripts / "stack_skymap.py",
     conda:
         gammapy_env
     log:
-        dl3 / "skymap/stack.log",
+        dl3 / "{analysis}/skymap/stack.log",
     shell:
         "python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule plot_skymap:
     output:
-        plots / "skymap/skymap_{run_id}.pdf",
+        dl3 / "{analysis}/plots/skymap/skymap_{run_id}.pdf",
     input:
-        data=dl3 / "skymap/{run_id}.fits.gz",
+        data=dl3 / "{analysis}/skymap/{run_id}.fits.gz",
         script=scripts / "plot_skymap.py",
         rc=MATPLOTLIBRC,
     conda:
@@ -305,18 +300,18 @@ rule plot_skymap:
     resources:
         time=5,
     log:
-        plots / "skymap/plot_{run_id}.log",
+        dl3 / "{analysis}/plots/skymap/plot_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule cuts_dl2_dl3:
     output:
-        dl3 / "counts_after_cuts/{run_id}.h5",
+        dl3 / "{analysis}/counts_after_cuts/{run_id}.h5",
     input:
         dl2=dl2 / "LST-1.Run{run_id}.dl2.h5",
-        irf=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
-        config=irf_config,
+        irf=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
+        config=config_dir / "{analysis}/irf_tool_config.json",
         script=scripts / "calc_counts_after_cuts.py",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
@@ -326,19 +321,19 @@ rule cuts_dl2_dl3:
     conda:
         lstchain_env
     log:
-        dl3 / "counts_after_cuts/calc_{run_id}.log",
+        dl3 / "{analysis}/counts_after_cuts/calc_{run_id}.log",
     shell:
         "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output} --log-file {log}"
 
 
 def dl3_all_counts(wildcards):
     ids = RUN_IDS(wildcards)
-    return [dl3 / f"counts_after_cuts/{run}.h5" for run in ids]
+    return [dl3 / f"{wildcards.analysis}/counts_after_cuts/{run}.h5" for run in ids]
 
 
 rule stack_cuts_dl2_dl3:
     output:
-        dl3 / "counts_after_cuts/stacked.h5",
+        dl3 / "{analysis}/counts_after_cuts/stacked.h5",
     input:
         data=dl3_all_counts,
         script=scripts / "stack_counts_after_cuts.py",
@@ -346,31 +341,31 @@ rule stack_cuts_dl2_dl3:
     conda:
         lstchain_env
     log:
-        dl3 / "counts_after_cuts/stack.log",  # TODO use this
+        dl3 / "{analysis}/counts_after_cuts/stack.log",  # TODO use this
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output}"
 
 
 rule plot_cuts_dl2_dl3:
     output:
-        plots / "counts_after_cuts/counts_after_cuts_{run_id}.pdf",
+        dl3 / "{analysis}/plots/counts_after_cuts/counts_after_cuts_{run_id}.pdf",
     input:
-        data=dl3 / "counts_after_cuts/{run_id}.h5",
+        data=dl3 / "{analysis}/counts_after_cuts/{run_id}.h5",
         script=scripts / "plot_counts_after_cuts.py",
         rc=MATPLOTLIBRC,
     conda:
         lstchain_env
     log:
-        plots / "counts_after_cuts/plot_counts_{run_id}.log",
+        dl3 / "{analysis}/dl3/counts_after_cuts/plot_counts_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} python {input.script} -i {input.data} -o {output} --log-file {log}"
 
 
 rule plot_run_irf:
     output:
-        "{somepath}/plots/{irf}/{irf}_{run_id}.pdf",
+        "{somepath}/{analysis}/plots/{irf}/{irf}_{run_id}.pdf",
     input:
-        data=dl3 / "LST-1.Run{run_id}.dl3.fits.gz",
+        data=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
         script=irf_scripts / "plot_irf_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
@@ -381,7 +376,7 @@ rule plot_run_irf:
     wildcard_constraints:
         irf="|".join(irfs_to_produce),
     log:
-        "{somepath}/plots/{irf}/{irf}_{run_id}.log",
+        "{somepath}/{analysis}/plots/{irf}/{irf}_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \

@@ -36,7 +36,7 @@ rule create_dataset:
         datasets=dl4 / "{analysis}/datasets.fits.gz",
         bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
     input:
-        data=dl3 / "hdu-index.fits.gz",
+        data=dl3 / "{analysis}/hdu-index.fits.gz",
         config=config_dir / "{analysis}/analysis.yaml",
         script=scripts / "write_datasets_3d_manual.py",
         bkg_exclusion_regions=dl4 / "{analysis}/bkg_exclusion.fits.gz",
