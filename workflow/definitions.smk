@@ -112,7 +112,7 @@ def MC_NODES_IRFs(wildcards):
     exists = Path(checkpoints.link_mc.get(**wildcards).output.dummy).exists()
     mc_nodes = Path(OUTDIRS["mc_nodes"]) / "GammaDiffuse"
     nodes = [x.name for x in mc_nodes.glob("*") if x.is_dir()]
-    out = Path(OUTDIRS["irfs"]) / f"plots/{wildcards.analysis}"
+    out = Path(OUTDIRS["irfs"]) / f"{wildcards.analysis}/plots"
     return [
         out / f"{irf}/{irf}_{node}.pdf" for node in nodes for irf in irfs_to_produce
     ]
