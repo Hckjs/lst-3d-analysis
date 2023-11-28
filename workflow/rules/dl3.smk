@@ -81,7 +81,7 @@ rule calc_background:
         dummy=dl3 / "{analysis}/bkg-exists",
     input:
         runs=DL3_FILES,
-        config=bkg_config,
+        config=config_dir / "{analysis}/bkgmodel.yml",
         script=scripts / "calc_background.py",
         cached_maps=dl3 / "{analysis}/bkg_cached_maps.pkl",
         bkg_exclusion_regions=config_dir / "{analysis}/bkg_exclusion",
