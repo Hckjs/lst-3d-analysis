@@ -45,14 +45,16 @@ def main(lima_maps_input, exclusion_mask, output):
     ).plot_mask(ax=ax2, hatches=["\\"], colors="C8")
     figures.append(fig)
 
-    significance_map_off = significance_map[exclusion_mask]
     significance_all = significance_map.data[np.isfinite(significance_map.data)]
-    significance_off = significance_map_off.data[np.isfinite(significance_map_off.data)]
     log.info(f"{len(significance_all)} bins in total")
-    log.info(f"{len(significance_off)} bins in off")
     log.info(
         f"All significances: {np.mean(significance_all)} +- {np.std(significance_all)}",
     )
+
+    significance_off = significance_map.data[
+        np.isfinite(significance_map.data) & exclusion_mask
+    ]
+    log.info(f"{len(significance_off)} bins in off")
     log.info(
         f"Off significances: {np.mean(significance_off)} +- {np.std(significance_off)}",
     )
