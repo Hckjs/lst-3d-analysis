@@ -34,12 +34,18 @@ def main(lima_maps_input, exclusion_mask, output):
     )
     ax1.set_title("Significance map")
     significance_map.plot(ax=ax1, add_cbar=True)
+    exclusion_mask.interp_to_geom(geom=significance_map.geom).reduce_over_axes(
+        func=np.logical_or,
+    ).plot_mask(ax=ax1, hatches=["\\"], colors="C8")
 
     ax2.set_title("Excess map")
     excess_map.plot(ax=ax2, add_cbar=True)
+    exclusion_mask.interp_to_geom(geom=excess_map.geom).reduce_over_axes(
+        func=np.logical_or,
+    ).plot_mask(ax=ax2, hatches=["\\"], colors="C8")
     figures.append(fig)
 
-    significance_map_off = significance_map * exclusion_mask
+    significance_map_off = significance_map * (~exclusion_mask)
     significance_all = significance_map.data[np.isfinite(significance_map.data)]
     significance_off = significance_map_off.data[np.isfinite(significance_map_off.data)]
     log.info(
