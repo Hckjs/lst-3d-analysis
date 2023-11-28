@@ -1,7 +1,6 @@
 lstchain_env = ENVS["lstchain"]
 plot_env = ENVS["gammapy"]
 irfs = Path(OUTDIRS["irfs"])
-irf_config = CONFIGS["irf_tool"]
 irf_scripts = Path(SCRIPTS["irfs"])
 dl2 = Path(OUTDIRS["dl2"])
 dl2_scripts = Path(SCRIPTS["dl2"])
@@ -12,7 +11,6 @@ config = CONFIGS["lstchain"]
 
 rule dl2:
     input:
-        irfs=MC_NODES_IRFs,
         runs=DL2_FILES,
 
 
@@ -42,10 +40,10 @@ rule dl1_to_dl2:
 
 rule irf:
     output:
-        irfs / "irfs_{node}.fits.gz",
+        irfs / "{analysis}/irfs_{node}.fits.gz",
     input:
         gammas=mc / "GammaDiffuse/dl2/{node}_test.dl2.h5",
-        config=irf_config,
+        config=config_dir / "{analysis}/irf_tool_config.json",
         edisp_script=irf_scripts / "fix_edisp.py",
     conda:
         lstchain_env
@@ -53,7 +51,7 @@ rule irf:
         mem_mb=8000,
         time=10,
     log:
-        irfs / "irfs_{node}.log",
+        irfs / "{analysis}/irfs_{node}.log",
     shell:
         """
         lstchain_create_irf_files \
@@ -67,9 +65,9 @@ rule irf:
 
 rule plot_irf:
     output:
-        "{somepath}/plots/{irf}/{irf}_{base}.pdf",
+        "{somepath}/{analysis}/plots/{irf}/{irf}_{base}.pdf",
     input:
-        data="{somepath}/irfs_{base}.fits.gz",
+        data="{somepath}/{analysis}/irfs_{base}.fits.gz",
         script=irf_scripts / "plot_irf_{irf}.py",
         rc=MATPLOTLIBRC,
     conda:
@@ -80,7 +78,7 @@ rule plot_irf:
     wildcard_constraints:
         irf="|".join(irfs_to_produce),
     log:
-        "{somepath}/plots/{irf}/{irf}_{base}.log",
+        "{somepath}/{analysis}/plots/{irf}/{irf}_{base}.log",
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \
