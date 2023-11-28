@@ -78,7 +78,9 @@ def main():  # noqa
     for obs_id in ds.obs_ids:
         obs = ds.obs(obs_id)
         decs.append(obs.pointing.get_icrs().dec.deg)
-        zens.append(obs.pointing.get_altaz(location=location, obstime=obs.tmid).alt.deg)
+        zens.append(
+            90 - obs.pointing.get_altaz(location=location, obstime=obs.tmid).alt.deg,
+        )
     criteria = pd.DataFrame(
         {
             "obs_id": ds.obs_ids,
