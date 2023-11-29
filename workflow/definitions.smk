@@ -159,9 +159,9 @@ def DL3_RUN_PLOTS(wildcards):
 
 def DL3_IRF_PLOTS(wildcards):
     ids = RUN_IDS(wildcards)
-    out = Path(OUTDIRS["dl3"]) / f"{analysis}/plots"
+    out = Path(OUTDIRS["dl3"])
     return [
-        out / f"{irf}/{irf}_{run_id}.pdf"
+        out / f"{analysis}/plots/{irf}/{irf}_{run_id}.pdf"
         for irf in irfs_to_produce
         for run_id in ids
         for analysis in analyses
