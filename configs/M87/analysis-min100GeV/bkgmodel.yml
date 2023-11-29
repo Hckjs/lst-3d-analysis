@@ -1,0 +1,16 @@
+hdu_type: "3D"
+prefix: "bkg"
+# global model for testing
+run_matching:
+  zenith_bin_edges: [0, 20, 30, 90] 
+    #  max_cos_zenith_diff: 0.1
+
+# TODO Align with other irfs?
+binning:
+  offset:
+    max: "4 deg"
+    n_bins: 20
+  energy:
+    min: "20 GeV"
+    max: "20 TeV"
+    n_bins: 15

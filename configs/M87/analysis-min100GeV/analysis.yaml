@@ -10,10 +10,11 @@ observations:
   required_irf:
     - aeff
     - edisp
+    - bkg
 
 datasets:
   type: 3d
-  stack: false
+  stack: False
   geom:
     wcs:
       skydir: { frame: icrs, lon: 187.70593076 deg, lat: 12.39112329 deg }
@@ -23,7 +24,7 @@ datasets:
     selection: { offset_max: 2.5 deg }
     axes:
       energy:
-        min: 20 GeV
+        min: 100 GeV
         max: 20 TeV
         nbins: 15
       energy_true:
@@ -33,7 +34,7 @@ datasets:
   background:
     method: "fov_background"
     parameters: { "method": "fit" }
-    exclusion: build/M87/dl4/analysis-example/bkg_exclusion.fits.gz
+    exclusion: build/M87/dl4/analysis-min100GeV/bkg_exclusion.fits.gz
   on_region:
     {
       frame: icrs,
