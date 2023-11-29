@@ -26,8 +26,8 @@ rule dl2_to_dl3:
         config=config_dir / "{analysis}/irf_tool_config.json",
     params:
         irf_pattern="irfs_*.fits.gz",
-        out=dl3 / "{analysis}",
-        in_irfs=irfs / "{analysis}",
+        out=lambda wc: dl3 / wc.get("analysis"),
+        in_irfs=lambda wc: irfs / wc.get("analysis"),
     conda:
         lstchain_env
     resources:
@@ -86,7 +86,7 @@ rule calc_background:
         cached_maps=dl3 / "{analysis}/bkg_cached_maps.pkl",
         bkg_exclusion_regions=config_dir / "{analysis}/bkg_exclusion",
     params:
-        bkg_dir=dl3 / "{analysis}",
+        bkg_dir=lambda wc: dl3 / wc.get("analysis"),
     conda:
         bkg_env
     resources:
@@ -120,7 +120,7 @@ rule dl3_hdu_index:
         link_script=scripts / "link_bkg.py",
         dummy=dl3 / "{analysis}/bkg-exists",
     params:
-        outdir=dl3 / "{analysis}",
+        outdir=lambda wc: dl3 / wc.get("analysis"),
         bkg=BKG_FILES,
         filelist=DL3_INDEX_FILELIST,
     conda:
