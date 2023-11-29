@@ -1166,7 +1166,7 @@ rule plot_theta:
     output:
         dl3 / "{analysis}/plots/theta2/theta2_{run_id}.pdf",
     input:
-        data=dl3 / "theta2/{run_id}.fits.gz",
+        data=dl3 / "{analysis}/theta2/{run_id}.fits.gz",
         script=scripts/"plot_theta2.py",
         rc=MATPLOTLIBRC,
     conda:
