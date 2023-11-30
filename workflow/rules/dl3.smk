@@ -256,12 +256,11 @@ rule calc_skymap:
         index=dl3 / "{analysis}/hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
-    params:
-        outdir=lambda wc: dl3 / wc.get("analysis"),
     resources:
         # mem_mb=16000,
         time=5,
     params:
+        outdir=lambda wc: dl3 / wc.get("analysis"),
         n_bins=50,
     conda:
         gammapy_env
