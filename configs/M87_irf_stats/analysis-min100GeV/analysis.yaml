@@ -3,7 +3,7 @@ general:
     level: info
 
 observations:
-  datastore: build/M87/dl3
+  datastore: build/M87/dl3/analysis-min100GeV
   obs_time:
     start: "2021-01-01"
     stop: "2023-01-01"
