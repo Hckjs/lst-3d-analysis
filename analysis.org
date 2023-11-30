@@ -1190,7 +1190,7 @@ rule plot_background:
         script=scripts / "plot_bkg.py",
         rc=MATPLOTLIBRC,
     params:
-        data=lambda wildcards: dl3 / f"bkg_{wildcards.run_id}.fits.gz",
+        data=lambda wildcards: dl3 / f"{wildcards.analysis}/bkg_{wildcards.run_id}.fits.gz",
     conda:
         gammapy_env
     log:
