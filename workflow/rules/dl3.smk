@@ -180,6 +180,8 @@ rule calc_theta2_per_obs:
         script=scripts / "calc_theta2_per_obs.py",
         config=data_selection_config,  # this seems unnecessary
         index=dl3 / "{analysis}/hdu-index.fits.gz",
+    params:
+        outdir=lambda wc: dl3 / wc.get("analysis"),
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
     resources:
@@ -189,7 +191,7 @@ rule calc_theta2_per_obs:
     log:
         dl3 / "{analysis}/theta2/calc_{run_id}.log",
     shell:
-        "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
+        "python {input.script} -i {params.outdir} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log}"
 
 
 def dl3_all_theta_tables(wildcards):
@@ -254,6 +256,8 @@ rule calc_skymap:
         index=dl3 / "{analysis}/hdu-index.fits.gz",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
+    params:
+        outdir=lambda wc: dl3 / wc.get("analysis"),
     resources:
         # mem_mb=16000,
         time=5,
@@ -264,7 +268,7 @@ rule calc_skymap:
     log:
         dl3 / "{analysis}/skymap/calc_{run_id}.log",
     shell:
-        "python {input.script} -i {dl3} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log} --n-bins {params.n_bins}"
+        "python {input.script} -i {params.outdir} -o {output} --obs-id {wildcards.run_id} --config {input.config} --log-file {log} --n-bins {params.n_bins}"
 
 
 def dl3_all_skymaps(wildcards):
