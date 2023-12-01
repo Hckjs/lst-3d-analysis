@@ -238,7 +238,8 @@ class ExclusionMapBackgroundMaker:
             self.counts_map_obs += counts_map_obs
             self.time_map_eff += times_map_eff
             self.time_map_obs += times_map_obs
-        self.alpha_map = self.time_map_eff / self.time_map_obs
+        # 0/0 is nan...
+        self.alpha_map = np.nantonum(self.time_map_eff / self.time_map_obs, nan=0.0)
         self.bg = self.get_bg_offset(self.counts_map_eff)
         self.bg_rate = self.get_bg_rate()
 
