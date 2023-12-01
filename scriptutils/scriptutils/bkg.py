@@ -224,7 +224,7 @@ class ExclusionMapBackgroundMaker:
         }
 
     def run(self, data_store, obs_ids=None, cached_maps=None):
-        print(f"running on {obs_ids}")
+        log.info(f"running on {obs_ids}")
         observations = data_store.get_observations(obs_ids, required_irf=[])
         if cached_maps is None:
             cached_maps = self.fill_all_maps(data_store, obs_ids)
