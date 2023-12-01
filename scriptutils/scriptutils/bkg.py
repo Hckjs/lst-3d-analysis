@@ -249,11 +249,14 @@ class ExclusionMapBackgroundMaker:
         bg_offset = []
         for rmi, rma in zip(rmin, rmax):
             mask = (self.offset_map >= rmi.value) & (self.offset_map < rma.value)
+            log.debug(f"Mean over {np.count_nonzero(mask)} entries")
             sum_counts = np.sum(counts_map[mask])
             solid_angle_diff = cone_solid_angle(rma) - cone_solid_angle(rmi)
             mean_alpha = np.mean(self.alpha_map[mask])
             mean_time = np.mean(self.time_map_obs)
+            log.debug(f"Means: {mean_alpha}, {mean_time}")
             counts_corrected = sum_counts / mean_alpha / solid_angle_diff / mean_time
+            log.debug(f"corrected counts: {counts_corrected} for {rmi}-{rma}")
             bg_offset.append(counts_corrected.value)
         return np.array(bg_offset) * counts_corrected.unit
 

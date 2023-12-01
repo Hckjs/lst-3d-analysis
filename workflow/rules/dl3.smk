@@ -102,6 +102,7 @@ rule calc_background:
         --cached-maps {input.cached_maps} \
         --config {input.config} \
         --log-file {log} \
+        --verbose \
         --overwrite
         """
 
