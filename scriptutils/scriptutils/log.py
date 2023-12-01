@@ -10,7 +10,7 @@ def setup_logging(logfile=None, verbose=False):
     Adapted from
     https://calmcode.io/logging/rich.html
     """
-
+    logging.captureWarnings(True)
     level = logging.INFO
     if verbose is True:
         level = logging.DEBUG
