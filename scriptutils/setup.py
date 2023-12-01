@@ -7,7 +7,7 @@ setup(
     packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[
-        "astropy",
+        "astropy<6",
         "numpy",
         "pydantic<2.0",
         "rich",

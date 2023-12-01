@@ -7,6 +7,7 @@ dependencies:
   - gammapy
   - pandas
   - rich
+  - astropy <6
   - pip:
       - ../../scriptutils
 variables:
