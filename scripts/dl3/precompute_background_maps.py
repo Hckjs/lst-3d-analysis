@@ -58,7 +58,7 @@ def main():
         nbins=fov_binning["n_bins"],
         offset_max=u.Quantity(fov_binning["max"]),
     )
-    cached_maps = bkg_maker.fill_all_maps(ds, None)
+    cached_maps = bkg_maker._fill_all_maps(ds, None)
     with open(args.output, "wb") as f:
         pickle.dump(cached_maps, f)
 
