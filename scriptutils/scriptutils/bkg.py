@@ -38,7 +38,7 @@ def cone_solid_angle_rectangular_pyramid(a, b):
     Returns
     -------
     solid_angle: astropy.units.Quantity
-        Apex angles of a retangluar pyramid.
+        Apex angles of a rectangular pyramid.
     """
     a = a.to(u.Unit("rad"))
     b = b.to(u.Unit("rad"))
@@ -56,7 +56,8 @@ class ExclusionMapBackgroundMaker:
         e_reco,
         location,
         exclusion_regions,
-        nbins=20,
+        nbins=21,
+        n_offset_bins=8,
         offset_max="1.75 deg",
     ):
         self.e_reco = e_reco
@@ -66,7 +67,7 @@ class ExclusionMapBackgroundMaker:
         self.offset = MapAxis.from_bounds(
             0,
             self.offset_max,
-            nbin=nbins,
+            nbin=n_offset_bins,
             interp="lin",
             unit="deg",
             name="offset",
@@ -95,15 +96,13 @@ class ExclusionMapBackgroundMaker:
         self.counts_map_obs = np.zeros((e_reco.nbin, nbins, nbins))
         self.time_map_obs = u.Quantity(np.zeros((nbins, nbins)), u.h)
         self.time_map_eff = u.Quantity(np.zeros((nbins, nbins)), u.h)
-        self.get_offset_map()
         self.exclusion_geom = RegionGeom.from_regions(exclusion_regions)
 
-    def get_offset_map(self):
-        """Calculate offset to pointing position for every bin."""
+        log.debug("Calculating offset map from lon and lat axes")
         lon, lat = np.meshgrid(self.lon_axis.center.value, self.lat_axis.center.value)
         self.offset_map = np.sqrt(lon**2 + lat**2)
 
-    def fill_counts(self, obs):
+    def _fill_counts(self, obs):
         # hist events in evergy energy bin
         log.info(f"Filling counts map(s) for obs {obs.obs_id}")
         # convert coordinates from Ra/Dec to Alt/Az
@@ -155,7 +154,7 @@ class ExclusionMapBackgroundMaker:
         counts_map_obs = counts_map_obs.transpose()
         return counts_map_eff, counts_map_obs
 
-    def fill_time_maps(self, obs):
+    def _fill_time_maps(self, obs):
         log.info(f"Filling time map(s) for obs {obs.obs_id}")
         # time_map
         t_binning = np.linspace(obs.tstart.value, obs.tstop.value, 30)
@@ -202,18 +201,18 @@ class ExclusionMapBackgroundMaker:
             u.h,
         )
 
-    def fill_all_maps(self, data_store, obs_ids=None):
+    def _fill_all_maps(self, data_store, obs_ids=None):
         counts_obs = {}
         times_obs = {}
         counts_eff = {}
         times_eff = {}
         observations = data_store.get_observations(obs_ids, required_irf=[])
         for obs in observations:
-            counts_map_eff, counts_map_obs = self.fill_counts(obs)
+            counts_map_eff, counts_map_obs = self._fill_counts(obs)
             counts_eff[obs.obs_id] = counts_map_eff
             counts_obs[obs.obs_id] = counts_map_obs
 
-            time_map_eff, time_map_obs = self.fill_time_maps(obs)
+            time_map_eff, time_map_obs = self._fill_time_maps(obs)
             times_eff[obs.obs_id] = time_map_eff
             times_obs[obs.obs_id] = time_map_obs
         return {
@@ -227,7 +226,7 @@ class ExclusionMapBackgroundMaker:
         log.info(f"running on {obs_ids}")
         observations = data_store.get_observations(obs_ids, required_irf=[])
         if cached_maps is None:
-            cached_maps = self.fill_all_maps(data_store, obs_ids)
+            cached_maps = self._fill_all_maps(data_store, obs_ids)
         for obs in observations:
             counts_map_eff = cached_maps["counts_eff"][obs.obs_id]
             counts_map_obs = cached_maps["counts_obs"][obs.obs_id]
@@ -240,10 +239,14 @@ class ExclusionMapBackgroundMaker:
             self.time_map_obs += times_map_obs
         # 0/0 is nan...
         self.alpha_map = np.nan_to_num(self.time_map_eff / self.time_map_obs, nan=0.0)
-        self.bg = self.get_bg_offset(self.counts_map_eff)
+        self.bg = self._get_bg_offset(self.counts_map_eff)
         self.bg_rate = self.get_bg_rate()
 
-    def get_bg_offset_1r(self, counts_map):
+    def _get_bg_offset_1r(self, counts_map):
+        """
+        For every offset bin find pixels with matching distance
+        and calculate the mean bkg rate.
+        """
         rmin = self.offset.edges.value[:-1] * self.offset.unit
         rmax = self.offset.edges.value[1:] * self.offset.unit
         bg_offset = []
@@ -255,15 +258,23 @@ class ExclusionMapBackgroundMaker:
             mean_alpha = np.mean(self.alpha_map[mask])
             mean_time = np.mean(self.time_map_obs)
             log.debug(f"Means: {mean_alpha}, {mean_time}")
+            # This is actually a rate (counts/time/angle)
             counts_corrected = sum_counts / mean_alpha / solid_angle_diff / mean_time
-            log.debug(f"corrected counts: {counts_corrected} for {rmi}-{rma}")
+            log.debug(f"counts: {counts_corrected} for {rmi}-{rma}")
+            log.debug(": ({solid_angle_diff}) {sum_counts}")
             bg_offset.append(counts_corrected.value)
         return np.array(bg_offset) * counts_corrected.unit
 
-    def get_bg_offset(self, counts_map):
-        return [self.get_bg_offset_1r(c) for c in self.counts_map_eff]
+    def _get_bg_offset(self, counts_map):
+        """
+        Create map of background rates for every bin in the time map
+        """
+        return [self._get_bg_offset_1r(c) for c in self.counts_map_eff]
 
     def get_bg_rate(self):
+        """
+        Divide rates by energy bin widths oto get the differential rate
+        """
         bg_rate = []
         background_unit = u.Unit("s-1 MeV-1 sr-1")
         for bg_r, e_width in zip(self.bg, self.e_reco.bin_width):
@@ -273,6 +284,7 @@ class ExclusionMapBackgroundMaker:
         return bg_rate
 
     def get_bg_2d(self):
+        # This uses self.bg_rate
         background_unit = u.Unit("s-1 MeV-1 sr-1")
         bg_2d = Background2D(
             axes=[self.e_reco, self.offset],
@@ -282,18 +294,28 @@ class ExclusionMapBackgroundMaker:
         return bg_2d
 
     def get_bg_3d(self):
-        bg_3d_counts = self.counts_map_eff / self.alpha_map
+        """
+        Calculate the fulld 3D bkg map.
+        This works on the maps itself, not on the
+        quantities calculated by the other get_bg functions
+        """
+        # This instead uses the counts, time and alpha maps
         bg_rate = []
         background_unit = u.Unit("s-1 MeV-1 sr-1")
+
         # calculate solid angle for each pixel
+        # Careful: This is the bin widths this time!
         lon, lat = np.meshgrid(self.lon_axis.bin_width, self.lat_axis.bin_width)
         solid_angle_pixel = cone_solid_angle_rectangular_pyramid(lon, lat)
+
         # go through every energy bin
+        bg_3d_counts = self.counts_map_eff / self.alpha_map
         for bg_r, e_width in zip(bg_3d_counts, self.e_reco.bin_width):
             a = bg_r / e_width / self.time_map_obs / solid_angle_pixel
-            a[np.isnan(a)] = 0
-            a = a.to(background_unit)
-            bg_rate.append(a)
+            # There could be nans if divided by 0. We dont want them
+            a = np.nan_to_num(a, nan=0.0)
+            bg_rate.append(a.to(background_unit))
+
         bg_3d = Background3D(
             axes=[self.e_reco, self.lon_axis, self.lat_axis],
             data=bg_rate,
