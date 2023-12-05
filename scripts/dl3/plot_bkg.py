@@ -90,7 +90,21 @@ def plot_at_energy(bkg, energy=None, add_cbar=True, ncols=3, figsize=None, **kwa
     if isinstance(bkg, Background3D):
         return plot3d_at_energy(bkg, energy, add_cbar, ncols, figsize, **kwargs)
     else:
-        return plot3d_at_energy(bkg.to_3d(), energy, add_cbar, ncols, figsize, **kwargs)
+        # Avoid https://github.com/gammapy/gammapy/issues/4950
+        # Its only some plots, no need to kill the whole workflow
+        try:
+            fig = plot3d_at_energy(
+                bkg.to_3d(),
+                energy,
+                add_cbar,
+                ncols,
+                figsize,
+                **kwargs,
+            )
+        except ValueError as e:
+            log.error(e)
+            fig = plt.figure()
+        return fig
 
 
 def main(input_path, output):
