@@ -238,7 +238,12 @@ class ExclusionMapBackgroundMaker:
             self.time_map_eff += times_map_eff
             self.time_map_obs += times_map_obs
         # 0/0 is nan...
-        self.alpha_map = np.nan_to_num(self.time_map_eff / self.time_map_obs, nan=0.0)
+        self.alpha_map = np.nan_to_num(
+            self.time_map_eff / self.time_map_obs,
+            nan=0.0,
+            posinf=0,
+            neginf=0,
+        )
         self.bg = self._get_bg_offset(self.counts_map_eff)
         self.bg_rate = self.get_bg_rate()
 
@@ -255,11 +260,13 @@ class ExclusionMapBackgroundMaker:
             log.debug(f"Mean over {np.count_nonzero(mask)} entries")
             sum_counts = np.sum(counts_map[mask])
             solid_angle_diff = cone_solid_angle(rma) - cone_solid_angle(rmi)
+            # Kept for debugging
             mean_alpha = np.mean(self.alpha_map[mask])
-            mean_time = np.mean(self.time_map_obs)
-            log.debug(f"Means: {mean_alpha}, {mean_time}")
+            mean_time = np.mean(self.time_map)
+            mean_time_eff = np.mean(self.time_map_eff)
+            log.debug(f"Means: {mean_alpha}, {mean_time}, {mean_time_eff}")
             # This is actually a rate (counts/time/angle)
-            counts_corrected = sum_counts / mean_alpha / solid_angle_diff / mean_time
+            counts_corrected = sum_counts / mean_time_eff / solid_angle_diff
             log.debug(f"counts: {counts_corrected} for {rmi}-{rma}")
             log.debug(": ({solid_angle_diff}) {sum_counts}")
             bg_offset.append(counts_corrected.value)
@@ -307,15 +314,19 @@ class ExclusionMapBackgroundMaker:
         # Careful: This is the bin widths this time!
         lon, lat = np.meshgrid(self.lon_axis.bin_width, self.lat_axis.bin_width)
         solid_angle_pixel = cone_solid_angle_rectangular_pyramid(lon, lat)
-
-        # go through every energy bin
-        bg_3d_counts = self.counts_map_eff / self.alpha_map
-        for bg_r, e_width in zip(bg_3d_counts, self.e_reco.bin_width):
-            a = bg_r / e_width / self.time_map_obs / solid_angle_pixel
-            # There could be nans if divided by 0. We dont want them
-            a = np.nan_to_num(a, nan=0.0)
-            bg_rate.append(a.to(background_unit))
-
+        bg_rate = (
+            self.counts_map_eff
+            / self.e_reco.bin_width.reshape(len(self.e_reco.bin_width), 1, 1)
+            / solid_angle_pixel
+            / self.time_map_eff
+        )
+        # nans and infs come from division by zero time, so they should be zero
+        bg_rate = np.nan_to_num(
+            bg_rate.to(background_unit),
+            nan=0.0,
+            posinf=0,
+            neginf=0,
+        )
         bg_3d = Background3D(
             axes=[self.e_reco, self.lon_axis, self.lat_axis],
             data=bg_rate,
