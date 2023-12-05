@@ -262,7 +262,7 @@ class ExclusionMapBackgroundMaker:
             solid_angle_diff = cone_solid_angle(rma) - cone_solid_angle(rmi)
             # Kept for debugging
             mean_alpha = np.mean(self.alpha_map[mask])
-            mean_time = np.mean(self.time_map)
+            mean_time = np.mean(self.time_map_obs)
             mean_time_eff = np.mean(self.time_map_eff)
             log.debug(f"Means: {mean_alpha}, {mean_time}, {mean_time_eff}")
             # This is actually a rate (counts/time/angle)
@@ -321,15 +321,10 @@ class ExclusionMapBackgroundMaker:
             / self.time_map_eff
         )
         # nans and infs come from division by zero time, so they should be zero
-        bg_rate = np.nan_to_num(
-            bg_rate.to(background_unit),
-            nan=0.0,
-            posinf=0,
-            neginf=0,
-        )
+        bg_rate = np.nan_to_num(bg_rate, nan=0.0, posinf=0, neginf=0)
         bg_3d = Background3D(
             axes=[self.e_reco, self.lon_axis, self.lat_axis],
-            data=bg_rate,
+            data=bg_rate.to(background_unit),
             unit=background_unit,
             meta={"FOVALIGN": "ALTAZ"},
         )
