@@ -1,0 +1,62 @@
+general:
+  log:
+    level: info
+
+observations:
+  datastore: build/M87/dl3/analysis-baseline-no-exclusion
+  obs_time:
+    start: "2021-01-01"
+    stop: "2023-01-01"
+  required_irf:
+    - aeff
+    - edisp
+    - bkg
+
+datasets:
+  type: 3d
+  stack: False
+  geom:
+    wcs:
+      skydir: { frame: icrs, lon: 187.70593076 deg, lat: 12.39112329 deg }
+      binsize: 0.02 deg
+      width: { width: 2.0 deg, height: 2.0 deg }
+      binsize_irf: 0.2 deg
+    selection: { offset_max: 2.5 deg }
+    axes:
+      energy:
+        min: 50 GeV
+        max: 20 TeV
+        nbins: 15
+      energy_true:
+        min: 20 GeV
+        max: 20 TeV
+        nbins: 9
+  background:
+    method: "fov_background"
+    parameters: { "method": "fit" }
+    exclusion: build/M87/dl4/analysis-baseline-no-exclusion/bkg_exclusion.fits.gz
+  on_region:
+    {
+      frame: icrs,
+      lon: 187.70593076 deg,
+      lat: 12.39112329 deg,
+      radius: 0.2 deg,
+    }
+  containment_correction: false
+  safe_mask:
+    methods:
+      - "aeff-default"
+      - "offset-max"
+    parameters:
+      offset_max: "1.5 deg"
+
+fit:
+  fit_range: { min: 20 GeV, max: 10 TeV }
+
+flux_points:
+  energy: { min: 20 GeV, max: 10 TeV, nbins: 20 }
+  source: M87
+
+light_curve:
+  energy_edges: { min: 100 GeV, max: 10 TeV, nbins: 1 }
+  source: M87
