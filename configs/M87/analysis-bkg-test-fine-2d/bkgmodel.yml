@@ -11,6 +11,7 @@ binning:
   offset:
     max: "2 deg"
     n_bins: 80
+    n_offset_bins: 40
   energy:
     min: "20 GeV"
     max: "20 TeV"
