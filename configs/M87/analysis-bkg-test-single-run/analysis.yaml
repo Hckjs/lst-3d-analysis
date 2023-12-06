@@ -3,7 +3,7 @@ general:
     level: info
 
 observations:
-  datastore: build/M87/dl3/analysis-bkg-test-fine-2d
+  datastore: build/M87/dl3/analysis-bkg-test-single-run
   obs_ids:
     - 4637
   obs_time:
@@ -36,7 +36,7 @@ datasets:
   background:
     method: "fov_background"
     parameters: { "method": "fit" }
-    exclusion: build/M87/dl4/analysis-bkg-test-fine2d/bkg_exclusion.fits.gz
+    exclusion: build/M87/dl4/analysis-bkg-test-single-run/bkg_exclusion.fits.gz
   on_region:
     {
       frame: icrs,

@@ -2,9 +2,7 @@ hdu_type: "3D"
 prefix: "bkg"
 # global model for testing
 run_matching:
-  zenith_bin_edges:
-    [0, 20, 30, 90]
-    #  max_cos_zenith_diff: 0.1
+  max_cos_zenith_diff: 0.0
 
 # TODO Align with other irfs?
 binning:

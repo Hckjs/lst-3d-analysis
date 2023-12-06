@@ -1,4 +1,4 @@
-hdu_type: "3D"
+hdu_type: "2D"
 prefix: "bkg"
 # global model for testing
 run_matching:

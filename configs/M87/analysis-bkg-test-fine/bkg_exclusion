@@ -1,4 +1,4 @@
 # Region file format: DS9 astropy/regions
 global include=1
 icrs
-circle(187.70593076,12.39112329,0.38000000)
+circle(187.70593076,12.39112329,0.32000000)

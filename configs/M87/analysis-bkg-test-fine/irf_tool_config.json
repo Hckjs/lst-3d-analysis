@@ -2,7 +2,7 @@
   "DL3Cuts": {
     "max_gh_cut": 0.8,
     "min_gh_cut": 0.3,
-    "gh_efficiency": 0.7
+    "gh_efficiency": 0.9
   },
   "IRFFITSWriter": {
     "energy_dependent_theta": false,
