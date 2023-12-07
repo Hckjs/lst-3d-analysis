@@ -3,7 +3,7 @@ prefix: "bkg"
 # global model for testing
 run_matching:
   zenith_bin_edges:
-    [0, 20, 30, 90]
+    [0, 30, 90]
     #  max_cos_zenith_diff: 0.1
 
 # TODO Align with other irfs?
