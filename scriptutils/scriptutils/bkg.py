@@ -58,11 +58,15 @@ class ExclusionMapBackgroundMaker:
         exclusion_regions,
         nbins=21,
         n_offset_bins=8,
+        n_subsample=3,
+        n_time_bins=5,
         offset_max="1.75 deg",
     ):
         self.e_reco = e_reco
         self.location = location
         self.nbins = nbins
+        self.n_subsample = n_subsample
+        self.n_time_bins = n_time_bins
         self.offset_max = Angle(offset_max)
         self.offset = MapAxis.from_bounds(
             0,
@@ -88,7 +92,22 @@ class ExclusionMapBackgroundMaker:
             unit="deg",
             name="fov_lat",
         )
-
+        self.lon_axis_fine = MapAxis.from_bounds(
+            -self.offset_max.value,
+            self.offset_max.value,
+            self.nbins * n_subsample,
+            interp="lin",
+            unit="deg",
+            name="fov_lon_fine",
+        )
+        self.lat_axis_fine = MapAxis.from_bounds(
+            -self.offset_max.value,
+            self.offset_max.value,
+            self.nbins * n_subsample,
+            interp="lin",
+            unit="deg",
+            name="fov_lat_fine",
+        )
         log.debug(f"Creating bkg models with e binning {self.e_reco}")
         log.debug(f"Creating bkg models with lon axis: {self.lon_axis}")
         log.debug(f"Creating bkg models with lat axis: {self.lat_axis}")
@@ -157,7 +176,7 @@ class ExclusionMapBackgroundMaker:
     def _fill_time_maps(self, obs):
         log.info(f"Filling time map(s) for obs {obs.obs_id}")
         # time_map
-        t_binning = np.linspace(obs.tstart.value, obs.tstop.value, 30)
+        t_binning = np.linspace(obs.tstart.value, obs.tstop.value, self.n_time_bins)
         t_binning = Time(t_binning, format="mjd")
         t_delta = np.diff(t_binning)
         t_center = t_binning[:-1] + 0.5 * t_delta
@@ -173,9 +192,10 @@ class ExclusionMapBackgroundMaker:
             frame = AltAz(obstime=t_c, location=self.location)
             pointing_position = obs.pointing_radec.transform_to(frame)
             pointing_positions.append(pointing_position)
+            # Use fine axis to account for partial overlap
             az, alt = fov_to_sky(
-                self.lon_axis.center,
-                self.lat_axis.center,
+                self.lon_axis_fine.center,
+                self.lat_axis_fine.center,
                 pointing_position.az,
                 pointing_position.alt,
             )
@@ -184,7 +204,12 @@ class ExclusionMapBackgroundMaker:
             # Exclusion mask needs to be constructed for each time bin, because
             # the source will move in the FoV
             coord_radec = SkyCoord(az, alt, frame=frame).transform_to("icrs")
-            exclusion_mask = ~self.exclusion_geom.contains(coord_radec)
+            # Need some reshape magic to get the correct form
+            ex = ~self.exclusion_geom.contains(coord_radec)
+            ex = ex.reshape(ex.shape[0], self.nbins, self.n_subsample).mean(axis=-1)
+            exclusion_weight = (
+                ex.T.reshape(self.nbins, self.nbins, self.n_subsample).mean(axis=-1)
+            ).T
 
             # We have a n-deg square, so some pixels
             # are more than n-deg away from the center
@@ -195,7 +220,9 @@ class ExclusionMapBackgroundMaker:
             )
             # fill observatione time 2d arays
             observation_time_obs[mask_fov] += t_d.to(u.Unit(u.h)).value
-            observation_time_eff[exclusion_mask & mask_fov] += t_d.to(u.Unit(u.h)).value
+            observation_time_eff += (
+                t_d.to(u.Unit(u.h)).value * mask_fov * exclusion_weight
+            )
         return u.Quantity(observation_time_eff, u.h), u.Quantity(
             observation_time_obs,
             u.h,
