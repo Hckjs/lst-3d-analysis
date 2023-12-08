@@ -1,0 +1,12 @@
+mass_range:
+  min: "100 GeV"
+  max: "100 TeV"
+  n_values: 10
+
+profile:
+  name: "NFW"
+  distance: "16 Mpc"
+  # How to handle the units of params?
+  # For now assume solar masses and kpc
+  params:
+    idata_path: "dm_halo_params.cdf"
