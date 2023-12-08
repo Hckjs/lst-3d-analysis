@@ -1,9 +1,9 @@
 import logging
+import pickle
 from argparse import ArgumentParser
 
 import matplotlib
 import numpy as np
-from gammapy.estimators import FluxMaps
 from gammapy.maps import WcsNDMap
 from matplotlib import pyplot as plt
 from scipy.stats import norm
@@ -21,77 +21,81 @@ else:
 # TODO Lots of hardcoded values here
 def main(lima_maps_input, exclusion_mask, output):
     figures = []
-    lima_maps = FluxMaps.read(lima_maps_input)
+    with open(lima_maps_input, "rb") as f:
+        maps = pickle.load(f)
+
     # this might have multiple energy bins and then the shapes will not match
     # There is no reason why the map would be energy dependent.
     # We could also take a slice instead
     exclusion_mask = WcsNDMap.read(exclusion_mask).sum_over_axes()
 
-    significance_map = lima_maps["sqrt_ts"]
-    excess_map = lima_maps["npred_excess"]
+    for name, lima_maps in maps.items():
+        significance_map = lima_maps["sqrt_ts"]
+        excess_map = lima_maps["npred_excess"]
 
-    fig, (ax1, ax2) = plt.subplots(
-        subplot_kw={"projection": lima_maps.geom.wcs},
-        ncols=2,
-    )
-    ax1.set_title("Significance map")
-    significance_map.plot(ax=ax1, add_cbar=True)
-    exclusion_mask.interp_to_geom(geom=significance_map.geom).reduce_over_axes(
-        func=np.logical_or,
-    ).plot_mask(ax=ax1, hatches=["\\"], colors="C8")
+        fig, (ax1, ax2) = plt.subplots(
+            subplot_kw={"projection": lima_maps.geom.wcs},
+            ncols=2,
+        )
+        ax1.set_title(f"Significance map ({name})")
+        significance_map.plot(ax=ax1, add_cbar=True)
+        exclusion_mask.interp_to_geom(geom=significance_map.geom).reduce_over_axes(
+            func=np.logical_or,
+        ).plot_mask(ax=ax1, hatches=["\\"], colors="C8")
 
-    ax2.set_title("Excess map")
-    excess_map.plot(ax=ax2, add_cbar=True)
-    exclusion_mask.interp_to_geom(geom=excess_map.geom).reduce_over_axes(
-        func=np.logical_or,
-    ).plot_mask(ax=ax2, hatches=["\\"], colors="C8")
-    figures.append(fig)
+        ax2.set_title("Excess map")
+        excess_map.plot(ax=ax2, add_cbar=True)
+        exclusion_mask.interp_to_geom(geom=excess_map.geom).reduce_over_axes(
+            func=np.logical_or,
+        ).plot_mask(ax=ax2, hatches=["\\"], colors="C8")
+        figures.append(fig)
 
-    significance_all = significance_map.data[np.isfinite(significance_map.data)]
-    log.info(f"{len(significance_all)} bins in total")
-    log.info(
-        f"All significances: {np.mean(significance_all)} +- {np.std(significance_all)}",
-    )
+        significance_all = significance_map.data[np.isfinite(significance_map.data)]
+        log.info(f"{len(significance_all)} bins in total")
+        log.info(
+            f"All: {np.mean(significance_all)} +- {np.std(significance_all)}",
+        )
 
-    significance_off = significance_map.data[
-        np.isfinite(significance_map.data) & exclusion_mask.data.astype(bool)
-    ]
-    log.info(f"{len(significance_off)} bins in off")
-    log.info(
-        f"Off significances: {np.mean(significance_off)} +- {np.std(significance_off)}",
-    )
+        significance_off = significance_map.data[
+            np.isfinite(significance_map.data) & exclusion_mask.data.astype(bool)
+        ]
+        log.info(f"{len(significance_off)} bins in off")
+        log.info(
+            f"Off: {np.mean(significance_off)} +- {np.std(significance_off)}",
+        )
 
-    x = np.linspace(-5, 5, 50)
-    fig, ax = plt.subplots()
-    ax.hist(
-        significance_all,
-        density=True,
-        alpha=0.5,
-        color="red",
-        label="all bins",
-        bins=x,
-    )
+        x = np.linspace(-5, 5, 50)
+        fig, ax = plt.subplots()
+        ax.hist(
+            significance_all,
+            density=True,
+            alpha=0.5,
+            color="red",
+            label="all bins",
+            bins=x,
+        )
 
-    ax.hist(
-        significance_off,
-        density=True,
-        alpha=0.5,
-        color="blue",
-        label="off bins",
-        bins=x,
-    )
+        ax.hist(
+            significance_off,
+            density=True,
+            alpha=0.5,
+            color="blue",
+            label="off bins",
+            bins=x,
+        )
 
-    # Now, fit the off distribution with a Gaussian
-    mu, std = norm.fit(significance_off)
-    p = norm.pdf(x, mu, std)
-    ax.plot(x, p, lw=2, color="black", label=f"mu={mu:.2f}\nstd={std:.2f}")
-    ax.legend()
-    ax.set_xlabel("Significance")
-    ax.set_yscale("log")
-    ax.set_ylim(1e-5, 1)
-    # xmin, xmax = np.min(significance_all), np.max(significance_all)
-    #    ax.set_xlim(xmin, xmax)
-    figures.append(fig)
+        # Now, fit the off distribution with a Gaussian
+        mu, std = norm.fit(significance_off)
+        p = norm.pdf(x, mu, std)
+        ax.plot(x, p, lw=2, color="black", label=f"mu={mu:.2f}\nstd={std:.2f}")
+        ax.legend()
+        ax.set_xlabel("Significance")
+        ax.set_yscale("log")
+        ax.set_ylim(1e-5, 1)
+        ax.set_title(f"Significance ({name})")
+        # xmin, xmax = np.min(significance_all), np.max(significance_all)
+        #    ax.set_xlim(xmin, xmax)
+        figures.append(fig)
 
     if output is None:
         plt.show()
