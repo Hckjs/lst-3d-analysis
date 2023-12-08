@@ -60,8 +60,8 @@ def counts(data):
             norms_map = RegionNDMap(geom, norms.to_value(u.one))
             (bkg_spectrum * norms_map).plot(label="bkg fit", ax=ax)
             ax_norms = ax.twinx()
-            e = bkg_norm_model.spectral_model.energy
-            n = bkg_norm_model.spectral_model.norms
+            e = bkg_norm_model.energy
+            n = bkg_norm_model.norms
             ax_norms.plot(e, n, color="k", ls="--", marker=".")
 
         elif isinstance(bkg_norm_model, PowerLawNormSpectralModel):
