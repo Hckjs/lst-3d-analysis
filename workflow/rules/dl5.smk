@@ -118,7 +118,7 @@ rule plot_residual_map:
 
 rule calc_significance_map:
     output:
-        dl5 / "{analysis}/ts_significance_map.fits.gz",
+        dl5 / "{analysis}/ts_significance_map.pkl",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
         fit=dl5 / "{analysis}/model-best-fit.yaml",
@@ -139,7 +139,7 @@ rule calc_significance_map:
 
 rule calc_excess_map:
     output:
-        dl5 / "{analysis}/excess_significance_map.fits.gz",
+        dl5 / "{analysis}/excess_significance_map.pkl",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
         fit=dl5 / "{analysis}/model-best-fit.yaml",
@@ -162,7 +162,7 @@ rule plot_significance_map:
     output:
         dl5 / "{analysis}/plots/{significance}_map.pdf",
     input:
-        lima_map=dl5 / "{analysis}/{significance}_map.fits.gz",
+        lima_map=dl5 / "{analysis}/{significance}_map.pkl",
         script=scripts / "plot_significance_map.py",
         rc=MATPLOTLIBRC,
     conda:

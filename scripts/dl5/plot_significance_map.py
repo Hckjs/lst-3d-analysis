@@ -1,9 +1,9 @@
 import logging
+import pickle
 from argparse import ArgumentParser
 
 import matplotlib
 import matplotlib.pyplot as plt
-from gammapy.estimators import FluxMaps
 
 from scriptutils.log import setup_logging
 
@@ -16,38 +16,26 @@ log = logging.getLogger(__name__)
 
 
 def main(flux_maps, output):
-    ts_maps = FluxMaps.read(flux_maps)
-    figures = []
+    with open(flux_maps, "rb") as f:
+        maps = pickle.load(f)
 
-    fig = plt.figure()
-    ax = ts_maps.flux.plot(add_cbar=True, fig=fig)
-    ax.set_title("Flux")
-    figures.append(fig)
+    for name, ts_maps in maps.items():
+        figures = []
 
-    fig = plt.figure()
-    ax = ts_maps.flux_err.plot(add_cbar=True, fig=fig)
-    ax.set_title("Flux Error")
-    figures.append(fig)
+        fig = plt.figure()
+        ax = ts_maps.flux.plot(add_cbar=True, fig=fig)
+        ax.set_title(f"Flux ({name})")
+        figures.append(fig)
 
-    fig = plt.figure()
-    ax = ts_maps.flux_ul.plot(add_cbar=True, fig=fig)
-    ax.set_title("Flux UL")
-    figures.append(fig)
+        fig = plt.figure()
+        ax = ts_maps.sqrt_ts.plot(add_cbar=True, fig=fig)
+        ax.set_title(f"Sqrt(TS) ({name})")
+        figures.append(fig)
 
-    fig = plt.figure()
-    ax = ts_maps.sqrt_ts.plot(add_cbar=True, fig=fig)
-    ax.set_title("Sqrt(TS)")
-    figures.append(fig)
-
-    fig = plt.figure()
-    ax = ts_maps.npred_excess.plot(add_cbar=True, fig=fig)
-    ax.set_title("N Pred Excess")
-    figures.append(fig)
-
-    fig = plt.figure()
-    ax = ts_maps.npred_excess_ul.plot(add_cbar=True, fig=fig)
-    ax.set_title("N Pred Excess UL")
-    figures.append(fig)
+        fig = plt.figure()
+        ax = ts_maps.npred_excess.plot(add_cbar=True, fig=fig)
+        ax.set_title(f"N Pred Excess ({name})")
+        figures.append(fig)
 
     if output is None:
         plt.show()

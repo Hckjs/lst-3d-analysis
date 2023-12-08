@@ -1,4 +1,5 @@
 import logging
+import pickle
 from argparse import ArgumentParser
 
 from gammapy.estimators import TSMapEstimator
@@ -16,9 +17,6 @@ log = logging.getLogger(__name__)
 
 def main(datasets_path, models_path, output):
     datasets = load_datasets_with_models(datasets_path, models_path)
-    # TS map estimator only works on a single dataset (?)
-    stacked = datasets.stack_reduce()
-
     # TODO make the smoothing configurable
     # Understand how exactly this works
     # Do I need the best fit models attached? fit bkg? No, right?
@@ -32,8 +30,17 @@ def main(datasets_path, models_path, output):
         kernel_width="0.2 deg",
         selection_optional="all",
     )
+    maps = {}
+    # Stacked
+    stacked = datasets.stack_reduce()
     ts_maps = estimator.run(stacked)
-    ts_maps.write(output, overwrite=True)
+    maps["stacked"] = ts_maps
+    for d in datasets:
+        ts_maps = estimator.run(d)
+        maps[d.name] = ts_maps
+
+    with open(output, "wb") as f:
+        pickle.dump(maps, f)
 
 
 if __name__ == "__main__":
