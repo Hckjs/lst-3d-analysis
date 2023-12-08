@@ -2,6 +2,8 @@ lstchain_env = ENVS["lstchain"]
 plot_env = ENVS["gammapy"]
 irfs = Path(OUTDIRS["irfs"])
 irf_scripts = Path(SCRIPTS["irfs"])
+mc = Path(OUTDIRS["mc"])
+dl1 = Path(OUTDIRS["dl1"])
 dl2 = Path(OUTDIRS["dl2"])
 dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
@@ -18,9 +20,12 @@ rule dl1_to_dl2:
     output:
         Path("{somepath}/dl2") / "{base}.dl2.h5",
     input:
-        data=Path("{somepath}/dl1") / "{base}.dl1.h5",
         config=config,
         models=models_to_train,
+        dl1_exists=dl1 / "runs-linked.txt",
+        mc_exists=mc / "mc-linked.txt",
+    params:
+        data=Path("{somepath}/dl1") / "{base}.dl1.h5",
     conda:
         lstchain_env
     resources:
@@ -31,7 +36,7 @@ rule dl1_to_dl2:
     shell:
         """
         lstchain_dl1_to_dl2  \
-            --input-file {input.data}  \
+            --input-file {params.data}  \
             --output-dir $(dirname {output}) \
             --path-models {models}  \
             --config {input.config}
