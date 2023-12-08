@@ -1806,7 +1806,7 @@ rule gen_uls:
         dm / "{analysis}/uls_{channel}.fits.gz"
     input:
         dataset = dl4 / "{analysis}/datasets.fits.gz",
-        dm_config = configs / "halo_profile.yaml",
+        dm_config = configs / "dm_config.yaml",
         script=scripts/"fit_uls.py",
         models_fit=dl4/"{analysis}/bkg_fit.yaml",
     conda:
@@ -1817,7 +1817,7 @@ rule gen_uls:
         """
         python {input.script} \
         --dataset {input.dataset} \
-        --config {input.dm_config} \
+        --config-path {input.dm_config} \
         --models-path {input.models_fit} \
         --output {output} \
         --log-file {log} \
