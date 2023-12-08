@@ -59,6 +59,11 @@ def counts(data):
             norms = bkg_norm_model.evaluate(energy_axis)
             norms_map = RegionNDMap(geom, norms.to_value(u.one))
             (bkg_spectrum * norms_map).plot(label="bkg fit", ax=ax)
+            ax_norms = ax.twinx()
+            e = bkg_norm_model.spectral_model.energy
+            n = bkg_norm_model.spectral_model.norms
+            ax_norms.plot(e, n, color="k", ls="--", marker=".")
+
         elif isinstance(bkg_norm_model, PowerLawNormSpectralModel):
             log.info("Plotting global norm")
             norm = bkg_norm_model.parameters["norm"].value
@@ -71,7 +76,9 @@ def counts(data):
 # maybe move to utils at some point
 def list_models(dataset):
     if dataset.models:
-        log.info(f"Dataset {dataset.name} has the following models: {dataset.models.names}")
+        log.info(
+            f"Dataset {dataset.name} has the following models: {dataset.models.names}",
+        )
     else:
         log.info(f"Dataset {dataset.name} has no models")
 
@@ -79,7 +86,7 @@ def list_models(dataset):
 def main(config, datasets_path, models_path, output):
     config = AnalysisConfig.read(config)
 
-    analysis = Analysis(config)
+    Analysis(config)
     datasets = load_datasets_with_models(datasets_path, models_path)
 
     exclusion_mask = WcsNDMap.read(config.datasets.background.exclusion)
