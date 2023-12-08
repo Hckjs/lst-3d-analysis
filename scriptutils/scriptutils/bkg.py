@@ -236,10 +236,18 @@ class ExclusionMapBackgroundMaker:
         observations = data_store.get_observations(obs_ids, required_irf=[])
         for obs in observations:
             counts_map_eff, counts_map_obs = self._fill_counts(obs)
+            time_map_eff, time_map_obs = self._fill_time_maps(obs)
+            alpha_obs = time_map_eff / time_map_obs
+            # remove pixels with less than half the nominal observation time
+            # this avoids inflating the counts there
+            threshold = 0.5
+            mask_low_exposure = alpha_obs < threshold
+            time_map_eff[mask_low_exposure] = 0
+            counts_map_eff[:, mask_low_exposure] = 0
+
             counts_eff[obs.obs_id] = counts_map_eff
             counts_obs[obs.obs_id] = counts_map_obs
 
-            time_map_eff, time_map_obs = self._fill_time_maps(obs)
             times_eff[obs.obs_id] = time_map_eff
             times_obs[obs.obs_id] = time_map_obs
         return {
