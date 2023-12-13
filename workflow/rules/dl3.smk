@@ -72,6 +72,7 @@ rule calc_count_maps:
         --output {output} \
         --config {input.config} \
         --log-file {log} \
+        --verbose \
         --overwrite
         """
 
