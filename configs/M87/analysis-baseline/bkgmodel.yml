@@ -9,8 +9,8 @@ run_matching:
 # TODO Align with other irfs?
 binning:
   offset:
-    max: "2.5 deg"
-    n_bins: 15
+    max: "4 deg"
+    n_bins: 50
   energy:
     min: "20 GeV"
     max: "20 TeV"
