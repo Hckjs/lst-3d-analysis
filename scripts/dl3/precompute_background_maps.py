@@ -3,20 +3,21 @@
 import argparse
 import logging
 import pickle
-
+import warnings
 import astropy.units as u
 import yaml
 from astropy.coordinates import EarthLocation
 from astropy.coordinates.erfa_astrom import ErfaAstromInterpolator, erfa_astrom
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis
+from gammapy.utils.deprecation import GammapyDeprecationWarning
 from regions import Regions
 
 from scriptutils.bkg import ExclusionMapBackgroundMaker
 from scriptutils.log import setup_logging
 
 log = logging.getLogger(__name__)
-
+warnings.filterwarnings("ignore", category=GammapyDeprecationWarning)
 
 def main():
     """
@@ -56,6 +57,7 @@ def main():
         location,
         exclusion_regions=exclusion_regions,
         nbins=fov_binning["n_bins"],
+        n_offset_bins=fov_binning.get("n_offset_bins", 8),
         offset_max=u.Quantity(fov_binning["max"]),
     )
     cached_maps = bkg_maker._fill_all_maps(ds, None)

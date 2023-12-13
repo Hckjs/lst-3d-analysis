@@ -125,6 +125,7 @@ def main():  # noqa
             location,
             exclusion_regions=exclusion_regions,
             nbins=fov_binning["n_bins"],
+            n_offset_bins=fov_binning.get("n_offset_bins", 8),
             offset_max=u.Quantity(fov_binning["max"]),
         )
         bkg_maker.run(ds, selected_ids, cached_maps=cached_maps)

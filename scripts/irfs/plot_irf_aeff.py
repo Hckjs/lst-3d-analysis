@@ -46,6 +46,7 @@ def main(input_path, output, log_file, verbose):
 
     ax.set_xscale("log")
     ax.set_yscale("log")
+    ax.legend()
 
     fig.savefig(output)
 
