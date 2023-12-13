@@ -67,11 +67,12 @@ class ExclusionMapBackgroundMaker:
         self.nbins = nbins
         self.n_subsample = n_subsample
         self.n_time_bins = n_time_bins
+        self.n_offset_bins = n_offset_bins
         self.offset_max = Angle(offset_max)
         self.offset = MapAxis.from_bounds(
             0,
             self.offset_max,
-            nbin=n_offset_bins,
+            nbin=self.n_offset_bins,
             interp="lin",
             unit="deg",
             name="offset",
@@ -111,6 +112,7 @@ class ExclusionMapBackgroundMaker:
         log.debug(f"Creating bkg models with e binning {self.e_reco}")
         log.debug(f"Creating bkg models with lon axis: {self.lon_axis}")
         log.debug(f"Creating bkg models with lat axis: {self.lat_axis}")
+        log.debug(f"Creating bkg models with offset axis: {self.offset}")
         self.counts_map_eff = np.zeros((e_reco.nbin, nbins, nbins))
         self.counts_map_obs = np.zeros((e_reco.nbin, nbins, nbins))
         self.time_map_obs = u.Quantity(np.zeros((nbins, nbins)), u.h)
@@ -279,7 +281,7 @@ class ExclusionMapBackgroundMaker:
             posinf=0,
             neginf=0,
         )
-        self.bg = self._get_bg_offset(self.counts_map_eff)
+        self.bg = self._get_bg_offset()
         self.bg_rate = self.get_bg_rate()
 
     def _get_bg_offset_1r(self, counts_map):
@@ -295,19 +297,17 @@ class ExclusionMapBackgroundMaker:
             log.debug(f"Mean over {np.count_nonzero(mask)} entries")
             sum_counts = np.sum(counts_map[mask])
             solid_angle_diff = cone_solid_angle(rma) - cone_solid_angle(rmi)
-            # Kept for debugging
-            mean_alpha = np.mean(self.alpha_map[mask])
-            mean_time = np.mean(self.time_map_obs)
-            mean_time_eff = np.mean(self.time_map_eff)
-            log.debug(f"Means: {mean_alpha}, {mean_time}, {mean_time_eff}")
+
+            mean_time_eff = np.mean(self.time_map_eff[mask])
+            log.debug(f"Mean time: {mean_time_eff}")
             # This is actually a rate (counts/time/angle)
             counts_corrected = sum_counts / mean_time_eff / solid_angle_diff
             log.debug(f"counts: {counts_corrected} for {rmi}-{rma}")
-            log.debug(": ({solid_angle_diff}) {sum_counts}")
+            log.debug(f": ({solid_angle_diff}) {sum_counts}")
             bg_offset.append(counts_corrected.value)
         return np.array(bg_offset) * counts_corrected.unit
 
-    def _get_bg_offset(self, counts_map):
+    def _get_bg_offset(self):
         """
         Create map of background rates for every bin in the time map
         """
@@ -322,6 +322,7 @@ class ExclusionMapBackgroundMaker:
         for bg_r, e_width in zip(self.bg, self.e_reco.bin_width):
             a = bg_r / e_width
             a = a.to(background_unit)
+            log.debug(f"{a}")
             bg_rate.append(a)
         return bg_rate
 
