@@ -8,9 +8,7 @@ dl5_plot_types = [
     "ts_significance_distribution",
     "excess_significance_map",
     "excess_significance_distribution",
-    "2d_flux_profile",
-    "fit_residuals",
-]
+]  # , "2d_flux_profile", "fit_residuals"]
 # _curve] significance distribution on vs off
 
 dl5_plots = [
@@ -121,7 +119,7 @@ rule calc_significance_map:
         dl5 / "{analysis}/ts_significance_map.pkl",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
-        fit=dl5 / "{analysis}/model-best-fit.yaml",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         script=scripts / "calc_significance_map.py",
     conda:
         gammapy_env
@@ -131,7 +129,7 @@ rule calc_significance_map:
         """
         python {input.script} \
         --datasets-path {input.data} \
-        --models-path {input.fit} \
+        --models-path {input.bkg_fit} \
         --output {output} \
         --log-file {log}
         """
@@ -142,7 +140,7 @@ rule calc_excess_map:
         dl5 / "{analysis}/excess_significance_map.pkl",
     input:
         data=dl4 / "{analysis}/datasets.fits.gz",
-        fit=dl5 / "{analysis}/model-best-fit.yaml",
+        bkg_fit=dl4 / "{analysis}/bkg_fit.yaml",
         script=scripts / "calc_excess_map.py",
     conda:
         gammapy_env
@@ -152,7 +150,7 @@ rule calc_excess_map:
         """
         python {input.script} \
         --datasets-path {input.data} \
-        --models-path {input.fit} \
+        --models-path {input.bkg_fit} \
         --output {output} \
         --log-file {log}
         """
