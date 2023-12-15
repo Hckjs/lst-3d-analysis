@@ -19,9 +19,8 @@ def main(flux_maps, output):
     with open(flux_maps, "rb") as f:
         maps = pickle.load(f)
 
+    figures = []
     for name, ts_maps in maps.items():
-        figures = []
-
         fig = plt.figure()
         ax = ts_maps.flux.plot(add_cbar=True, fig=fig)
         ax.set_title(f"Flux ({name})")
