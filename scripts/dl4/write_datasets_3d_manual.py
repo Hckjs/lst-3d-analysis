@@ -13,6 +13,46 @@ from scriptutils.log import setup_logging
 
 log = logging.getLogger("__name__")
 
+class DatasetsMakerWithNames(DatasetsMaker):
+    tag = "DatasetsMakerWithNames"
+
+    def make_dataset(self, dataset, observation):
+        """Make single dataset.
+
+        Parameters
+        ----------
+        dataset : `~gammapy.datasets.MapDataset`
+            Reference dataset
+        observation : `Observation`
+            Observation
+        """
+        name=f"Run_{observation.obs_id}"
+        if self._apply_cutout:
+            cutouts_kwargs = {
+                "position": observation.get_pointing_icrs(observation.tmid).galactic,
+                "width": self.cutout_width,
+                "mode": self.cutout_mode,
+                "name": name,
+            }
+            dataset_obs = dataset.cutout(
+                **cutouts_kwargs,
+            )
+        else:
+            dataset_obs = dataset.copy(name=name)
+
+        if dataset.models is not None:
+            models = dataset.models.copy()
+            models.reassign(dataset.name, dataset_obs.name)
+            dataset_obs.models = models
+
+        log.info(f"Computing dataset {dataset_obs.name} for observation {observation.obs_id}")
+
+        for maker in self.makers:
+            log.info(f"Running {maker.tag} on dataset {dataset_obs.name}")
+            dataset_obs = maker.run(dataset=dataset_obs, observation=observation)
+
+        return dataset_obs
+
 
 def main(config, output_datasets, output_models, n_jobs):
     # Standard high-level interface stuff
@@ -47,7 +87,7 @@ def main(config, output_datasets, output_models, n_jobs):
 
     log.info("Start the data reduction loop.")
 
-    datasets_maker = DatasetsMaker(
+    datasets_maker = DatasetsMakerWithNames(
         makers,
         stack_datasets=datasets_settings.stack,
         n_jobs=n_jobs,
