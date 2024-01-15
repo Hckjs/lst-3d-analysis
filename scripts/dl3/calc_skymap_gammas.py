@@ -2,7 +2,6 @@ import json
 import logging
 from argparse import ArgumentParser
 
-import numpy as np
 from astropy import units as u
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis, WcsGeom, WcsNDMap
@@ -23,26 +22,12 @@ def main(input_path, config, output_path, obs_id, width, n_bins):  # noqa: PLR09
 
     events = obs.events
 
-    evts = events.radec
-
     source = obs.target_radec
     pointing = obs.get_pointing_icrs(obs.tmid)
+    log.info(obs.obs_id)
     log.info(f"source: {source}")
     log.info(f"pointing: {pointing}")
-
-    r = width / 2
-    bins = u.Quantity(
-        [
-            np.linspace(source.ra - r, source.ra + r, n_bins + 1),
-            np.linspace(source.dec - r, source.dec + r, n_bins + 1),
-        ],
-    )
-
-    hist, *edges = np.histogram2d(
-        evts.ra.to_value(u.deg),
-        evts.dec.to_value(u.deg),
-        bins.to_value(u.deg),
-    )
+    log.info(f"{pointing.separation(source)}")
 
     energy_axis = MapAxis.from_edges(
         u.Quantity([1e-5, 1e5], u.TeV),  # basically [-inf, inf], but finite
@@ -56,7 +41,8 @@ def main(input_path, config, output_path, obs_id, width, n_bins):  # noqa: PLR09
         axes=[energy_axis],
     )
 
-    skymap = WcsNDMap(geom, hist)
+    skymap = WcsNDMap(geom)
+    skymap.fill_events(events)
     skymap.meta["pointing_ra_deg"] = pointing.ra.to_value(u.deg)
     skymap.meta["pointing_dec_deg"] = pointing.dec.to_value(u.deg)
 
