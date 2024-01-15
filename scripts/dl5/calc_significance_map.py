@@ -31,14 +31,18 @@ def main(datasets_path, models_path, output):
         selection_optional="all",
     )
     maps = {}
+    log.info(f"Running on {len(datasets)} datasets")
+
+    for d in datasets:
+        log.info(f"Estimating significances on dataset {d.name} with models {d.models.names}")
+        estimator = TSMapEstimator()
+        ts_maps = estimator.run(d)
+        maps[d.name] = ts_maps
+
     # Stacked
     stacked = datasets.stack_reduce()
     ts_maps = estimator.run(stacked)
     maps["stacked"] = ts_maps
-    for d in datasets:
-        ts_maps = estimator.run(d)
-        maps[d.name] = ts_maps
-
     with open(output, "wb") as f:
         pickle.dump(maps, f)
 
@@ -52,5 +56,5 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
-
+    log.info(f"Estimating significances on {args.datasets_path}")
     main(args.datasets_path, args.models_path, args.output)
