@@ -59,6 +59,10 @@ def main(input_path, config, output_path, obs_id, width, n_bins):  # noqa: PLR09
     )
 
     skymap = WcsNDMap(geom, hist)
+    # Note that this is deprecated, but its super useful :(
+    pointing = obs.target_radec
+    skymap.meta["pointing_ra_deg"] = pointing.ra.to_value(u.deg)
+    skymap.meta["pointing_dec_deg"] = pointing.dec.to_value(u.deg)
 
     skymap.write(output_path, overwrite=True)
 

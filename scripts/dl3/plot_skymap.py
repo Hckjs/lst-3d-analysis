@@ -16,6 +16,8 @@ def main(input_path, output_path):
 
     geom = skymap.geom
     source = geom.center_skydir
+    pointing_ra = skymap.meta["pointing_ra_deg"]
+    pointing_dec = skymap.meta["pointing_dec_deg"]
 
     edges = u.Quantity(
         [
@@ -37,6 +39,14 @@ def main(input_path, output_path):
         ec="k",
         fc="w",
         label="Source",
+    )
+
+    ax.scatter(
+        pointing_ra,
+        pointing_dec,
+        ec="k",
+        fc="g",
+        label="Pointing",
     )
 
     fig.colorbar(mesh, ax=ax)
