@@ -18,7 +18,7 @@ rule mc:
     input:
         link=mc / "mc-linked.txt",
         models=models_to_train,
-        #plots=plots/"gh_score.pdf",
+        plots=plots / "gh_score.pdf",
 
 
 localrules:
@@ -78,11 +78,12 @@ rule merge_gamma_mc_per_node:
 rule merge_proton_mc_per_node:
     output:
         train=mc / "Protons/dl1/{node}_train.dl1.h5",
+        train=mc / "Protons/dl1/{node}_test.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts / "merge_mc_nodes.py",
     params:
-        train_size=1.0,
+        train_size=0.9,
         directory=lambda wildcards: mc_nodes / f"Protons/{wildcards.node}",
     conda:
         lstchain_env
@@ -93,6 +94,7 @@ rule merge_proton_mc_per_node:
         --input-dir {params.directory} \
         --train-size {params.train_size} \
         --output-train {output.train} \
+        --output-test {output.test} \
         --pattern 'dl1_*.h5' \
         --log-file {log}"
 
