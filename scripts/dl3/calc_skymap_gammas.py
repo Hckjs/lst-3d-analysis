@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--width",
         help="Width of skymap",
-        default="3 deg",
+        default="5 deg",
         type=u.Quantity,
     )
     parser.add_argument("--n-bins", default=100, type=int)
