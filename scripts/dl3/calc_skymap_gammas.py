@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 
 import numpy as np
 from astropy import units as u
-from astropy.coordinates import SkyCoord
 from gammapy.data import DataStore
 from gammapy.maps import MapAxis, WcsGeom, WcsNDMap
 
@@ -26,11 +25,10 @@ def main(input_path, config, output_path, obs_id, width, n_bins):  # noqa: PLR09
 
     evts = events.radec
 
-    source = SkyCoord(
-        config["DataReductionFITSWriter"]["source_ra"],
-        config["DataReductionFITSWriter"]["source_dec"],
-        frame="icrs",
-    )
+    source = obs.target_radec
+    pointing = obs.get_pointing_icrs(obs.tmid)
+    log.info(f"source: {source}")
+    log.info(f"pointing: {pointing}")
 
     r = width / 2
     bins = u.Quantity(
@@ -59,8 +57,6 @@ def main(input_path, config, output_path, obs_id, width, n_bins):  # noqa: PLR09
     )
 
     skymap = WcsNDMap(geom, hist)
-    # Note that this is deprecated, but its super useful :(
-    pointing = obs.pointing.get_icrs()
     skymap.meta["pointing_ra_deg"] = pointing.ra.to_value(u.deg)
     skymap.meta["pointing_dec_deg"] = pointing.dec.to_value(u.deg)
 
