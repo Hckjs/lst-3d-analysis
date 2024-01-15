@@ -6,7 +6,6 @@ observations:
   datastore: build/M87/dl3/analysis-bkg-test-fine-2d
   obs_ids:
     - 4637
-    - 7186
     - 12745
   obs_time:
     start: "2021-01-01"
