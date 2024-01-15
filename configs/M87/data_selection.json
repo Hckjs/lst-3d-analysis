@@ -8,6 +8,6 @@
   "cosmics_30": { "ul": 6, "ll": 4, "sigma": null },
   "time_start": "2020-01-01",
   "time_stop": "2024-01-01",
-  "max_zenith_deg": 60,
+  "max_zenith_deg": 35,
   "never_include": [7186, 7187, 8091, 13300, 13301, 13302, 13303]
 }
