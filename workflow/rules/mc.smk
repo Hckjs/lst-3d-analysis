@@ -9,7 +9,6 @@ models = mc / "models"
 mc_nodes = Path(OUTDIRS["mc_nodes"])
 dl1 = Path(OUTDIRS["dl1"])
 models = Path(OUTDIRS["models"])
-# config = lstchain_config
 config = CONFIGS["lstchain"]
 
 plots = mc / "plots"
@@ -19,6 +18,7 @@ rule mc:
     input:
         link=mc / "mc-linked.txt",
         models=models_to_train,
+        plots=plots / "gh_score.pdf",
 
 
 localrules:
@@ -121,7 +121,6 @@ rule merge_train_or_test_of_all_nodes:
         """
 
 
-# TODO Any chance to get logging in here?
 rule train_models:
     output:
         models_to_train,
@@ -144,5 +143,47 @@ rule train_models:
         --fg {input.gamma} \
         --fp {input.proton} \
         --config {input.config} \
+        --log-file {log} \
         --output-dir {models}
+        """
+
+
+rule calc_parameter_histograms:
+    output:
+        mc / "{parameter}_distribution.h5",
+    input:
+        gamma=mc / "GammaDiffuse/GammaDiffuse_test.dl1.h5",
+        proton=mc / "Protons/Protons_test.dl1.h5",
+        script=scripts / "calc_parameter_distribution.py",
+    conda:
+        lstchain_env
+    log:
+        models / "calc_{parameter}_distribution.log",
+    shell:
+        """
+        python {input.script} \
+        --input-gamma {input.gamma} \
+        --input-proton {input.proton} \
+        --parameter {wildcards.parameter} \
+        --output {output} \
+        --log-file {log}
+        """
+
+
+rule plot_parameter_histograms:
+    output:
+        plots / "{parameter}.pdf",
+    input:
+        data=mc / "{parameter}_distribution.h5",
+        script=scripts / "plot_parameter_distribution.py",
+    conda:
+        lstchain_env
+    log:
+        models / "plot_{parameter}_distribution.log",
+    shell:
+        """
+        python {input.script} \
+        --input-path {input.data} \
+        --output-path {output} \
+        --log-file {log}
         """
