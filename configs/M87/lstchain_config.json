@@ -27,7 +27,7 @@
     }
   },
   "events_filters": {
-    "intensity": [50, Infinity],
+    "intensity": [80, Infinity],
     "width": [0, Infinity],
     "length": [0, Infinity],
     "wl": [0, Infinity],
