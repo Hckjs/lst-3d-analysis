@@ -78,7 +78,7 @@ rule merge_gamma_mc_per_node:
 rule merge_proton_mc_per_node:
     output:
         train=mc / "Protons/dl1/{node}_train.dl1.h5",
-        train=mc / "Protons/dl1/{node}_test.dl1.h5",
+        test=mc / "Protons/dl1/{node}_test.dl1.h5",
     input:
         dummy=mc / "mc-linked.txt",
         script=scripts / "merge_mc_nodes.py",
