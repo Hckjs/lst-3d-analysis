@@ -578,7 +578,7 @@ rule mc:
     input:
         link=mc / "mc-linked.txt",
         models=models_to_train,
-        plots=plots/"gh_score.pdf",
+        plots=plots/"gammaness.pdf",
 
 localrules:
     link_mc,

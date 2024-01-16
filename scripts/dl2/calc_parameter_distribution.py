@@ -16,7 +16,7 @@ def main(input_gamma, input_proton, parameter, output):
     for k, p in zip(("gamma", "proton"), (input_gamma, input_proton)):
         events = read_dl2_params(p)
         log.info(events.columns)
-        columns = ["gh_score", "reco_energy", "intensity"]
+        columns = [parameter, "reco_energy", "intensity"]
         events = events[columns]
         for lower, upper in zip(intensity_bins[:-1], intensity_bins[1:]):
             mask = (events["intensity"] >= lower) & (events["intensity"] < upper)
