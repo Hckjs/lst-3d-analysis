@@ -21,6 +21,7 @@ def main(input_gamma, input_proton, parameter, output):
         for lower, upper in zip(intensity_bins[:-1], intensity_bins[1:]):
             mask = (events["intensity"] >= lower) & (events["intensity"] < upper)
             selected = events[mask]
+            log.info(f"Selected {len(selected)} out of {len(events)}")
             # TODO Log or not. save unit
             counts, edges = np.histogram(selected[parameter], bins=100)
             hists[k][f"{lower}_{upper}"] = {
