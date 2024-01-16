@@ -18,21 +18,44 @@ rule dl2:
 
 rule dl1_to_dl2:
     output:
-        Path("{somepath}/dl2") / "{base}.dl2.h5",
+        mc / "{particle}/dl2/{base}.dl2.h5",
     input:
         config=config,
         models=models_to_train,
-        dl1_exists=dl1 / "runs-linked.txt",
-        mc_exists=mc / "mc-linked.txt",
-    params:
-        data=lambda wc: Path(f"{wc.get('somepath')}/dl1") / f"{wc.get('base')}.dl1.h5",
+        data=mc / "{particle}/dl1/{base}.dl1.h5",
     conda:
         lstchain_env
     resources:
         mem_mb=64000,
         cpus=4,
     log:
-        "{somepath}/dl2/dl1_to_dl2_{base}.log",
+        mc / "dl2/dl1_to_dl2_{base}.log",
+    shell:
+        """
+        lstchain_dl1_to_dl2  \
+            --input-file {params.data}  \
+            --output-dir $(dirname {output}) \
+            --path-models {models}  \
+            --config {input.config}
+        """
+
+
+rule dl1_to_dl2:
+    output:
+        dl2 / "{base}.dl2.h5",
+    input:
+        config=config,
+        models=models_to_train,
+        dl1_exists=dl1 / "runs-linked.txt",
+    params:
+        data=lambda wc: dl1 / f"{wc.get('base')}.dl1.h5",
+    conda:
+        lstchain_env
+    resources:
+        mem_mb=64000,
+        cpus=4,
+    log:
+        dl2 / "dl1_to_dl2_{base}.log",
     shell:
         """
         lstchain_dl1_to_dl2  \
