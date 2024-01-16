@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 import numpy as np
 from astropy.table import Table
-from lstchain.io import read_data_dl2_to_QTable
+from lstchain.io import read_mc_dl2_to_QTable
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ intensity_bins = [80, 200, 800, 3200]
 def main(input_gamma, input_proton, parameter, output):
     hists = {"gamma": {}, "proton": {}}
     for k, p in zip(("gamma", "proton"), (input_gamma, input_proton)):
-        events, _ = read_data_dl2_to_QTable(p, None)
+        events, _ = read_mc_dl2_to_QTable(p, None)
         log.info(events.columns)
         columns = ["gh_score", "reco_energy", "intensity"]
         events = events[columns]
