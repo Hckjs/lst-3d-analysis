@@ -117,6 +117,8 @@ rule merge_train_or_test_of_all_nodes:
         """
         python {input.script} \
         --input-dir {params.directory} \
+        --output-train {output} \
+        --train-size 1.0 \
         --pattern {params.pattern} \
         --{params.out_type} {output} \
         --log-file {log}
