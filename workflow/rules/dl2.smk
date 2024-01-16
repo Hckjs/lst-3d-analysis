@@ -120,8 +120,8 @@ rule calc_parameter_histograms:
     output:
         mc / "{parameter}_distribution.h5",
     input:
-        gamma=mc / "GammaDiffuse/dl2/GammaDiffuse_test.dl2.h5",
-        proton=mc / "Protons/dl2/Protons_test.dl2.h5",
+        gamma=mc / "GammaDiffuse/dl2/GammaDiffuse_merged_test.dl2.h5",
+        proton=mc / "Protons/dl2/Protons_merged_test.dl2.h5",
         script=scripts / "calc_parameter_distribution.py",
     conda:
         lstchain_env

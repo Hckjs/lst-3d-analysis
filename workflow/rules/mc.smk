@@ -101,7 +101,7 @@ rule merge_proton_mc_per_node:
 
 rule merge_train_or_test_of_all_nodes:
     output:
-        mc / "{particle}/dl1/{particle}_{train_or_test}.dl1.h5",
+        mc / "{particle}/dl1/{particle}_merged_{train_or_test}.dl1.h5",
     input:
         nodes=MC_NODES_DL1,
         script=scripts / "merge_mc_nodes.py",
@@ -127,8 +127,8 @@ rule train_models:
     output:
         models_to_train,
     input:
-        gamma=mc / "GammaDiffuse/dl1/GammaDiffuse_train.dl1.h5",
-        proton=mc / "Protons/dl1/Protons_train.dl1.h5",
+        gamma=mc / "GammaDiffuse/dl1/GammaDiffuse_merged_train.dl1.h5",
+        proton=mc / "Protons/dl1/Protons_merged_train.dl1.h5",
         config=config,
     resources:
         mem_mb=64000,
