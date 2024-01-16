@@ -145,6 +145,5 @@ rule train_models:
         --fg {input.gamma} \
         --fp {input.proton} \
         --config {input.config} \
-        --log-file {log} \
-        --output-dir {models}
+        --output-dir {models} > {log}
         """
