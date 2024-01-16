@@ -101,7 +101,7 @@ def main():
     )
     parser.add_argument(
         "--output-train",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "--output-test",
