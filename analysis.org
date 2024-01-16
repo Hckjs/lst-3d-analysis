@@ -802,7 +802,7 @@ rule dl1_to_dl2_mc:
     shell:
         """
         lstchain_dl1_to_dl2  \
-            --input-file {params.data}  \
+            --input-file {input.data}  \
             --output-dir $(dirname {output}) \
             --path-models {models}  \
             --config {input.config}
