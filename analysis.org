@@ -269,7 +269,7 @@ env = ENVS["data_selection"]
 config = CONFIGS["data_selection"]
 scripts = Path(SCRIPTS["data_selection"])
 out = Path(OUTDIRS["data_selection"])
-dl1_link_location = Path(OUTDIRS["dl1"])
+dl1 = Path(OUTDIRS["dl1"])
 plots = out / "plots"
 
 
@@ -453,13 +453,13 @@ folder.
 
 checkpoint link_runs:
     output:
-        out / "runs-linked.txt",
+        dl1 / "runs-linked.txt",
     input:
         runs=out / "runs.json",
         datacheck=out / "dl1-datachecks-masked.h5",
         script=scripts / "link-runs.py",
     params:
-        dl1=dl1_link_location,
+        dl1=dl1,
     conda:
         env
     log:
