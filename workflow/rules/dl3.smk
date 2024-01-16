@@ -362,7 +362,7 @@ rule plot_cuts_dl2_dl3:
 
 rule plot_run_irf:
     output:
-        "{somepath}/{analysis}/plots/{irf}/{irf}_{run_id}.pdf",
+        dl3 / "{analysis}/plots/{irf}/{irf}_{run_id}.pdf",
     input:
         data=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
         script=irf_scripts / "plot_irf_{irf}.py",
@@ -375,7 +375,7 @@ rule plot_run_irf:
     wildcard_constraints:
         irf="|".join(irfs_to_produce),
     log:
-        "{somepath}/{analysis}/plots/{irf}/{irf}_{run_id}.log",
+        dl3 / "{analysis}/plots/{irf}/{irf}_{run_id}.log",
     shell:
         "MATPLOTLIBRC={input.rc} \
         python {input.script} \
