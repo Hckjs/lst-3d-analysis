@@ -46,7 +46,7 @@ datasets:
   safe_mask:
     methods:
       - "offset-max"
-      - "aeff-percent"
+      - "aeff-max"
       - "edisp-bias"
     parameters:
       offset_max: "1.5 deg"
