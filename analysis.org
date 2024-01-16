@@ -791,7 +791,7 @@ rule dl1_to_dl2:
         dl1_exists=dl1 / "runs-linked.txt",
         mc_exists=mc / "mc-linked.txt",
     params:
-        data = Path("{somepath}/dl1") / "{base}.dl1.h5",
+        data =lambda wc: Path(f"{wc.get('somepath')}/dl1") / f"{wc.get('base')}.dl1.h5",
     conda:
         lstchain_env
     resources:
