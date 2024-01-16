@@ -795,7 +795,7 @@ rule dl1_to_dl2:
         mem_mb=64000,
         cpus=4,
     log:
-        mc/"dl2/dl1_to_dl2_{base}.log"
+        mc/"{particle}/dl2/dl1_to_dl2_{base}.log"
     shell:
         """
         lstchain_dl1_to_dl2  \
