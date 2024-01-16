@@ -34,9 +34,11 @@ def main(datasets_path, models_path, output):
     log.info(f"Running on {len(datasets)} datasets")
 
     for d in datasets:
-        log.info(f"Estimating significances on dataset {d.name} with models {d.models.names}")
+        log.info(
+            f"Estimating on dataset {d.name} with models {d.models.names}",
+        )
         estimator = TSMapEstimator()
-        ts_maps = estimator.run(d)
+        ts_maps = estimator.run(d.to_masked())
         maps[d.name] = ts_maps
 
     # Stacked

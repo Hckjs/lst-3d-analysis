@@ -28,7 +28,7 @@ def main(datasets_path, models_path, output):
     ts_maps.write(output, overwrite=True)
     maps["stacked"] = ts_maps
     for d in datasets:
-        ts_maps = estimator.run(d)
+        ts_maps = estimator.run(d.to_masked())
         maps[d.name] = ts_maps
 
     with open(output, "wb") as f:
