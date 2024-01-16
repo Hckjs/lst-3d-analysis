@@ -16,7 +16,7 @@ rule dl2:
         runs=DL2_FILES,
 
 
-rule dl1_to_dl2:
+rule dl1_to_dl2_mc:
     output:
         mc / "{particle}/dl2/{base}.dl2.h5",
     input:
@@ -40,7 +40,7 @@ rule dl1_to_dl2:
         """
 
 
-rule dl1_to_dl2:
+rule dl1_to_dl2_data:
     output:
         dl2 / "{base}.dl2.h5",
     input:
