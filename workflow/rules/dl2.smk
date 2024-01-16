@@ -90,3 +90,44 @@ rule plot_irf:
         -i {input.data} \
         -o {output} \
         --log-file {log}"
+
+
+rule calc_parameter_histograms:
+    output:
+        mc / "{parameter}_distribution.h5",
+    input:
+        gamma=mc / "GammaDiffuse/GammaDiffuse_test.dl2.h5",
+        proton=mc / "Protons/Protons_test.dl2.h5",
+        script=scripts / "calc_parameter_distribution.py",
+    conda:
+        lstchain_env
+    log:
+        models / "calc_{parameter}_distribution.log",
+    shell:
+        """
+        python {input.script} \
+        --input-gamma {input.gamma} \
+        --input-proton {input.proton} \
+        --parameter {wildcards.parameter} \
+        --output {output} \
+        --log-file {log}
+        """
+
+
+rule plot_parameter_histograms:
+    output:
+        plots / "{parameter}.pdf",
+    input:
+        data=mc / "{parameter}_distribution.h5",
+        script=scripts / "plot_parameter_distribution.py",
+    conda:
+        lstchain_env
+    log:
+        models / "plot_{parameter}_distribution.log",
+    shell:
+        """
+        python {input.script} \
+        --input-path {input.data} \
+        --output-path {output} \
+        --log-file {log}
+        """
