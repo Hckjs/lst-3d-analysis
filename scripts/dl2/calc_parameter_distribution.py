@@ -14,7 +14,7 @@ intensity_bins = [80, 200, 800, 3200]
 def main(input_gamma, input_proton, parameter, output):
     hists = {"gamma": {}, "proton": {}}
     for k, p in zip(("gamma", "proton"), (input_gamma, input_proton)):
-        events, _ = read_dl2_params(p)
+        events = read_dl2_params(p)
         log.info(events.columns)
         columns = ["gh_score", "reco_energy", "intensity"]
         events = events[columns]

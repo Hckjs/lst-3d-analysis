@@ -1,5 +1,6 @@
 lstchain_env = ENVS["lstchain"]
 plot_env = ENVS["gammapy"]
+scripts = Path(SCRIPTS["dl2"])
 irfs = Path(OUTDIRS["irfs"])
 irf_scripts = Path(SCRIPTS["irfs"])
 mc = Path(OUTDIRS["mc"])
@@ -7,7 +8,6 @@ dl1 = Path(OUTDIRS["dl1"])
 dl2 = Path(OUTDIRS["dl2"])
 dl2_scripts = Path(SCRIPTS["dl2"])
 models = Path(OUTDIRS["models"])
-# config = lstchain_config
 config = CONFIGS["lstchain"]
 
 
