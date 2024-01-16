@@ -22,6 +22,7 @@ rule dl1_to_dl2_mc:
     input:
         config=config,
         models=models_to_train,
+        mc_exists=mc / "mc-linked.txt",
         data=mc / "{particle}/dl1/{base}.dl1.h5",
     conda:
         lstchain_env
@@ -119,8 +120,8 @@ rule calc_parameter_histograms:
     output:
         mc / "{parameter}_distribution.h5",
     input:
-        gamma=mc / "dl2/GammaDiffuse/GammaDiffuse_test.dl2.h5",
-        proton=mc / "dl2/Protons/Protons_test.dl2.h5",
+        gamma=mc / "GammaDiffuse/dl2/GammaDiffuse_test.dl2.h5",
+        proton=mc / "Protons/dl2/Protons_test.dl2.h5",
         script=scripts / "calc_parameter_distribution.py",
     conda:
         lstchain_env
