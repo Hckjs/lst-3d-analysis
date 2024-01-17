@@ -46,12 +46,8 @@ datasets:
   safe_mask:
     methods:
       - "offset-max"
-      - "aeff-max"
-      - "edisp-bias"
     parameters:
       offset_max: "1.5 deg"
-      aeff_percent: 0.1
-      bias_percent: 50
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }
