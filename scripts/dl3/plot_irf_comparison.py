@@ -258,8 +258,8 @@ def main(input_path, config_path, output):
 
     config = AnalysisConfig.read(config_path)
     energy_axis_true_config = config.datasets.geom.axes.energy_true
-    e_min = energy_axis_true_config.min.to(u.GeV)
-    e_max = energy_axis_true_config.max.to(u.GeV)
+    e_min = energy_axis_true_config.min.to_value(u.GeV)
+    e_max = energy_axis_true_config.max.to_value(u.GeV)
 
     figs = {
         "psf": plt.subplots(1, 2, sharey=True),
