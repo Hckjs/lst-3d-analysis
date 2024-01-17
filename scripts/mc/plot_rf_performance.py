@@ -98,7 +98,7 @@ def main():  # noqa
     ax.hist(dl2[dl2["mc_type"] == 0]["gammaness"], bins=100)
     figures.append(fig)
 
-    with PdfPages(args.output) as pdf:
+    with PdfPages(args.output_path) as pdf:
         for fig in figures:
             pdf.savefig(fig)
 
