@@ -18,7 +18,7 @@ rule mc:
     input:
         link=mc / "mc-linked.txt",
         models=models_to_train,
-        plots=plots / "gammaness.pdf",
+        plots=(plots / "model_performance.pdf"),
 
 
 localrules:
@@ -146,4 +146,31 @@ rule train_models:
         --fp {input.proton} \
         --config {input.config} \
         --output-dir {models} > {log}
+        """
+
+
+rule plot_rf_performance:
+    output:
+        plots / "model_performace.pdf",
+    input:
+        models=models_to_train,
+        gamma=mc / "GammaDiffuse/dl1/GammaDiffuse_test_merged.dl2.h5",
+        proton=mc / "Protons/dl1/Protons_test_merged.dl2.h5",
+        config=config,
+        script=scripts / "plot_rf_performace.py",
+    params:
+        modeldir=models,
+    conda:
+        lstchain_env
+    log:
+        models / "plot_models.log",
+    shell:
+        """
+        python {input.script} \
+        --gammas {input.gamma} \
+        --protons {input.proton} \
+        --config {input.config} \
+        --modeldir {params.modeldir} \
+        --output {output} \
+        --log-file {log}
         """
