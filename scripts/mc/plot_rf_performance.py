@@ -36,8 +36,8 @@ def main():  # noqa
     # TODO basic logging replacememtn
     log = logging.getLogger(__name__)
     log.level = logging.DEBUG if args.verbose else logging.INFO
-    if args.logfile is not None:
-        file_handler = logging.FileHandler(args.logfile)
+    if args.log_file is not None:
+        file_handler = logging.FileHandler(args.log_file)
         file_formatter = logging.Formatter(
             fmt="%(asctime)s|%(levelname)s|%(name)s|%(message)s",
             datefmt="%Y-%m-%dT%H:%M:%S",
