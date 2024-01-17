@@ -158,6 +158,8 @@ rule plot_rf_performance:
         proton=mc / "Protons/dl2/Protons_test_merged.dl2.h5",
         config=config,
         script=scripts / "plot_rf_performance.py",
+    resources:
+        mem_mb=64000,
     params:
         modeldir=models,
     conda:
