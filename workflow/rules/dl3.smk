@@ -165,13 +165,19 @@ rule plot_dl3_irf_comparison:
     input:
         index=dl3 / "{analysis}/hdu-index.fits.gz",
         script=scripts / "plot_irf_comparison.py",
+        config=config_dir / "{analysis}/analysis.yaml",
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
     log:
         dl3 / "{analysis}/plots/irfs.log",
     shell:
-        "MATPLOTLIBRC={input.rc} python {input.script} -i {input.index} -o {output} --log-file {log}"
+        """MATPLOTLIBRC={input.rc} python {input.script} \
+        -i {input.index} \
+        -o {output} \
+        --config {input.config} \
+        --log-file {log}
+        """
 
 
 rule calc_theta2_per_obs:

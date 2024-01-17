@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 
 import astropy.units as u
 import matplotlib
+from gammapy.analysis import AnalysisConfig
 from gammapy.data import DataStore
 from matplotlib import pyplot as plt
 
@@ -16,6 +17,14 @@ else:
 log = logging.getLogger(__name__)
 
 # global units
+
+
+def mark_energy_region(ax, e_min, e_max):
+    ax_min, ax_max = ax.get_xlim()
+    if e_min:
+        ax.axvspan(ax_min, e_min, facecolor="g", alpha=0.5)
+    if e_max:
+        ax.axvspan(ax_max, e_max, facecolor="g", alpha=0.5)
 
 
 def title_irf_vs_offset(ax, energy):
@@ -180,7 +189,15 @@ def plot_bkg2d_vs_offset(bkg2d, ax, energy, **kwargs):
     return ax
 
 
-def add_irf(irf, axes, offset=0.4 * u.deg, energy=0.1 * u.TeV, setup=False):
+def add_irf(  # noqa: PLR0913
+    irf,
+    axes,
+    offset=0.4 * u.deg,
+    energy=0.1 * u.TeV,
+    setup=False,
+    e_min=None,
+    e_max=None,
+):
     match irf.tag:
         case "edisp_2d":
             plot_edisp_vs_energy(irf, ax=axes[0], offset=offset, color="C0")
@@ -220,10 +237,16 @@ def add_irf(irf, axes, offset=0.4 * u.deg, energy=0.1 * u.TeV, setup=False):
         x_vs_offset(axes[1])
         axes[0].axvline(energy.to_value(u.GeV), ls="--")
         axes[1].axvline(offset.to_value(u.deg), ls="--")
+        mark_energy_region(axes[0], e_min, e_max)
 
 
-def main(input_path, output):
+def main(input_path, config_path, output):
     ds = DataStore.from_file(input_path)
+
+    config = AnalysisConfig.read(config_path)
+    energy_axis_true_config = config.datasets.geom.axes.energy_true
+    e_min = (energy_axis_true_config.min,)
+    e_max = (energy_axis_true_config.max,)
 
     figs = {
         "psf": plt.subplots(1, 2, sharey=True),
@@ -235,7 +258,7 @@ def main(input_path, output):
     for j, o in enumerate(ds.get_observations()):
         for i in o.available_irfs:
             fig, axes = figs[i]
-            add_irf(o.__getattribute__(i), axes, setup=j == 0)
+            add_irf(o.__getattribute__(i), axes, setup=j == 0, e_min=e_min, e_max=e_max)
 
     figures = []
     for fig, axes in figs.values():
@@ -254,8 +277,9 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--input-path", required=True)
     parser.add_argument("-o", "--output")
     parser.add_argument("--log-file")
+    parser.add_argument("--config")  # the analysis config
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
     setup_logging(logfile=args.log_file, verbose=args.verbose)
 
-    main(args.input_path, args.output)
+    main(args.input_path, args.config, args.output)
