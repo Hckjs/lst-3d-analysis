@@ -1,5 +1,6 @@
 import logging
 from argparse import ArgumentParser
+from contextlib import contextmanager
 
 import astropy.units as u
 import matplotlib
@@ -16,7 +17,18 @@ else:
 
 log = logging.getLogger(__name__)
 
+
 # global units
+@contextmanager
+def autoscale_turned_off(ax=None):
+    """
+    https://stackoverflow.com/questions/38629830/how-to-turn-off-autoscaling-in-matplotlib-pyplot
+    """
+    ax = ax or plt.gca()
+    lims = [ax.get_xlim(), ax.get_ylim()]
+    yield
+    ax.set_xlim(*lims[0])
+    ax.set_ylim(*lims[1])
 
 
 def mark_energy_region(ax, e_min, e_max):
@@ -237,7 +249,8 @@ def add_irf(  # noqa: PLR0913
         x_vs_offset(axes[1])
         axes[0].axvline(energy.to_value(u.GeV), ls="--")
         axes[1].axvline(offset.to_value(u.deg), ls="--")
-        mark_energy_region(axes[0], e_min, e_max)
+        with autoscale_turned_off(ax=axes[0]):
+            mark_energy_region(axes[0], e_min, e_max)
 
 
 def main(input_path, config_path, output):
