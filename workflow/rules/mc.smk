@@ -151,7 +151,7 @@ rule train_models:
 
 rule plot_rf_performance:
     output:
-        plots / "model_performace.pdf",
+        plots / "model_performance.pdf",
     input:
         models=models_to_train,
         gamma=mc / "GammaDiffuse/dl1/GammaDiffuse_test_merged.dl2.h5",
