@@ -90,7 +90,7 @@ def main():  # noqa
     plot_dl2.plot_roc_gamma(dl2, ax=ax)
     figures.append(fig)
 
-    plot_dl2.plot_models_features_importances(args.models_dir, args.config)
+    plot_dl2.plot_models_features_importances(args.model_dir, args.config)
     figures.append(plt.gcf())
 
     fig, ax = plt.subplots()
