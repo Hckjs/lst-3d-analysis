@@ -69,35 +69,29 @@ def main():  # noqa
     protons.query("reco_type==0 & mc_type==0")
     dl2 = pd.concat([gammas, protons], ignore_index=True)
 
-    # TODO use lstchain plot code (give axes)
+    # lstchain does not foresee us passing axes or figure here :(
     figures = []
-    fig, ax = plt.subplots()
-    plot_dl2.plot_features(dl2, ax=ax)
-    figures.append(fig)
+    plot_dl2.plot_features(dl2)
+    figures.append(plt.gcf())
 
-    fig, ax = plt.subplots()
     plot_dl2.energy_results(selected_gammas)
-    figures.append(fig)
+    figures.append(plt.gcf())
 
-    fig, ax = plt.subplots()
     plot_dl2.direction_results(selected_gammas)
-    figures.append(fig)
+    figures.append(plt.gcf())
 
-    fig, ax = plt.subplots()
     plot_dl2.plot_disp_vector(selected_gammas)
-    figures.append(fig)
+    figures.append(plt.gcf())
 
-    fig, ax = plt.subplots()
     plot_dl2.plot_pos(dl2)
-    figures.append(fig)
+    figures.append(plt.gcf())
 
     fig, ax = plt.subplots()
-    plot_dl2.plot_roc_gamma(dl2)
+    plot_dl2.plot_roc_gamma(dl2, ax=ax)
     figures.append(fig)
 
-    fig, ax = plt.subplots()
     plot_dl2.plot_models_features_importances(args.models_dir, args.config)
-    figures.append(fig)
+    figures.append(plt.gcf())
 
     fig, ax = plt.subplots()
     ax.hist(dl2[dl2["mc_type"] == 101]["gammaness"], bins=100)  # noqa
