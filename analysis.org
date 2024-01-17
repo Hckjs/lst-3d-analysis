@@ -742,10 +742,10 @@ rule plot_rf_performance:
         plots / "model_performance.pdf"
     input:
         models=models_to_train,
-        gamma=mc / "GammaDiffuse/dl1/GammaDiffuse_test_merged.dl2.h5",
-        proton=mc / "Protons/dl1/Protons_test_merged.dl2.h5",
+        gamma=mc / "GammaDiffuse/dl2/GammaDiffuse_test_merged.dl2.h5",
+        proton=mc / "Protons/dl2/Protons_test_merged.dl2.h5",
         config=config,
-        script=scripts/"plot_rf_performace.py"
+        script=scripts/"plot_rf_performance.py"
     params:
         modeldir=models,
     conda:
