@@ -34,9 +34,9 @@ def autoscale_turned_off(ax=None):
 def mark_energy_region(ax, e_min, e_max):
     ax_min, ax_max = ax.get_xlim()
     if e_min is not None:
-        ax.axvspan(ax_min, e_min, facecolor="g", alpha=0.5)
+        ax.axvspan(ax_min, e_min, facecolor="black", alpha=0.3, hatch="/")
     if e_max is not None:
-        ax.axvspan(ax_max, e_max, facecolor="g", alpha=0.5)
+        ax.axvspan(ax_max, e_max, facecolor="black", alpha=0.3, hatch="/")
 
 
 def title_irf_vs_offset(ax, energy):
