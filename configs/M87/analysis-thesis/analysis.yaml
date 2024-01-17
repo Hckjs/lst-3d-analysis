@@ -50,7 +50,7 @@ datasets:
       - "edisp-bias"
     parameters:
       offset_max: "1.5 deg"
-      aeff_percent: 10
+      aeff_percent: 0.1
       bias_percent: 50
 
 fit:
