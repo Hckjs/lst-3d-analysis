@@ -170,7 +170,7 @@ rule plot_rf_performance:
         --gammas {input.gamma} \
         --protons {input.proton} \
         --config {input.config} \
-        --modeldir {params.modeldir} \
+        --model-dir {params.modeldir} \
         --output {output} \
         --log-file {log}
         """
