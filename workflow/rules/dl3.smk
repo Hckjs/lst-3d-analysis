@@ -303,8 +303,6 @@ rule plot_skymap:
         rc=MATPLOTLIBRC,
     conda:
         gammapy_env
-    resources:
-        time=5,
     log:
         dl3 / "{analysis}/plots/skymap/plot_{run_id}.log",
     shell:
