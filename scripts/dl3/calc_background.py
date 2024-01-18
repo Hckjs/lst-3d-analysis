@@ -47,6 +47,7 @@ def main():  # noqa
         config = yaml.safe_load(f)
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
+    gaussian_smoothing_3d = config.get("3d_gaussian_smoothing")
     matching = config["run_matching"]
     assert len(matching) == 1, "Got more than one matching key in config"
     match_on = list(matching.keys())[0]
@@ -127,6 +128,7 @@ def main():  # noqa
             nbins=fov_binning["n_bins"],
             n_offset_bins=fov_binning.get("n_offset_bins", 8),
             offset_max=u.Quantity(fov_binning["max"]),
+            gaussian_smoothing_3d=gaussian_smoothing_3d,
         )
         bkg_maker.run(ds, selected_ids, cached_maps=cached_maps)
         if config["hdu_type"] == "3D":

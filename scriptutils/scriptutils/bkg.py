@@ -2,6 +2,7 @@ import logging
 
 import astropy.units as u
 import numpy as np
+from astropy.convolution import Gaussian2D, convolve
 from astropy.coordinates import AltAz, Angle, SkyCoord
 from astropy.time import Time
 from gammapy.irf import Background2D, Background3D
@@ -61,6 +62,7 @@ class ExclusionMapBackgroundMaker:
         n_subsample=3,
         n_time_bins=5,
         offset_max="1.75 deg",
+        gaussian_smoothing_3d=0.5,  # in pixels
     ):
         self.e_reco = e_reco
         self.location = location
@@ -118,6 +120,8 @@ class ExclusionMapBackgroundMaker:
         self.time_map_obs = u.Quantity(np.zeros((nbins, nbins)), u.h)
         self.time_map_eff = u.Quantity(np.zeros((nbins, nbins)), u.h)
         self.exclusion_geom = RegionGeom.from_regions(exclusion_regions)
+
+        self.gaussian_smoothing_3d = gaussian_smoothing_3d
 
         log.debug("Calculating offset map from lon and lat axes")
         lon, lat = np.meshgrid(self.lon_axis.center.value, self.lat_axis.center.value)
@@ -350,12 +354,19 @@ class ExclusionMapBackgroundMaker:
         # Careful: This is the bin widths this time!
         lon, lat = np.meshgrid(self.lon_axis.bin_width, self.lat_axis.bin_width)
         solid_angle_pixel = cone_solid_angle_rectangular_pyramid(lon, lat)
+
         bg_rate = (
             self.counts_map_eff
             / self.e_reco.bin_width.reshape(len(self.e_reco.bin_width), 1, 1)
             / solid_angle_pixel
             / self.time_map_eff
         )
+        # TODO Can this be broadcasted?
+        if self.gaussian_smoothing_3d:
+            smoothing_kernel = Gaussian2D(self.gaussian_smoothing_3d)
+            for i in np.arange(len(bg_rate)):
+                bg_rate[i] = convolve(bg_rate[i], smoothing_kernel)
+
         # nans and infs come from division by zero time, so they should be zero
         bg_rate = np.nan_to_num(bg_rate, nan=0.0, posinf=0, neginf=0)
         bg_3d = Background3D(
