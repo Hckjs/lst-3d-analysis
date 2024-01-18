@@ -6,7 +6,7 @@ observations:
   datastore: build/M87_irf_stats/dl3/analysis-thesis
   obs_time:
     start: "2021-01-01"
-    stop: "2023-01-01"
+    stop: "2025-01-01"
   required_irf:
     - aeff
     - edisp
@@ -28,8 +28,8 @@ datasets:
         max: 5 TeV
         nbins: 10
       energy_true:
-        min: 20 GeV
-        max: 10 TeV
+        min: 50 GeV
+        max: 5 TeV
         nbins: 10
   background:
     method: "fov_background"
@@ -47,7 +47,7 @@ datasets:
     methods:
       - "offset-max"
     parameters:
-      offset_max: "1.2 deg"
+      offset_max: "1.5 deg"
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }

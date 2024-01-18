@@ -1,0 +1,4 @@
+figure.dpi: 200
+#figure.autolayout: True
+figure.constrained_layout.use: True
+
