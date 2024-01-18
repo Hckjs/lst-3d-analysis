@@ -28,7 +28,7 @@ rule create_fov_bkg_exclusion:
     log:
         dl4 / "{analysis}/create_exclusion.log",
     shell:
-        "python {input.script}  -i {input.region} -o {output} --log-file {log} -c {input.config}"
+        "python {input.script}  -i {input.region} -o {output} --log-file {log} -c {input.config} --verbose"
 
 
 rule create_dataset:
