@@ -1,4 +1,5 @@
 hdu_type: "3D"
+gaussian_smoothing_3d: 0.5
 prefix: "bkg"
 # global model for testing
 run_matching:

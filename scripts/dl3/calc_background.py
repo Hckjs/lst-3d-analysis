@@ -47,7 +47,7 @@ def main():  # noqa
         config = yaml.safe_load(f)
     e_binning = config["binning"]["energy"]
     fov_binning = config["binning"]["offset"]
-    gaussian_smoothing_3d = config.get("3d_gaussian_smoothing")
+    gaussian_smoothing_3d = config.get("gaussian_smoothing_3d")
     matching = config["run_matching"]
     assert len(matching) == 1, "Got more than one matching key in config"
     match_on = list(matching.keys())[0]
