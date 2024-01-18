@@ -21,7 +21,7 @@ datasets:
       binsize: 0.04 deg
       width: { width: 4.0 deg, height: 4.0 deg }
       binsize_irf: 0.4 deg
-    selection: { offset_max: 1.0 deg }
+    selection: { offset_max: 3.0 deg }
     axes:
       energy:
         min: 50 GeV
