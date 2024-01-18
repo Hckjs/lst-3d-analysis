@@ -3,10 +3,10 @@ general:
     level: info
 
 observations:
-  datastore: build/M87/dl3/analysis-baseline-2D
+  datastore: build/M87/dl3/analysis-small-offset
   obs_time:
     start: "2021-01-01"
-    stop: "2023-01-01"
+    stop: "2025-01-01"
   required_irf:
     - aeff
     - edisp
@@ -18,23 +18,23 @@ datasets:
   geom:
     wcs:
       skydir: { frame: icrs, lon: 187.70593076 deg, lat: 12.39112329 deg }
-      binsize: 0.02 deg
-      width: { width: 2.0 deg, height: 2.0 deg }
-      binsize_irf: 0.2 deg
-    selection: { offset_max: 2.5 deg }
+      binsize: 0.04 deg
+      width: { width: 4.0 deg, height: 4.0 deg }
+      binsize_irf: 0.4 deg
+    selection: { offset_max: 1.0 deg }
     axes:
       energy:
         min: 50 GeV
-        max: 20 TeV
-        nbins: 15
+        max: 5 TeV
+        nbins: 10
       energy_true:
-        min: 20 GeV
-        max: 20 TeV
-        nbins: 9
+        min: 50 GeV
+        max: 5 TeV
+        nbins: 10
   background:
     method: "fov_background"
     parameters: { "method": "fit" }
-    exclusion: build/M87/dl4/analysis-baseline-2D/bkg_exclusion.fits.gz
+    exclusion: build/M87/dl4/analysis-small-offset/bkg_exclusion.fits.gz
   on_region:
     {
       frame: icrs,
@@ -45,10 +45,9 @@ datasets:
   containment_correction: false
   safe_mask:
     methods:
-      - "aeff-default"
       - "offset-max"
     parameters:
-      offset_max: "1.5 deg"
+      offset_max: "1.0 deg"
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }
