@@ -169,8 +169,7 @@ rule plot_rf_performance:
         models / "plot_models.log",
     shell:
         """
-        "MATPLOTLIBRC={input.rc} \
-        python {input.script} \
+        "MATPLOTLIBRC={input.rc} python {input.script} \
         --gammas {input.gamma} \
         --protons {input.proton} \
         --config {input.config} \
