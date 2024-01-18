@@ -14,7 +14,7 @@ run_selection_plots = [
 
 rule dl1:
     input:
-        out / "runs-linked.txt",
+        dl1 / "runs-linked.txt",
         run_selection_plots,
 
 
