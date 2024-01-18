@@ -158,7 +158,6 @@ rule plot_rf_performance:
         proton=mc / "Protons/dl2/Protons_test_merged.dl2.h5",
         config=config,
         script=scripts / "plot_rf_performance.py",
-        rc=MATPLOTLIBRC,
     resources:
         mem_mb=64000,
     params:
@@ -169,7 +168,7 @@ rule plot_rf_performance:
         models / "plot_models.log",
     shell:
         """
-        MATPLOTLIBRC={input.rc} python {input.script} \
+        python {input.script} \
         --gammas {input.gamma} \
         --protons {input.proton} \
         --config {input.config} \

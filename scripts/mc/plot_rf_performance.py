@@ -72,7 +72,9 @@ def main():  # noqa
     # lstchain does not foresee us passing axes or figure here :(
     figures = []
     plot_dl2.plot_features(dl2)
-    figures.append(plt.gcf())
+    fig = plt.gcf()
+    fig.tight_layout()
+    figures.append(fig)
 
     plot_dl2.energy_results(selected_gammas)
     figures.append(plt.gcf())
@@ -81,7 +83,9 @@ def main():  # noqa
     figures.append(plt.gcf())
 
     plot_dl2.plot_disp_vector(selected_gammas)
-    figures.append(plt.gcf())
+    fig = plt.gcf()
+    fig.tight_layout()
+    figures.append(fig)
 
     plot_dl2.plot_pos(dl2)
     figures.append(plt.gcf())
@@ -94,8 +98,18 @@ def main():  # noqa
     figures.append(plt.gcf())
 
     fig, ax = plt.subplots()
-    ax.hist(dl2[dl2["mc_type"] == 101]["gammaness"], bins=100)  # noqa
-    ax.hist(dl2[dl2["mc_type"] == 0]["gammaness"], bins=100)
+    ax.hist(
+        dl2[dl2["mc_type"] == 101]["gammaness"],  # noqa
+        bins=100,
+        histtype="step",
+        density=True,
+    )
+    ax.hist(
+        dl2[dl2["mc_type"] == 0]["gammaness"],
+        bins=100,
+        histtype="step",
+        density=True,
+    )
     figures.append(fig)
 
     with PdfPages(args.output_path) as pdf:
