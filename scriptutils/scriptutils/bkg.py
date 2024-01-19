@@ -2,7 +2,7 @@ import logging
 
 import astropy.units as u
 import numpy as np
-from astropy.convolution import Gaussian2D, convolve
+from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.coordinates import AltAz, Angle, SkyCoord
 from astropy.time import Time
 from gammapy.irf import Background2D, Background3D
@@ -363,7 +363,7 @@ class ExclusionMapBackgroundMaker:
         )
         # TODO Can this be broadcasted?
         if self.gaussian_smoothing_3d:
-            smoothing_kernel = Gaussian2D(self.gaussian_smoothing_3d)
+            smoothing_kernel = Gaussian2DKernel(self.gaussian_smoothing_3d)
             for i in np.arange(len(bg_rate)):
                 bg_rate[i] = convolve(bg_rate[i], smoothing_kernel)
 
