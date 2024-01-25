@@ -54,7 +54,8 @@ def main():  # noqa
     log.info(f"Selecting based on: {match_on}")
 
     # TODO Define that properly somewhere
-    location = EarthLocation.of_site("Roque de los Muchachos")
+    location = EarthLocation.from_geodetic(-17.89139 * u.deg, 28.76139 * u.deg, 2184 * u.m)
+
     e_reco = MapAxis.from_energy_bounds(
         u.Quantity(e_binning["min"]),
         u.Quantity(e_binning["max"]),
