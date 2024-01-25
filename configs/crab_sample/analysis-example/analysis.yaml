@@ -3,7 +3,7 @@ general:
     level: info
 
 observations:
-  datastore: build/crab_sample/dl3
+  datastore: build/crab_sample/dl3/analysis-example
   obs_time:
     start: null
     stop: null
@@ -13,7 +13,7 @@ observations:
 
 datasets:
   type: 3d
-  stack: True
+  stack: False
   geom:
     wcs:
       skydir: { frame: icrs, lon: 83.633 deg, lat: 22.014 deg }
@@ -23,7 +23,7 @@ datasets:
     selection: { offset_max: 2.5 deg }
     axes:
       energy:
-        min: 5 GeV
+        min: 200 GeV
         max: 50 TeV
         nbins: 20
       energy_true:
