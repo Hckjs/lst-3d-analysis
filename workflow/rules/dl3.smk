@@ -63,6 +63,7 @@ rule calc_count_maps:
     resources:
         partition="long",
         time=360,
+        mem_mb=32000,
     log:
         dl3 / "{analysis}/calc_count_maps.log",
     shell:
