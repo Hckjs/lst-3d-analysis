@@ -3,7 +3,7 @@ general:
     level: info
 
 observations:
-  datastore: build/M87_all_runs/dl3/analysis-thesis
+  datastore: build/M87/dl3/analysis-per-run-dummy-bkg
   obs_time:
     start: "2021-01-01"
     stop: "2025-01-01"
@@ -24,17 +24,17 @@ datasets:
     selection: { offset_max: 2.5 deg }
     axes:
       energy:
-        min: 200 GeV
+        min: 20 GeV
         max: 20 TeV
-        nbins: 10
+        nbins: 15
       energy_true:
-        min: 200 GeV
+        min: 20 GeV
         max: 20 TeV
-        nbins: 10
+        nbins: 15
   background:
     method: "fov_background"
     parameters: { "method": "fit" }
-    exclusion: build/M87_all_runs/dl4/analysis-thesis/bkg_exclusion.fits.gz
+    exclusion: build/M87/dl4/analysis-per-run-dummy-bkg/bkg_exclusion.fits.gz
   on_region:
     {
       frame: icrs,

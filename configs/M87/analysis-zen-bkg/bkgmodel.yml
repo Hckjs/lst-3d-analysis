@@ -3,14 +3,14 @@ prefix: "bkg"
 # global model for testing
 run_matching:
   zenith_bin_edges:
-    [0, 25, 90]
+    [0, 22, 90]
     #  max_cos_zenith_diff: 0.1
 
 # TODO Align with other irfs?
 binning:
   offset:
-    max: "2 deg"
-    n_bins: 10
+    max: "4 deg"
+    n_bins: 40
     n_subsample: 20
     n_time_bins: 20
   energy:

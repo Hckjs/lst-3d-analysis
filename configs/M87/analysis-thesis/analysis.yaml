@@ -24,13 +24,13 @@ datasets:
     selection: { offset_max: 2.5 deg }
     axes:
       energy:
-        min: 50 GeV
-        max: 5 TeV
-        nbins: 10
+        min: 20 GeV
+        max: 20 TeV
+        nbins: 15
       energy_true:
-        min: 50 GeV
-        max: 5 TeV
-        nbins: 10
+        min: 20 GeV
+        max: 20 TeV
+        nbins: 15
   background:
     method: "fov_background"
     parameters: { "method": "fit" }
@@ -47,7 +47,7 @@ datasets:
     methods:
       - "offset-max"
     parameters:
-      offset_max: "1.5 deg"
+      offset_max: "0.9 deg"
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }

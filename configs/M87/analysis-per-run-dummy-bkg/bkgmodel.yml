@@ -1,0 +1,16 @@
+hdu_type: "2D"
+prefix: "bkg"
+# global model for testing
+run_matching:
+  max_cos_zenith_diff: 0.001
+
+# TODO Align with other irfs?
+binning:
+  offset:
+    max: "2 deg"
+    n_bins: 400
+    n_offset_bins: 10
+  energy:
+    min: "20 GeV"
+    max: "20 TeV"
+    n_bins: 15

@@ -10,8 +10,8 @@ run_matching:
 # TODO Align with other irfs?
 binning:
   offset:
-    max: "2 deg"
-    n_bins: 20
+    max: "4 deg"
+    n_bins: 40
     n_subsample: 20
     n_time_bins: 20
   energy:

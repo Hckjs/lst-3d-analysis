@@ -16,7 +16,7 @@
   },
   "DataBinning": {
     "fov_offset_min": 0.0,
-    "fov_offset_max": 2.0,
+    "fov_offset_max": 1.2,
     "fov_offset_n_edges": 6
   }
 }
