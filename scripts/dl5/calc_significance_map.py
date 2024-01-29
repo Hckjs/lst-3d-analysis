@@ -37,14 +37,23 @@ def main(datasets_path, models_path, output):
         log.info(
             f"Estimating on dataset {d.name} with models {d.models.names}",
         )
-        estimator = TSMapEstimator()
-        ts_maps = estimator.run(d.to_masked())
-        maps[d.name] = ts_maps
+        try:
+            estimator = TSMapEstimator()
+            ts_maps = estimator.run(d.to_masked())
+            maps[d.name] = ts_maps
+        except ValueError as e:
+            log.error(f"Can not compute significance for dataset {d}.")
+            log.error(e)
 
     # Stacked
-    stacked = datasets.stack_reduce()
-    ts_maps = estimator.run(stacked)
-    maps["stacked"] = ts_maps
+    try:
+        stacked = datasets.stack_reduce()
+        ts_maps = estimator.run(stacked)
+        maps["stacked"] = ts_maps
+    except ValueError as e:
+        log.error("Can not compute significance for stacked dataset.")
+        log.error(e)
+
     with open(output, "wb") as f:
         pickle.dump(maps, f)
 

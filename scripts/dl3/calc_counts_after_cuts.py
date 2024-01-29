@@ -39,7 +39,8 @@ def main(input_dl2, input_irf, config, output):
     events["gh_bin"] = np.digitize(
         events["reco_energy"],
         gh_cuts["high"],
-    )
+    ) - 1
+    log.info(f"Digitized into {len(np.unique(events['gh_bin']))} bins")
     events["gh_cut"] = gh_cuts["cut"][events["gh_bin"]]
     gh_mask = events["gh_score"] >= events["gh_cut"]
     events["gh_mask"] = gh_mask

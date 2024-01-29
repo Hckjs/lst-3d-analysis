@@ -32,6 +32,11 @@ def main(flux_maps, output):
         figures.append(fig)
 
         fig = plt.figure()
+        ax = ts_maps.sqrt_ts.plot(add_cbar=True, fig=fig, vmin=-5, vmax=5)
+        ax.set_title(f"Sqrt(TS) ({name}) (limited)")
+        figures.append(fig)
+
+        fig = plt.figure()
         ax = ts_maps.npred_excess.plot(add_cbar=True, fig=fig)
         ax.set_title(f"N Pred Excess ({name})")
         figures.append(fig)
