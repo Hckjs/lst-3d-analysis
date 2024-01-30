@@ -96,7 +96,7 @@ def main(input_dl2, input_irf, config, output):
         {
             "after_trigger": counts,
             "after_gh": counts_gh,
-            "bin_centers": (bins[: -1 + bin[1:]]) / 2,
+            "bin_centers": (bins[: -1 + bins[1:]]) / 2,
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )
