@@ -1345,6 +1345,7 @@ rule cuts_dl2_dl3:
         dl2=dl2/ "LST-1.Run{run_id}.dl2.h5",
         irf=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
         config=config_dir / "{analysis}/irf_tool_config.json",
+        lstchain_config=config_dir / "lstchain_config.json",
         script=scripts/"calc_counts_after_cuts.py",
     wildcard_constraints:
         run_id="\d+",  # dont match on "stacked".
@@ -1355,7 +1356,7 @@ rule cuts_dl2_dl3:
     log:
         dl3 / "{analysis}/counts_after_cuts/calc_{run_id}.log",
     shell:
-        "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} -c {input.config} -o {output} --log-file {log}"
+        "python {input.script} --input-dl2 {input.dl2} --input-irf {input.irf} --lstchain-config {input.lstchain_config} -c {input.config} -o {output} --log-file {log}"
 #+end_src
 
 #+begin_src snakemake

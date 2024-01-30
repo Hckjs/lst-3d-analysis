@@ -63,7 +63,7 @@ def plot_cog(input_path):
 
     for ax in (ax_trigger, ax_gh):
         ax.set_xlabel("x")
-        ax.set_xlabel("y")
+        ax.set_ylabel("y")
 
     return fig_trigger, fig_gh
 
@@ -94,7 +94,7 @@ def plot_intensity(input_path):
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(rf"E_{{\text{{reco}}}} \:/\: {x.unit}")
+    ax.set_xlabel(r"Intensity / p.e.")
     ax.set_ylabel(intensity["after_trigger"].unit)
     ax.legend(title="Counts after")
     return fig

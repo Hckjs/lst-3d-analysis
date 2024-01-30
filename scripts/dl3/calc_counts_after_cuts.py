@@ -8,23 +8,27 @@ from astropy.table import QTable
 from astropy.time import Time
 from lstchain.high_level.hdu_table import add_icrs_position_params
 from lstchain.io import read_data_dl2_to_QTable
-from lstchain.reco.utils import get_effective_time
+from lstchain.reco.utils import filter_events, get_effective_time
 
 log = logging.getLogger(__name__)
 
 
-def main(input_dl2, input_irf, config, output):
-    with open(config, "r") as f:
-        config = json.load(f)
+def main(input_dl2, input_irf, lstchain_config, irf_config, output):
+    with open(irf_config, "r") as f:
+        irf_config = json.load(f)
 
+    with open(lstchain_config, "r") as f:
+        filters = json.load(f)["event_filters"]
     events, _ = read_data_dl2_to_QTable(input_dl2, None)
+    events = filter_events(events, filters)
+
     t_eff, t_ela = get_effective_time(events)
     events.meta["t_effective"] = t_eff
     events.meta["t_elapsed"] = t_ela
 
     source = SkyCoord(
-        ra=config["DataReductionFITSWriter"]["source_ra"],
-        dec=config["DataReductionFITSWriter"]["source_dec"],
+        ra=irf_config["DataReductionFITSWriter"]["source_ra"],
+        dec=irf_config["DataReductionFITSWriter"]["source_dec"],
     )
     # adds "RA", "Dec", "theta" to events
     log.info(events.keys())
@@ -35,7 +39,7 @@ def main(input_dl2, input_irf, config, output):
     events = events[columns]
 
     gh_cuts = QTable.read(input_irf, hdu="GH_CUTS")
-    intensity_bin_edges = [0, 200, 800, 3200, 1e9]
+    intensity_bin_edges = np.geomspace(10, 10000, 100)
 
     events["gh_bin"] = (
         np.digitize(
@@ -109,8 +113,9 @@ if __name__ == "__main__":
     parser.add_argument("--input-irf", required=True)
     parser.add_argument("-o", "--output", required=True)
     parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("--lstchain-config", required=True)
     parser.add_argument("--log-file")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
-    main(args.input_dl2, args.input_irf, args.config, args.output)
+    main(args.input_dl2, args.input_irf, args.lstchain_config, args.config, args.output)
