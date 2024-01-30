@@ -31,29 +31,29 @@ def main(input_dl2, input_irf, config, output):
     time_utc = Time(events["dragon_time"], format="unix", scale="utc")
     events = add_icrs_position_params(events, source, time_utc)
 
-    columns = ["gh_score", "reco_energy", "RA", "Dec", "theta"]
+    columns = ["reco_energy", "gh_score", "RA", "Dec", "theta", "intensity", "x", "y"]
     events = events[columns]
 
     gh_cuts = QTable.read(input_irf, hdu="GH_CUTS")
+    intensity_bin_edges = [0, 200, 800, 3200, 1e9]
 
-    events["gh_bin"] = np.digitize(
-        events["reco_energy"],
-        gh_cuts["high"],
-    ) - 1
-    log.info(f"Digitized into {len(np.unique(events['gh_bin']))} bins")
+    events["gh_bin"] = (
+        np.digitize(
+            events["reco_energy"],
+            gh_cuts["high"],
+        )
+        - 1
+    )
+    events["intensity_bin"] = (
+        np.digitize(
+            events["intensity"],
+            intensity_bin_edges,
+        )
+        - 1
+    )
     events["gh_cut"] = gh_cuts["cut"][events["gh_bin"]]
     gh_mask = events["gh_score"] >= events["gh_cut"]
     events["gh_mask"] = gh_mask
-
-    # rad_max_cuts = QTable.read(input_irf, hdu="RAD_MAX")
-
-    # events["theta_bin"] = np.digitize(
-    #    events["reco_energy"],
-    #    rad_max_cuts["ENERG_HI"][0],
-    # )
-    # events["theta_cut"] = rad_max_cuts["RAD_MAX"][0, 0][events["theta_bin"]]
-    # theta_mask = events["theta"] <= events["theta_cut"]
-    # events["theta_mask"] = theta_mask
 
     table = QTable(
         {
@@ -64,16 +64,43 @@ def main(input_dl2, input_irf, config, output):
                 len(events[(events["gh_bin"] == i) & gh_mask])
                 for i in range(len(gh_cuts))
             ],
-            #        "after_gh_theta": [
-            #            len(events[(events["gh_bin"] == i) & gh_mask & theta_mask])
-            #            for i in range(len(gh_cuts))
-            #        ],
-            #        "rad_max_cut": rad_max_cuts["RAD_MAX"][0, 0],
             **gh_cuts,
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )
     table.write(output, path="cuts", overwrite=True, serialize_meta=True)
+
+    table_intensity = QTable(
+        {
+            "after_trigger": [
+                len(events[events["gh_bin"] == i]) for i in range(len(gh_cuts))
+            ],
+            "after_gh": [
+                len(events[(events["gh_bin"] == i) & gh_mask])
+                for i in range(len(gh_cuts))
+            ],
+            **gh_cuts,
+        },
+        meta={"t_elapsed": t_ela, "t_effective": t_eff},
+    )
+    table_intensity.write(output, path="intensity", overwrite=True, serialize_meta=True)
+
+    bins = np.linspace(-1, 1, 100)
+    counts, *_ = np.histogram2d(events["x"], events["y"], bins=bins)
+    counts_gh, *_ = np.histogram2d(
+        events[gh_mask]["x"],
+        events[gh_mask]["y"],
+        bins=bins,
+    )
+    cog = QTable(
+        {
+            "after_trigger": counts,
+            "after_gh": counts_gh,
+            "bin_edges": bins,
+        },
+        meta={"t_elapsed": t_ela, "t_effective": t_eff},
+    )
+    cog.write(output, path="cog", append=True, serialize_meta=True)
 
 
 if __name__ == "__main__":
