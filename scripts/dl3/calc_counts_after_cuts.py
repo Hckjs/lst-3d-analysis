@@ -18,7 +18,7 @@ def main(input_dl2, input_irf, lstchain_config, irf_config, output):
         irf_config = json.load(f)
 
     with open(lstchain_config, "r") as f:
-        filters = json.load(f)["event_filters"]
+        filters = json.load(f)["events_filters"]
     events, _ = read_data_dl2_to_QTable(input_dl2, None)
     events = filter_events(events, filters)
 
