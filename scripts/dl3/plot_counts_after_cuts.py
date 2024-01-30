@@ -27,14 +27,14 @@ def plot_cuts(input_path):
         x,
         cuts["after_trigger"] / time,
         xerr=xerr,
-        y_err=np.sqrt(cuts["after_trigger"]) / time,
+        yerr=np.sqrt(cuts["after_trigger"]) / time,
         ls="",
         label="Trigger",
     )
     ax.errorbar(
         x,
         cuts["after_gh"] / time,
-        y_err=np.sqrt(cuts["after_gh"]) / time,
+        yerr=np.sqrt(cuts["after_gh"]) / time,
         xerr=xerr,
         ls="",
         label="GH Cut",
