@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 def plot_cuts(input_path):
     cuts = Table.read(input_path, path="cuts")
-    time = cuts.meta["effective_time"]
+    time = cuts.meta["t_effective"]
 
     x = cuts["center"]
     xerr = (cuts["high"] - x, x - cuts["low"])
@@ -49,7 +49,7 @@ def plot_cuts(input_path):
 
 def plot_cog(input_path):
     cog = Table.read(input_path, path="cog")
-    time = cog.meta["effective_time"]
+    time = cog.meta["t_effective"]
 
     fig_trigger, ax_trigger = plt.subplots()
     im = ax_trigger.pcolormesh(cog["after_trigger"] / time)
@@ -70,7 +70,7 @@ def plot_cog(input_path):
 
 def plot_intensity(input_path):
     intensity = Table.read(input_path, path="intensity")
-    time = intensity.meta["effective_time"]
+    time = intensity.meta["t_effective"]
 
     x = intensity["center"]
     xerr = (intensity["high"] - x, x - intensity["low"])
