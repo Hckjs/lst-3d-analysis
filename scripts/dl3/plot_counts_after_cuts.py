@@ -49,7 +49,7 @@ def plot_cuts(input_path):
 
 def plot_cog(input_path):
     cog = Table.read(input_path, path="cog")
-    time = cog.meta["t_effective"]
+    time = cog.meta["t_effective"].to_value("second")
 
     fig_trigger, ax_trigger = plt.subplots()
     im = ax_trigger.pcolormesh(cog["after_trigger"] / time)
