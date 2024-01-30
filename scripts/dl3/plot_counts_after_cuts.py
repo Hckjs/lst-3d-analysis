@@ -80,14 +80,14 @@ def plot_intensity(input_path):
         x,
         intensity["after_trigger"] / time,
         xerr=xerr,
-        y_err=np.sqrt(intensity["after_trigger"]) / time,
+        yerr=np.sqrt(intensity["after_trigger"]) / time,
         ls="",
         label="Trigger",
     )
     ax.errorbar(
         x,
         intensity["after_gh"] / time,
-        y_err=np.sqrt(intensity["after_gh"]) / time,
+        yerr=np.sqrt(intensity["after_gh"]) / time,
         xerr=xerr,
         ls="",
         label="GH Cut",
