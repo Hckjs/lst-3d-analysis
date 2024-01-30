@@ -83,7 +83,7 @@ def main(input_dl2, input_irf, config, output):
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )
-    table_intensity.write(output, path="intensity", overwrite=True, serialize_meta=True)
+    table_intensity.write(output, path="intensity", append=True, serialize_meta=True)
 
     bins = np.linspace(-1, 1, 100)
     counts, *_ = np.histogram2d(events["x"], events["y"], bins=bins)
