@@ -77,11 +77,12 @@ def main(input_dl2, input_irf, lstchain_config, irf_config, output):
     table_intensity = QTable(
         {
             "after_trigger": [
-                len(events[events["gh_bin"] == i]) for i in range(len(gh_cuts))
+                len(events[events["intensity_bin"] == i])
+                for i in range(len(intensity_bin_edges))
             ],
             "after_gh": [
-                len(events[(events["gh_bin"] == i) & gh_mask])
-                for i in range(len(gh_cuts))
+                len(events[(events["intensity_bin"] == i) & gh_mask])
+                for i in range(len(intensity_bin_edges))
             ],
             "center": (intensity_bin_edges[1:] + intensity_bin_edges[:-1]) / 2,
             "low": intensity_bin_edges[1:],
