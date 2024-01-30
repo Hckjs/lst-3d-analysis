@@ -52,7 +52,7 @@ def plot_cog(input_path):
     time = cog.meta["t_effective"].to_value("second")
 
     fig_trigger, ax_trigger = plt.subplots()
-    im = ax_trigger.pcolormesh(cog["after_trigger"] / time)
+    im = ax_trigger.pcolormesh(cog["after_trigger"] / time, norm="log")
     ax_trigger.set_title("After trigger")
     fig_trigger.colorbar(im)
 

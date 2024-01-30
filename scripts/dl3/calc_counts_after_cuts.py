@@ -83,7 +83,9 @@ def main(input_dl2, input_irf, lstchain_config, irf_config, output):
                 len(events[(events["gh_bin"] == i) & gh_mask])
                 for i in range(len(gh_cuts))
             ],
-            **gh_cuts,
+            "center": (intensity_bin_edges[1:] + intensity_bin_edges[:-1]) / 2,
+            "low": intensity_bin_edges[1:],
+            "high": intensity_bin_edges[:-1],
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )
