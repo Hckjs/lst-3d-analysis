@@ -47,7 +47,7 @@ datasets:
     methods:
       - "offset-max"
     parameters:
-      offset_max: "0.9 deg"
+      offset_max: "1.5 deg"
 
 fit:
   fit_range: { min: 20 GeV, max: 10 TeV }
