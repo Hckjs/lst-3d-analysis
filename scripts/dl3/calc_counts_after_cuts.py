@@ -19,6 +19,7 @@ def main(input_dl2, input_irf, lstchain_config, irf_config, output):
 
     with open(lstchain_config, "r") as f:
         filters = json.load(f)["events_filters"]
+        filters["event_type"] = [32,32]
     events, _ = read_data_dl2_to_QTable(input_dl2, None)
     events = filter_events(events, filters)
 
@@ -78,15 +79,15 @@ def main(input_dl2, input_irf, lstchain_config, irf_config, output):
         {
             "after_trigger": [
                 len(events[events["intensity_bin"] == i])
-                for i in range(len(intensity_bin_edges))
+                for i in range(len(intensity_bin_edges)-1)
             ],
             "after_gh": [
                 len(events[(events["intensity_bin"] == i) & gh_mask])
-                for i in range(len(intensity_bin_edges))
+                for i in range(len(intensity_bin_edges)-1)
             ],
             "center": (intensity_bin_edges[1:] + intensity_bin_edges[:-1]) / 2,
-            "low": intensity_bin_edges[1:],
-            "high": intensity_bin_edges[:-1],
+            "low": intensity_bin_edges[:-1],
+            "high": intensity_bin_edges[1:],
         },
         meta={"t_elapsed": t_ela, "t_effective": t_eff},
     )
