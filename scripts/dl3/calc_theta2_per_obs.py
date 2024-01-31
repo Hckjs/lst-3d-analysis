@@ -51,15 +51,15 @@ def get_axes(obs):
     """
     theta_squared_axis = MapAxis.from_bounds(
         0,
-        0.2,
+        0.5,
         nbin=20,
         interp="lin",
         unit="deg2",
     )
     energy_axis = MapAxis.from_energy_bounds(
-        0.005,
-        50,
-        nbin=25,
+        0.02,
+        20,
+        nbin=15,
         unit="TeV",
     )
     # energy_axis = obs.rad_max.axes["energy"]
