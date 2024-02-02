@@ -90,11 +90,7 @@ def main(lima_maps_input, exclusion_mask, output):
         ax.plot(x, p, lw=2, color="black", label=f"mu={mu:.2f}\nstd={std:.2f}")
         ax.legend()
         ax.set_xlabel("Significance")
-        ax.set_yscale("log")
-        ax.set_ylim(1e-5, 1)
         ax.set_title(f"Significance ({name})")
-        # xmin, xmax = np.min(significance_all), np.max(significance_all)
-        #    ax.set_xlim(xmin, xmax)
         figures.append(fig)
 
     if output is None:

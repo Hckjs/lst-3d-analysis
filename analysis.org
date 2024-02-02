@@ -120,6 +120,7 @@ OUTDIRS = {
     "irfs": (build / "irfs").absolute(),
     "dl4": (build / "dl4").absolute(),
     "dl5": (build / "dl5").absolute(),
+    "dm": (build / "dm").absolute(),
 }
 
 # Set all enviroments
@@ -1541,7 +1542,7 @@ rule plot_dl4_dianotics:
 
 #+end_src
 
-* TODO DL5
+* DONE DL5
 :PROPERTIES:
  :header-args:  :tangle ./workflow/rules/dl5.smk :mkdirp yes
 :END:
