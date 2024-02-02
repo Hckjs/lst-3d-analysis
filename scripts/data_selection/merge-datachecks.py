@@ -22,28 +22,34 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
-    template = (
+    template_v09 = (
         "/fefs/aswg/data/real/OSA/DL1DataCheck_LongTerm/"
         "v0.9/{night}/DL1_datacheck_{night}.h5"
+    )
+    template_v10 = (
+        "/fefs/aswg/data/real/OSA/DL1DataCheck_LongTerm/"
+        "v0.10/{night}/DL1_datacheck_{night}.h5"
     )
 
     setup_logging(logfile=args.log_file, verbose=args.verbose)
 
     runs = pd.read_csv(args.input_path)
 
-    filenames = [
-        template.format(night=night)
-        for night in sorted(np.unique(runs["Date directory"]))
-    ]
-    log.info(f"All files: {filenames}")
-
     datachecks = []
-    for f in filenames:
-        if Path(f).exists():
-            log.debug(f"Adding {f}")
-            datachecks.append(f)
+    for night in sorted(np.unique(runs["Date directory"])):
+        datacheck_v09 = template_v09.format(night=night)
+        if Path(datacheck_v09).exists():
+            datachecks.append(datacheck_v09)
+            log.debug(f"Adding {datacheck_v09}")
         else:
-            log.warning("%s not found.", f)
+            log.info(f"No v0.9 datacheck found for noght {night}. Searching for v0.10")
+            datacheck_v10 = template_v10.format(night=night)
+            if Path(datacheck_v10).exists():
+                datachecks.append(datacheck_v10)
+                log.debug(f"Adding {datacheck_v10}")
+            else:
+                log.warning("%s not found.", night)
+    log.info(f"All files: {datachecks}")
 
     if len(datachecks) == 0:
         raise Exception(

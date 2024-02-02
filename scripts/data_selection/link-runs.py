@@ -39,28 +39,35 @@ def main() -> None:  # noqa: PLR-915
     outdir_dl1 = Path(args.dl1_link_dir)
 
     filename_dl1 = "dl1_LST-1.Run{run_id}.h5"
-    # TODO the lstchain version is hardcoded here! Thats not good...
-    # Need to check which ones are available and select somehow
-    # There is no 0.10 for older fildes yet...
-    # But also no 0.9 for new ones...
+
     template_target_dl1 = (
-        Path("/fefs/aswg/data/real/DL1/{night}/v0.9/tailcut84") / filename_dl1
+        Path("/fefs/aswg/data/real/DL1/{night}/{version}/tailcut84") / filename_dl1
     ).as_posix()
+    log.info(template_target_dl1)
     template_linkname_dl1 = (outdir_dl1 / rename_dl1(filename_dl1)).as_posix()
+    log.info(template_linkname_dl1)
 
     progress = tqdm(total=n_runs)
     for night, run_ids in runs.items():
         for run_id in run_ids:
             log.info(f"Linking for run {run_id}")
-            target_dl1 = Path(template_target_dl1.format(night=night, run_id=run_id))
+            target_dl1 = Path(template_target_dl1.format(night=night, run_id=run_id, version="v0.9"))
             linkname_dl1 = Path(
                 template_linkname_dl1.format(
                     night=night,
                     run_id=run_id,
                 ),
             )
-
-            link(target_dl1, linkname_dl1)
+            if target_dl1.exists():
+                link(target_dl1, linkname_dl1)
+            else:
+                log.info(f"{target_dl1} does not exist")
+                target_dl1 = Path(template_target_dl1.format(night=night, run_id=run_id, version="v0.10"))
+                if target_dl1.exists():
+                    log.info(f"Linking v0.10 for run {run_id}")
+                    link(target_dl1, linkname_dl1)
+                else:
+                    log.warning(f"Could not find either 0.9 or 0.10 for run {run_id}")
             progress.update()
 
     Path(args.output_path).touch()
