@@ -51,6 +51,7 @@ OUTDIRS = {
     "irfs": (build / "irfs").absolute(),
     "dl4": (build / "dl4").absolute(),
     "dl5": (build / "dl5").absolute(),
+    "dm": (build / "dm").absolute(),
 }
 
 # Set all enviroments
