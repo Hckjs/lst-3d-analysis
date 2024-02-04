@@ -17,19 +17,6 @@ log = logging.getLogger(__name__)
 
 def main(datasets_path, models_path, output):
     datasets = load_datasets_with_models(datasets_path, models_path)
-    # TODO make the smoothing configurable
-    # Understand how exactly this works
-    # Do I need the best fit models attached? fit bkg? No, right?
-    # Kernel width vs spatial model size?
-    model = SkyModel(
-        spectral_model=PowerLawSpectralModel(),
-        spatial_model=GaussianSpatialModel(sigma="0.05 deg"),
-    )
-    estimator = TSMapEstimator(
-        model=model,
-        kernel_width="0.2 deg",
-        selection_optional="all",
-    )
     maps = {}
     log.info(f"Running on {len(datasets)} datasets")
 
@@ -38,15 +25,24 @@ def main(datasets_path, models_path, output):
             f"Estimating on dataset {d.name} with models {d.models.names}",
         )
         try:
+            e_reco = d.background.axes["energy"]
             estimator = TSMapEstimator()
-            ts_maps = estimator.run(d.to_masked())
+            d = d.to_masked()
+            ts_maps = estimator.run(d)
             maps[d.name] = ts_maps
+            log.info(f"Calculating ts maps in bins of energy: {e_reco}")
+            for e_min, e_max in zip(e_reco[:-1], e_reco1:):
+                estimator = TSMapEstimator(energy_edges = [e_min, e_max])
+                ts_maps = estimator.run(d)
+                maps[f"{d.name}_{e_min]_{e_max}"}] = ts_maps
+
         except ValueError as e:
             log.error(f"Can not compute significance for dataset {d}.")
             log.error(e)
 
     # Stacked
     try:
+        estimator = TSMapEstimator()
         stacked = datasets.stack_reduce()
         ts_maps = estimator.run(stacked)
         maps["stacked"] = ts_maps
