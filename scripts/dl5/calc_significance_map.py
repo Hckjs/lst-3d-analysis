@@ -25,19 +25,22 @@ def main(datasets_path, models_path, output):
             f"Estimating on dataset {d.name} with models {d.models.names}",
         )
         try:
-            e_reco = d.background.axes["energy"]
+            e_reco = d.background.geom.axes["energy"].edges
             estimator = TSMapEstimator()
+            name = d.name
             d = d.to_masked()
             ts_maps = estimator.run(d)
-            maps[d.name] = ts_maps
+            maps[name] = ts_maps
             log.info(f"Calculating ts maps in bins of energy: {e_reco}")
-            for e_min, e_max in zip(e_reco[:-1], e_reco1:):
+            for e_min, e_max in zip(e_reco[:-1], e_reco[1:]):
                 estimator = TSMapEstimator(energy_edges = [e_min, e_max])
                 ts_maps = estimator.run(d)
-                maps[f"{d.name}_{e_min]_{e_max}"}] = ts_maps
+                maps[f"{name}_{e_min:.1f}_{e_max:.1f}"] = ts_maps
 
         except ValueError as e:
             log.error(f"Can not compute significance for dataset {d}.")
+            log.error(e)
+        except AttributeError as e:
             log.error(e)
 
     # Stacked
@@ -46,8 +49,15 @@ def main(datasets_path, models_path, output):
         stacked = datasets.stack_reduce()
         ts_maps = estimator.run(stacked)
         maps["stacked"] = ts_maps
+        for e_min, e_max in zip(e_reco[:-1], e_reco[1:]):
+            estimator = TSMapEstimator(energy_edges = [e_min, e_max])
+            ts_maps = estimator.run(stacked)
+            maps[f"{stacked}_{e_min:.1f}_{e_max:.1f}"] = ts_maps
+
     except ValueError as e:
         log.error("Can not compute significance for stacked dataset.")
+        log.error(e)
+    except AttributeError as e:
         log.error(e)
 
     with open(output, "wb") as f:
