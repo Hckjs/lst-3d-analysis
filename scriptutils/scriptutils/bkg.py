@@ -5,7 +5,7 @@ import numpy as np
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.coordinates import AltAz, Angle, SkyCoord
 from astropy.time import Time
-from gammapy.irf import Background2D, Background3D
+from gammapy.irf import Background2D, Background3D, FoVAlignment
 from gammapy.maps import MapAxis, RegionGeom
 from gammapy.utils.coordinates import fov_to_sky, sky_to_fov
 
@@ -337,6 +337,7 @@ class ExclusionMapBackgroundMaker:
             axes=[self.e_reco, self.offset],
             data=self.bg_rate,
             unit=background_unit,
+            fov_alignment=FoVAlignment.ALTAZ,
         )
         return bg_2d
 
@@ -373,6 +374,7 @@ class ExclusionMapBackgroundMaker:
             axes=[self.e_reco, self.lon_axis, self.lat_axis],
             data=bg_rate.to(background_unit),
             unit=background_unit,
+            fov_alignment=FoVAlignment.ALTAZ,
             meta={"FOVALIGN": "ALTAZ"},
         )
         return bg_3d
