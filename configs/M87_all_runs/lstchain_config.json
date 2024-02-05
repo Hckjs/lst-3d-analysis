@@ -27,12 +27,13 @@
     }
   },
   "events_filters": {
-    "intensity": [80, Infinity],
+    "intensity": [0, Infinity],
     "width": [0, Infinity],
     "length": [0, Infinity],
-    "wl": [0, Infinity],
+    "wl": [0.01, 1],
     "r": [0, Infinity],
-    "leakage_intensity_width_2": [0, 0.2]
+    "leakage_intensity_width_2": [0, 0.2],
+    "event_type":[32, 32]
   },
   "n_training_events": {
     "gamma_regressors": 1.0,
