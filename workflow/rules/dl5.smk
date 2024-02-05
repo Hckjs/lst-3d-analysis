@@ -167,6 +167,8 @@ rule plot_significance_map:
         gammapy_env
     log:
         dl5 / "{analysis}/plots/plot_{significance}_map.log",
+    resources:
+        mem_mb=16000,
     shell:
         """
         MATPLOTLIBRC={input.rc} \
@@ -187,6 +189,8 @@ rule plot_significance_distribution:
         exclusion_mask=dl4 / "{analysis}/bkg_exclusion.fits.gz",
     conda:
         gammapy_env
+    resources:
+        mem_mb=16000,
     log:
         dl5 / "{analysis}/plots/plot_{significance}_distribution.log",
     shell:
