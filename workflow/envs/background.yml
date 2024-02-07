@@ -8,6 +8,7 @@ dependencies:
   - pandas
   - rich
   - astropy <6
+  - scipy<1.10
   - pip:
       - ../../scriptutils
 variables:
