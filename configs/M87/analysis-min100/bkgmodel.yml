@@ -13,6 +13,6 @@ binning:
     n_bins: 400
     n_offset_bins: 10
   energy:
-    min: "20 GeV"
-    max: "20 TeV"
-    n_bins: 15
+    min: "100 GeV"
+    max: "10 TeV"
+    n_bins: 10

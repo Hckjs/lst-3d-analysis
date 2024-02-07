@@ -25,11 +25,11 @@ datasets:
     axes:
       energy:
         min: 100 GeV
-        max: 5 TeV
+        max: 10 TeV
         nbins: 10
       energy_true:
         min: 100 GeV
-        max: 5 TeV
+        max: 10 TeV
         nbins: 10
   background:
     method: "fov_background"
