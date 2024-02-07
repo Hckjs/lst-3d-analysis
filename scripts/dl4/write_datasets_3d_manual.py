@@ -11,7 +11,7 @@ from gammapy.modeling.models import PiecewiseNormSpectralModel
 from scriptutils.io import save_datasets_with_models
 from scriptutils.log import setup_logging
 
-log = logging.getLogger("__name__")
+log = logging.getLogger(__name__)
 
 class DatasetsMakerWithNames(DatasetsMaker):
     tag = "DatasetsMakerWithNames"
@@ -47,6 +47,7 @@ class DatasetsMakerWithNames(DatasetsMaker):
 
         log.info(f"Computing dataset {dataset_obs.name} for observation {observation.obs_id}")
 
+
         for maker in self.makers:
             log.info(f"Running {maker.tag} on dataset {dataset_obs.name}")
             dataset_obs = maker.run(dataset=dataset_obs, observation=observation)
@@ -63,6 +64,10 @@ def main(config, output_datasets, output_models, n_jobs):
     datasets_settings = analysis.config.datasets
     offset_max = datasets_settings.geom.selection.offset_max
 
+    for obs in analysis.observations:
+        pointing = obs.pointing
+        log.info(type(pointing))
+        log.info(f"Location: {pointing.location}")
     log.info("Creating reference dataset and makers.")
     stacked = analysis._create_reference_dataset(name="stacked")
 
@@ -95,6 +100,7 @@ def main(config, output_datasets, output_models, n_jobs):
         cutout_width=2 * offset_max,
     )
     analysis.datasets = datasets_maker.run(stacked, analysis.observations)
+    log.info("Datasets created")
 
     save_datasets_with_models(
         analysis.datasets,

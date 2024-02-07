@@ -113,7 +113,8 @@ def main(input_path, output):
     except Exception:
         bkg = Background2D.read(input_path, hdu="BACKGROUND")
     # TODO: Could use the bins in the file, but unsure about edges vs centers etc...
-    energies = u.Quantity([20, 50, 100, 200, 500, 1000, 2000, 5000], u.GeV)
+
+    energies = bkg.axes["energy"].edges
     figures = []
 
     # there is no ax keyword or similar, figure always gets created in the function :/
