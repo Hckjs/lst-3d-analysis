@@ -22,8 +22,9 @@ rule dl2_to_dl3:
         run=dl3 / "{analysis}/LST-1.Run{run_id}.dl3.fits.gz",
     input:
         data=dl2 / "LST-1.Run{run_id}.dl2.h5",
-        irfs=MC_NODES_IRFs,  # changes baes on analysis
+        irfs=MC_NODES_IRFs, 
         config=config_dir / "{analysis}/irf_tool_config.json",
+        fix_script = scripts / "patch_dl3_header.py"
     params:
         irf_pattern="irfs_*.fits.gz",
         out=lambda wc: dl3 / wc.get("analysis"),
@@ -47,6 +48,8 @@ rule dl2_to_dl3:
             --use-nearest-irf-node \
             --overwrite \
             --log-file {log}
+
+        python {input.fix_script} --dl3-file {output.run}
         """
 
 

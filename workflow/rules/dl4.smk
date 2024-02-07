@@ -43,12 +43,12 @@ rule create_dataset:
     conda:
         gammapy_env
     resources:
-        cpus=16,
+        cpus=1,
         mem_mb=32000,
     log:
         dl4 / "{analysis}/datasets.log",
     shell:
-        "python {input.script} -c {input.config}  -o {output.datasets} -m {output.bkg_fit} --log-file {log} --n-jobs {resources.cpus}"
+        "python {input.script} -c {input.config}  -o {output.datasets} -m {output.bkg_fit} --log-file {log} --n-jobs {resources.cpus} --verbose"
 
 
 rule calc_dl4_diagnostics:
