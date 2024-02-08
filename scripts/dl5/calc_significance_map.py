@@ -52,7 +52,7 @@ def main(datasets_path, models_path, output):
         for e_min, e_max in zip(e_reco[:-1], e_reco[1:]):
             estimator = TSMapEstimator(energy_edges = [e_min, e_max])
             ts_maps = estimator.run(stacked)
-            maps[f"{stacked}_{e_min:.1f}_{e_max:.1f}"] = ts_maps
+            maps[f"stacked_{e_min:.1f}_{e_max:.1f}"] = ts_maps
 
     except ValueError as e:
         log.error("Can not compute significance for stacked dataset.")

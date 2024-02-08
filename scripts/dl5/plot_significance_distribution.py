@@ -28,10 +28,13 @@ def main(lima_maps_input, exclusion_mask, output):
     # There is no reason why the map would be energy dependent.
     # We could also take a slice instead
     exclusion_mask = WcsNDMap.read(exclusion_mask).sum_over_axes()
+    excess_counts = []
+    npred_counts = []
 
     for name, lima_maps in maps.items():
         significance_map = lima_maps["sqrt_ts"]
         excess_map = lima_maps["npred_excess"]
+        npred_map = lima_maps["npred"]
 
         fig, (ax1, ax2) = plt.subplots(
             subplot_kw={"projection": lima_maps.geom.wcs},
@@ -92,6 +95,30 @@ def main(lima_maps_input, exclusion_mask, output):
         ax.set_xlabel("Significance")
         ax.set_title(f"Significance ({name})")
         figures.append(fig)
+
+        if (not "GeV" in name) and (not "TeV" in name):
+            excess_counts.append(excess_map.data[
+                np.isfinite(significance_map.data) & exclusion_mask.data.astype(bool)
+            ].sum())
+            npred_counts.append(npred_map.data[
+                np.isfinite(significance_map.data) & exclusion_mask.data.astype(bool)
+            ].sum())
+        
+
+    fig, ax = plt.subplots()
+    ax.plot(np.cumsum(excess_counts))
+    ax.set_title("Cumulative excess counts in on region")
+    ax.set_ylabel("Counts")
+    ax.set_xlabel("Observations")
+    figures.append(fig)
+
+    fig, ax = plt.subplots()
+    ax.plot(np.cumsum(npred_counts))
+    ax.set_title("Cumulative npred counts in on region")
+    ax.set_ylabel("Counts")
+    ax.set_xlabel("Observations")
+    figures.append(fig)
+
 
     if output is None:
         plt.show()
