@@ -123,7 +123,9 @@ if __name__ == "__main__":
     )
     log.info(s)
 
-    mask = mask & (~np.isin(runsummary["runnumber"], config.never_include))
+    mask_blacklist = (~np.isin(runsummary["runnumber"], config.never_include))
+    runsummary["mask_blacklist"] = mask_blacklist
+    mask = mask & mask_blacklist
     log.info(
         f"Selected runs after blacklist: {list(runsummary['runnumber'][mask].data)}",
     )
@@ -157,7 +159,7 @@ if __name__ == "__main__":
 
     mask_pedestal_charge = get_mask(ped_std, ge=ped_ll, le=ped_ul)
 
-    runsummary["mask_pedestal_charge"] = mask_pedestal_charge & mask
+    runsummary["mask_pedestal_charge"] = mask_pedestal_charge
     mask = runsummary["mask_pedestal_charge"] & mask
 
     after_pedestal_charge = np.count_nonzero(mask)
@@ -277,10 +279,12 @@ if __name__ == "__main__":
         f"Selected runs after all steps: {list(runsummary['runnumber'][mask].data)}",
     )
 
-    mask = mask | np.isin(runsummary["runnumber"], config.always_include)
+    mask_whitelist = np.isin(runsummary["runnumber"], config.always_include)
+    mask = mask | mask_whitelist
     log.info(
         f"Selected runs after whitelist: {list(runsummary['runnumber'][mask].data)}",
     )
+    runsummary["mask_whitelist"] = mask_whitelist
     runsummary["mask_final"] = mask
     moon_alt, moon_ill = get_moon_info(runsummary)
     runsummary["moon_altitude"] = moon_alt
