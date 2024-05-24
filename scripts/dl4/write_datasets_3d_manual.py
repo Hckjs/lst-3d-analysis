@@ -74,18 +74,23 @@ def main(config, output_datasets, output_models, n_jobs):
     maker = analysis._create_dataset_maker()
     maker_safe_mask = analysis._create_safe_mask_maker()
     bkg_maker = analysis._create_background_maker()
-    energy_axis = analysis._make_energy_axis(analysis.config.datasets.geom.axes.energy)
-    bkg_spectral = PiecewiseNormSpectralModel(
-        energy_axis.center,
-        norms=np.ones(len(energy_axis.center)),
-    )
-    # make sure norms are all positive
-    for p in bkg_spectral.parameters:
-        if p.name.startswith("norm_"):
-            p.min = 1e-3
-            p.max = 1e3
 
-    bkg_maker.default_spectral_model = bkg_spectral
+    # TODO Could attach my own fit instance to that to improve convergence?
+    # TODO Could also add a flag for that.
+    # Perform the fit in bins of energy
+    # The scale method only works globally!
+    if bkg_maker.method =="fit":
+        energy_axis = analysis._make_energy_axis(analysis.config.datasets.geom.axes.energy)
+        bkg_spectral = PiecewiseNormSpectralModel(
+            energy_axis.center,
+            norms=np.ones(len(energy_axis.center)),
+        )
+        # make sure norms are all positive
+        for p in bkg_spectral.parameters:
+            if p.name.startswith("norm_"):
+                p.min = 1e-3
+                p.max = 1e3
+        bkg_maker.default_spectral_model = bkg_spectral
 
     makers = [maker, maker_safe_mask, bkg_maker]
     makers = [maker for maker in makers if maker is not None]
